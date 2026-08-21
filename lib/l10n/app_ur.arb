@@ -1,0 +1,62 @@
+{
+  "@@locale": "ur",
+
+  "appName": "سلامتی",
+  "welcomeTitle": "سلامتی میں خوش آمدید",
+  "welcomeSubtitle": "قرآن، نکاح، اور کمیونٹی — آپ کی اپنی زبان میں۔",
+  "chooseLanguage": "اپنی زبان منتخب کریں",
+  "english": "English",
+  "urdu": "اردو",
+  "continueLabel": "جاری رکھیں",
+
+  "loginTitle": "لاگ ان",
+  "registerTitle": "اکاؤنٹ بنائیں",
+  "fullName": "پورا نام",
+  "emailAddress": "ای میل ایڈریس",
+  "phoneNumber": "فون نمبر",
+  "password": "پاسورڈ",
+  "confirmPassword": "پاسورڈ کی تصدیق",
+  "loginButton": "لاگ ان",
+  "registerButton": "اکاؤنٹ بنائیں",
+  "dontHaveAccount": "اکاؤنٹ نہیں ہے؟",
+  "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟",
+  "signUp": "سائن اپ کریں",
+  "orContinueWith": "یا اس کے ذریعے جاری رکھیں",
+  "continueWithGoogle": "گوگل کے ذریعے جاری رکھیں",
+  "continueWithFacebook": "فیس بک کے ذریعے جاری رکھیں",
+  "signInWithCode": "اس کے بجائے کوڈ سے سائن ان کریں",
+  "useEmailPassword": "اس کے بجائے ای میل اور پاسورڈ استعمال کریں",
+
+  "otpTitle": "تصدیقی کوڈ درج کریں",
+  "otpSentTo": "ہم نے {phone} پر 6 ہندسوں کا کوڈ بھیجا ہے",
+  "@otpSentTo": {
+    "placeholders": { "phone": { "type": "String" } }
+  },
+  "verify": "تصدیق کریں",
+  "resendCode": "کوڈ دوبارہ بھیجیں",
+  "sendCode": "کوڈ بھیجیں",
+
+  "dashboardWelcome": "السلام علیکم، {name}!",
+  "@dashboardWelcome": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "modulesTitle": "آج آپ کیا کرنا چاہیں گے؟",
+  "logout": "لاگ آؤٹ",
+
+  "moduleNikah": "نکاح میچ میکنگ",
+  "moduleQuran": "قرآن کورسز",
+  "moduleQuranLive": "لائیو قرآن کلاسز",
+  "moduleSkills": "ڈیجیٹل سکلز",
+  "moduleCounseling": "فیملی کاؤنسلنگ",
+  "moduleDonation": "عطیہ دیں",
+  "moduleVolunteer": "رضاکار بنیں",
+  "moduleWall": "سلامتی وال",
+
+  "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔",
+  "errorNetwork": "رابطہ نہیں ہو سکا۔ اپنا انٹرنیٹ کنکشن چیک کریں۔",
+  "fieldRequired": "یہ خانہ ضروری ہے",
+  "invalidEmail": "درست ای میل ایڈریس درج کریں",
+  "loading": "لوڈ ہو رہا ہے…",
+  "faqTitle": "اکثر پوچھے گئے سوالات",
+  "comingSoon": "ایپ کا یہ حصہ جلد آ رہا ہے۔"
+}

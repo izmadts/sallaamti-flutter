@@ -1,0 +1,52 @@
+import 'package:dio/dio.dart';
+
+import '../config/app_config.dart';
+import '../storage/secure_store.dart';
+import 'api_exception.dart';
+
+// Thin Dio wrapper: every request automatically carries the stored bearer
+// token (if any) and Accept: application/json, and every failure is
+// normalized into an ApiException before it reaches a repository or
+// screen — nothing above this layer should ever touch a raw DioException.
+class ApiClient {
+  late final Dio _dio;
+
+  ApiClient() {
+    _dio = Dio(BaseOptions(
+      baseUrl: AppConfig.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {'Accept': 'application/json'},
+    ));
+
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await SecureStore.readToken();
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+        handler.next(options);
+      },
+    ));
+  }
+
+  Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? query}) =>
+      _request(() => _dio.get(path, queryParameters: query));
+
+  Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? data}) =>
+      _request(() => _dio.post(path, data: data));
+
+  Future<Map<String, dynamic>> _request(Future<Response> Function() call) async {
+    try {
+      final response = await call();
+      return Map<String, dynamic>.from(response.data as Map);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw ApiException.network();
+      }
+      throw ApiException.fromResponseData(e.response?.data, e.response?.statusCode);
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "@@locale": "en",
+
+  "appName": "Sallaamti",
+  "welcomeTitle": "Welcome to Sallaamti",
+  "welcomeSubtitle": "Quran, Nikah, and community — in your language.",
+  "chooseLanguage": "Choose your language",
+  "english": "English",
+  "urdu": "اردو",
+  "continueLabel": "Continue",
+
+  "loginTitle": "Log In",
+  "registerTitle": "Create Account",
+  "fullName": "Full Name",
+  "emailAddress": "Email Address",
+  "phoneNumber": "Phone Number",
+  "password": "Password",
+  "confirmPassword": "Confirm Password",
+  "loginButton": "Log In",
+  "registerButton": "Create Account",
+  "dontHaveAccount": "Don't have an account?",
+  "alreadyHaveAccount": "Already have an account?",
+  "signUp": "Sign Up",
+  "orContinueWith": "or continue with",
+  "continueWithGoogle": "Continue with Google",
+  "continueWithFacebook": "Continue with Facebook",
+  "signInWithCode": "Sign in with a code instead",
+  "useEmailPassword": "Use email & password instead",
+
+  "otpTitle": "Enter Verification Code",
+  "otpSentTo": "We sent a 6-digit code to {phone}",
+  "@otpSentTo": {
+    "placeholders": { "phone": { "type": "String" } }
+  },
+  "verify": "Verify",
+  "resendCode": "Resend Code",
+  "sendCode": "Send Code",
+
+  "dashboardWelcome": "Assalamu Alaikum, {name}!",
+  "@dashboardWelcome": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "modulesTitle": "What would you like to do today?",
+  "logout": "Log Out",
+
+  "moduleNikah": "Nikah Matchmaking",
+  "moduleQuran": "Quran Courses",
+  "moduleQuranLive": "Live Quran Classes",
+  "moduleSkills": "Digital Skills",
+  "moduleCounseling": "Family Counseling",
+  "moduleDonation": "Donate",
+  "moduleVolunteer": "Volunteer",
+  "moduleWall": "Sallaamti Wall",
+
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorNetwork": "Couldn't connect. Check your internet connection.",
+  "fieldRequired": "This field is required",
+  "invalidEmail": "Enter a valid email address",
+  "loading": "Loading…",
+  "faqTitle": "Frequently Asked Questions",
+  "comingSoon": "This part of the app is coming soon."
+}
