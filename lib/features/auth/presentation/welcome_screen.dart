@@ -11,24 +11,28 @@ class WelcomeScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      // Black background matches the logo's own black lockup and the
+      // native splash screen, so onboarding reads as one continuous brand
+      // moment rather than a jarring black-to-white cut.
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               const Spacer(),
-              const Text('🕊️', style: TextStyle(fontSize: 64)),
-              const SizedBox(height: 16),
+              Image.asset('assets/logo.jpg', width: 240),
+              const SizedBox(height: 20),
               Text(
                 l10n.welcomeTitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white),
               ),
               const SizedBox(height: 8),
               Text(
                 l10n.welcomeSubtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 15, color: Colors.grey.shade400),
               ),
               const Spacer(),
               ElevatedButton(
@@ -37,13 +41,17 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white, width: 1.5),
+                ),
                 onPressed: () => context.go('/login'),
                 child: Text(l10n.loginTitle),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => context.go('/otp'),
-                child: Text(l10n.signInWithCode),
+                child: Text(l10n.signInWithCode, style: const TextStyle(color: Colors.white70)),
               ),
             ],
           ),

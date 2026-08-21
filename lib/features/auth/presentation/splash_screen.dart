@@ -33,16 +33,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
     });
 
-    return const Scaffold(
+    return Scaffold(
+      // Matches the native launch screen's black background so control
+      // passing from it to this widget doesn't flash white first.
+      backgroundColor: Colors.black,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('🕊️', style: TextStyle(fontSize: 56)),
-            SizedBox(height: 16),
-            Text('Sallaamti', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-            SizedBox(height: 24),
-            CircularProgressIndicator(),
+            Semantics(
+              label: 'Sallaamti',
+              child: Image.asset('assets/logo.jpg', width: 220),
+            ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(color: Colors.white),
           ],
         ),
       ),

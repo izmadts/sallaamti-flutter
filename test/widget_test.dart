@@ -11,6 +11,6 @@ void main() {
     // animates indefinitely, so pumpAndSettle would never return here.
     await tester.pump();
 
-    expect(find.text('Sallaamti'), findsOneWidget);
+    expect(find.bySemanticsLabel('Sallaamti'), findsOneWidget);
   });
 }
