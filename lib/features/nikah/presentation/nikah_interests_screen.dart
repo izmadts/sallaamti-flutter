@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
 import '../domain/nikah_interest.dart';
 import '../state/nikah_controller.dart';
@@ -39,7 +40,9 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
         _sent = result.sent;
       });
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
+    } catch (_) {
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -55,7 +58,9 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
       }
       _load();
     } on ApiException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorGeneric)));
     }
   }
 
@@ -84,7 +89,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
 
   Widget _list(List<NikahInterest> items, {required bool showActions}) {
     if (items.isEmpty) {
-      return const Center(child: Text('Nothing here yet.'));
+      return Center(child: Text(AppLocalizations.of(context)!.nikahNothingHereYet));
     }
 
     return RefreshIndicator(

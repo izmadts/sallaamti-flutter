@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/image_pick_field.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
@@ -42,15 +43,16 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
   }
 
   Future<void> _next() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     final profile = ref.read(nikahControllerProvider).profile;
     if (_cnicFront == null && profile?.hasCnicFrontImage != true) {
-      setState(() => _error = 'Please upload the front of your CNIC.');
+      setState(() => _error = l10n.nikahCnicFrontRequired);
       return;
     }
     if (_cnicBack == null && profile?.hasCnicBackImage != true) {
-      setState(() => _error = 'Please upload the back of your CNIC.');
+      setState(() => _error = l10n.nikahCnicBackRequired);
       return;
     }
 
@@ -73,9 +75,9 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
 
       if (mounted) context.push('/nikah/wizard/review');
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -84,6 +86,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(nikahControllerProvider).profile;
+    final l10n = AppLocalizations.of(context)!;
 
     return StepWizardScaffold(
       title: 'Photos & Verification',
@@ -109,7 +112,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
             TextFormField(
               controller: _cnicController,
               decoration: const InputDecoration(labelText: 'CNIC Number'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
             ),
             const SizedBox(height: 12),
             Row(

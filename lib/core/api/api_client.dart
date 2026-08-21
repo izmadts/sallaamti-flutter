@@ -27,6 +27,14 @@ class ApiClient {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        // Backend's SetApiLocale middleware reads this to pick which
+        // language __('db.*') error/status messages come back in — without
+        // it every API message is English regardless of the app's own
+        // language switch.
+        final locale = await SecureStore.readLocale();
+        if (locale != null) {
+          options.headers['X-Locale'] = locale;
+        }
         handler.next(options);
       },
     ));

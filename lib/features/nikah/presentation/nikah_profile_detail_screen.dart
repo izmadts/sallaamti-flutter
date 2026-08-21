@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
 import '../data/nikah_repository.dart';
 import '../state/nikah_controller.dart';
@@ -36,39 +37,56 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
       final detail = await repo.viewProfile(widget.profileId);
       setState(() => _detail = detail);
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
+    } catch (_) {
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _sendInterest() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _sendingInterest = true);
     try {
       final repo = ref.read(nikahRepositoryProvider);
       await repo.sendInterest(widget.profileId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Interest sent!')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nikahInterestSent)));
         _load();
       }
     } on ApiException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     } finally {
       if (mounted) setState(() => _sendingInterest = false);
     }
   }
 
+  // Previously had no error handling at all — a failed save/unsave (e.g.
+  // no connection) crashed silently with no feedback and no way to know
+  // it hadn't actually happened.
   Future<void> _toggleSave() async {
-    final repo = ref.read(nikahRepositoryProvider);
-    final saved = await repo.toggleSave(widget.profileId);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(saved ? 'Saved!' : 'Removed from saved.')));
-      _load();
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final repo = ref.read(nikahRepositoryProvider);
+      final saved = await repo.toggleSave(widget.profileId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(saved ? l10n.nikahSaved : l10n.nikahRemovedFromSaved)));
+        _load();
+      }
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -76,7 +94,7 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
     if (_error != null || _detail == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error ?? 'Not found'))),
+        body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error ?? l10n.nikahNothingHereYet))),
       );
     }
 
@@ -151,11 +169,11 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
             ],
             const SizedBox(height: 28),
             if (detail.interestStatus == 'accepted')
-              const Center(child: Text('✅ You\'re connected!', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.green)))
+              Center(child: Text('✅ ${l10n.nikahYouAreConnected}', style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.green)))
             else if (detail.isMineSent)
               Center(
                 child: Text(
-                  detail.interestStatus == 'declined' ? 'Interest declined' : 'Interest sent — awaiting response',
+                  detail.interestStatus == 'declined' ? l10n.nikahInterestDeclinedStatus : l10n.nikahInterestAwaiting,
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
               )
@@ -163,7 +181,7 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
               ElevatedButton.icon(
                 onPressed: _sendingInterest ? null : _sendInterest,
                 icon: const Icon(Icons.favorite_border),
-                label: Text(_sendingInterest ? 'Sending…' : 'Send Interest'),
+                label: Text(_sendingInterest ? l10n.nikahSending : l10n.nikahSendInterest),
               ),
           ],
         ),

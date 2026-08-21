@@ -12,6 +12,18 @@ class ApiException implements Exception {
 
   String? firstErrorFor(String field) => fieldErrors[field]?.first;
 
+  // Laravel's top-level `message` on a 422 is a generic "The given data
+  // was invalid." — the actually useful, specific text is the first field
+  // error. Screens that don't know which single field to look up (the
+  // Nikah wizard steps, which each submit several fields at once) use
+  // this instead of `message` directly.
+  String get displayMessage {
+    if (fieldErrors.isNotEmpty) {
+      return fieldErrors.values.first.first;
+    }
+    return message;
+  }
+
   factory ApiException.network() => ApiException(
         message: 'Couldn\'t connect. Check your internet connection.',
       );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../state/nikah_controller.dart';
 
 class NikahReviewScreen extends ConsumerStatefulWidget {
@@ -17,6 +18,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
   String? _error;
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _busy = true;
       _error = null;
@@ -26,9 +28,9 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
       await ref.read(nikahControllerProvider.notifier).submit();
       if (mounted) context.go('/nikah/payment');
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -37,6 +39,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(nikahControllerProvider).profile;
+    final l10n = AppLocalizations.of(context)!;
 
     if (profile == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -102,7 +105,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
-                        'Please go back and finish the Verification step before submitting.',
+                        l10n.nikahFinishVerificationFirst,
                         style: TextStyle(color: Colors.red.shade700, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
@@ -111,7 +114,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
                     onPressed: (_busy || !profile.isComplete) ? null : _submit,
                     child: _busy
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Submit for Verification'),
+                        : Text(l10n.nikahSubmitForVerification),
                   ),
                 ],
               ),

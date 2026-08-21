@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../domain/nikah_profile.dart';
 import '../state/nikah_controller.dart';
 
@@ -23,9 +24,11 @@ class NikahHomeScreen extends ConsumerWidget {
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
                   onRefresh: () => ref.read(nikahControllerProvider.notifier).refresh(),
-                  child: state.profile == null
-                      ? _NoProfileView()
-                      : _ProfileStatusView(profile: state.profile!),
+                  child: state.error != null
+                      ? _ErrorView(message: state.error!, onRetry: () => ref.read(nikahControllerProvider.notifier).refresh())
+                      : state.profile == null
+                          ? const _NoProfileView()
+                          : _ProfileStatusView(profile: state.profile!),
                 ),
         ),
       ),
@@ -34,34 +37,37 @@ class NikahHomeScreen extends ConsumerWidget {
 }
 
 class _NoProfileView extends StatelessWidget {
+  const _NoProfileView();
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 40),
         const Center(child: Text('💍', style: TextStyle(fontSize: 64))),
         const SizedBox(height: 20),
-        const Text(
-          'Find your match, the halal way',
+        Text(
+          l10n.nikahFindMatchTitle,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Text(
-          'Create your Nikah profile in a few short steps. Your guardian and identity verification keep the community safe and genuine.',
+          l10n.nikahFindMatchSubtitle,
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 28),
         ElevatedButton(
           onPressed: () => context.push('/nikah/wizard/step1'),
-          child: const Text('Create Your Profile'),
+          child: Text(l10n.nikahCreateProfile),
         ),
         const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () => context.push('/faq/nikah'),
-          child: const Text('Frequently Asked Questions'),
+          child: Text(l10n.faqTitle),
         ),
       ],
     );
@@ -74,12 +80,14 @@ class _ProfileStatusView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (!profile.isComplete) {
       return _StatusCard(
         emoji: '📝',
-        title: 'Finish setting up your profile',
-        message: '${profile.completenessPercentage}% complete — a few more details and your CNIC are needed before you can submit.',
-        actionLabel: 'Continue Setup',
+        title: l10n.nikahFinishProfileTitle,
+        message: l10n.nikahFinishProfileMessage(profile.completenessPercentage),
+        actionLabel: l10n.nikahContinueSetup,
         onAction: () => context.push('/nikah/wizard/step2'),
       );
     }
@@ -87,11 +95,11 @@ class _ProfileStatusView extends StatelessWidget {
     if (profile.paymentStatus == 'unpaid' || profile.paymentStatus == 'rejected') {
       return _StatusCard(
         emoji: '💳',
-        title: profile.paymentStatus == 'rejected' ? 'Payment needs another look' : 'One step left — the verification fee',
+        title: profile.paymentStatus == 'rejected' ? l10n.nikahPaymentRejectedTitle : l10n.nikahPaymentDueTitle,
         message: profile.paymentStatus == 'rejected'
-            ? 'Your last payment proof wasn\'t accepted. Please submit it again.'
-            : 'Pay a one-time Rs. ${profile.paymentAmount ?? ''} verification fee to get your profile reviewed.',
-        actionLabel: 'Pay Verification Fee',
+            ? l10n.nikahPaymentRejectedMessage
+            : l10n.nikahPaymentDueMessage(profile.paymentAmount ?? ''),
+        actionLabel: l10n.nikahPayVerificationFee,
         onAction: () => context.push('/nikah/payment'),
       );
     }
@@ -99,19 +107,19 @@ class _ProfileStatusView extends StatelessWidget {
     if (profile.paymentStatus == 'submitted') {
       return _StatusCard(
         emoji: '⏳',
-        title: 'Payment under review',
-        message: 'We\'re confirming your payment — this usually takes a short while.',
+        title: l10n.nikahPaymentUnderReviewTitle,
+        message: l10n.nikahPaymentUnderReviewMessage,
       );
     }
 
     if (profile.verificationStatus != 'verified') {
       return _StatusCard(
         emoji: '🔍',
-        title: 'Profile under verification',
+        title: l10n.nikahProfileUnderVerificationTitle,
         message: profile.verificationStatus == 'rejected'
-            ? (profile.rejectionReason ?? 'Your profile needs some changes — please update your details.')
-            : 'Our team is reviewing your details and CNIC. You\'ll be notified once approved.',
-        actionLabel: profile.verificationStatus == 'rejected' ? 'Update Profile' : null,
+            ? (profile.rejectionReason ?? l10n.nikahProfileNeedsChangesMessage)
+            : l10n.nikahProfileReviewingMessage,
+        actionLabel: profile.verificationStatus == 'rejected' ? l10n.nikahUpdateProfile : null,
         onAction: profile.verificationStatus == 'rejected' ? () => context.push('/nikah/wizard/step1') : null,
       );
     }
@@ -126,37 +134,37 @@ class _ProfileStatusView extends StatelessWidget {
             color: Colors.green.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Text('✅', style: TextStyle(fontSize: 24)),
-              SizedBox(width: 12),
-              Expanded(child: Text('Your profile is live and verified!', style: TextStyle(fontWeight: FontWeight.w700))),
+              const Text('✅', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+              Expanded(child: Text(l10n.nikahProfileLiveMessage, style: const TextStyle(fontWeight: FontWeight.w700))),
             ],
           ),
         ),
         const SizedBox(height: 20),
         _HubTile(
           emoji: '🔎',
-          title: 'Browse Matches',
-          subtitle: 'See profiles that match your preferences',
+          title: l10n.nikahBrowseMatchesTitle,
+          subtitle: l10n.nikahBrowseMatchesSubtitle,
           onTap: () => context.push('/nikah/browse'),
         ),
         _HubTile(
           emoji: '💌',
-          title: 'My Interests',
-          subtitle: 'Sent and received interest requests',
+          title: l10n.nikahMyInterestsTitle,
+          subtitle: l10n.nikahMyInterestsSubtitle,
           onTap: () => context.push('/nikah/interests'),
         ),
         _HubTile(
           emoji: '⚙️',
-          title: 'Edit My Profile',
-          subtitle: 'Update your details anytime',
+          title: l10n.nikahEditProfileTitle,
+          subtitle: l10n.nikahEditProfileSubtitle,
           onTap: () => context.push('/nikah/wizard/step1'),
         ),
         _HubTile(
           emoji: '❓',
-          title: 'FAQs',
-          subtitle: 'Common questions about Nikah matching',
+          title: l10n.faqTitle,
+          subtitle: l10n.nikahFaqsSubtitle,
           onTap: () => context.push('/faq/nikah'),
         ),
       ],
@@ -217,6 +225,36 @@ class _StatusCard extends StatelessWidget {
           const SizedBox(height: 24),
           ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
         ],
+      ],
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    // ListView (not Center) so RefreshIndicator's pull-to-refresh gesture
+    // still has something scrollable to grab, even on this error state.
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              const Text('⚠️', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 16),
+              Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
+              const SizedBox(height: 20),
+              ElevatedButton(onPressed: onRetry, child: Text(l10n.nikahTryAgain)),
+            ],
+          ),
+        ),
       ],
     );
   }

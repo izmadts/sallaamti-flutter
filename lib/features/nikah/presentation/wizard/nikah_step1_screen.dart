@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
 
@@ -69,8 +70,10 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   }
 
   Future<void> _next() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_gender == null) {
-      setState(() => _error = 'Please select your gender.');
+      setState(() => _error = l10n.nikahSelectGender);
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -96,9 +99,9 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       });
       if (mounted) context.push('/nikah/wizard/step2');
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -106,6 +109,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StepWizardScaffold(
       title: 'Basic Info',
       stepIndex: 0,
@@ -162,7 +166,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
         TextFormField(
           controller: _cityController,
           decoration: const InputDecoration(labelText: 'City'),
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+          validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -185,14 +189,14 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
         TextFormField(
           controller: _guardianNameController,
           decoration: const InputDecoration(labelText: 'Guardian Name'),
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+          validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _guardianContactController,
           decoration: const InputDecoration(labelText: 'Guardian Phone Number'),
           keyboardType: TextInputType.phone,
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+          validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(

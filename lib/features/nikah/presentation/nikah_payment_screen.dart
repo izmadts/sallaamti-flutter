@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../state/nikah_controller.dart';
 
@@ -36,8 +37,9 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_screenshot == null) {
-      setState(() => _error = 'Please attach a screenshot of your payment.');
+      setState(() => _error = l10n.nikahPaymentScreenshotRequired);
       return;
     }
 
@@ -51,9 +53,9 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
       await repo.submitPayment(paymentMethod: _method, paymentReference: _referenceController.text.trim(), screenshot: _screenshot!);
       setState(() => _submitted = true);
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -62,10 +64,11 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(nikahControllerProvider).profile;
+    final l10n = AppLocalizations.of(context)!;
 
     if (_submitted) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Payment Submitted')),
+        appBar: AppBar(title: Text(l10n.nikahPaymentSubmittedTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -74,7 +77,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
               children: [
                 const Text('✅', style: TextStyle(fontSize: 56)),
                 const SizedBox(height: 16),
-                const Text('Payment proof submitted!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
+                Text(l10n.nikahPaymentSubmittedTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
                 const SizedBox(height: 8),
                 Text(
                   'Our team will confirm it shortly, then your profile can go live once it\'s also verified.',
@@ -84,7 +87,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () => context.go('/nikah'),
-                  child: const Text('Back to Nikah'),
+                  child: Text(l10n.nikahBackToNikah),
                 ),
               ],
             ),
@@ -160,7 +163,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 onPressed: _busy ? null : _submit,
                 child: _busy
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Submit Payment Proof'),
+                    : Text(l10n.nikahSubmitPaymentProof),
               ),
             ],
           ),

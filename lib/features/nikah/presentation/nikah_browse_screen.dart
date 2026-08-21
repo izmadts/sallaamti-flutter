@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
 import '../domain/nikah_card.dart';
 import '../state/nikah_controller.dart';
@@ -45,7 +46,9 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
         _hasMore = result.hasMore;
       });
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
+    } catch (_) {
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -78,10 +81,10 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
 
     if (_profiles.isEmpty) {
       return ListView(
-        children: const [
+        children: [
           Padding(
-            padding: EdgeInsets.all(32),
-            child: Center(child: Text('No matches found yet — check back soon.')),
+            padding: const EdgeInsets.all(32),
+            child: Center(child: Text(AppLocalizations.of(context)!.nikahNoMatchesYet)),
           ),
         ],
       );
@@ -98,7 +101,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
             child: Center(
               child: _loading
                   ? const CircularProgressIndicator()
-                  : OutlinedButton(onPressed: _loadMore, child: const Text('Load More')),
+                  : OutlinedButton(onPressed: _loadMore, child: Text(AppLocalizations.of(context)!.nikahLoadMore)),
             ),
           );
         }
@@ -181,7 +184,7 @@ class _NikahGateNotice extends StatelessWidget {
               const SizedBox(height: 16),
               Text(error, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
               const SizedBox(height: 20),
-              ElevatedButton(onPressed: () => context.go('/nikah'), child: const Text('Back to Nikah')),
+              ElevatedButton(onPressed: () => context.go('/nikah'), child: Text(AppLocalizations.of(context)!.nikahBackToNikah)),
             ],
           ),
         ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
 import 'nikah_step1_screen.dart' show maritalStatusOptions;
@@ -55,6 +56,7 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
   }
 
   Future<void> _next() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _busy = true;
       _error = null;
@@ -73,9 +75,9 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
       });
       if (mounted) context.push('/nikah/wizard/step4');
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
