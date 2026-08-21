@@ -76,7 +76,8 @@ flutter:
   generate: true
 
   assets:
-    - assets/logo.jpg
+    - assets/icon.png
+    - assets/app-logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -108,23 +109,28 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/logo.jpg"
-  # The source image is a full black-background lockup (Arabic mark +
-  # wordmark + tagline + social icons), used as-is per the brand owner's
-  # explicit choice over a mark-only crop. Android adaptive icon masks may
-  # crop a little of the edge content (the URL/tagline lines) on launchers
-  # that apply a circular/squircle mask — expected with a full lockup, not
-  # a bug in generation.
-  adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/logo.jpg"
+  image_path: "assets/icon.png"
+  # Dedicated icon-only mark — dark green circular badge, transparent
+  # corners — swapped in for the launcher icon specifically; splash still
+  # uses the full black lockup (assets/logo.jpg) below.
+  adaptive_icon_background: "#022C22"
+  adaptive_icon_foreground: "assets/icon.png"
   min_sdk_android: 21
+  # iOS icons can't have transparency (App Store rejects it) — flatten the
+  # transparent corners to the same dark green instead of leaving them.
+  remove_alpha_ios: true
+  background_color_ios: "#022C22"
 
 # flutter_native_splash config — run: dart run flutter_native_splash:create
+# Note: icon.png is a full-bleed circular badge — Android 12+'s native
+# splash-icon safe zone may crop its outer edge slightly on some devices.
+# Explicit choice (over app-logo.png, which doesn't have this issue) per
+# the brand owner — revisit if it looks wrong on-device.
 flutter_native_splash:
-  color: "#000000"
-  image: assets/logo.jpg
+  color: "#022C22"
+  image: assets/icon.png
   android_12:
-    color: "#000000"
-    image: assets/logo.jpg
+    color: "#022C22"
+    image: assets/icon.png
   android: true
   ios: true

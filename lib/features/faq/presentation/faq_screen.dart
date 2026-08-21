@@ -15,19 +15,28 @@ class FaqScreen extends ConsumerStatefulWidget {
 }
 
 class _FaqScreenState extends ConsumerState<FaqScreen> {
-  late Future<List<FaqItem>> _future;
+  Future<List<FaqItem>>? _future;
+  String? _loadedLocale;
   int? _expandedId;
 
+  // Localizations.localeOf(context) depends on an InheritedWidget, which
+  // isn't available yet in initState() — didChangeDependencies() is the
+  // correct place, and re-fires (harmlessly re-fetching in the new
+  // language) if the user flips the language switch while this screen is
+  // still open.
   @override
-  void initState() {
-    super.initState();
-    _load();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale != _loadedLocale) {
+      _loadedLocale = locale;
+      _load();
+    }
   }
 
   void _load() {
     final repo = FaqRepository(ref.read(apiClientProvider));
-    final locale = Localizations.localeOf(context).languageCode;
-    _future = repo.forModule(widget.module, locale: locale);
+    _future = repo.forModule(widget.module, locale: _loadedLocale!);
   }
 
   @override

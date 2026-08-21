@@ -7,6 +7,10 @@ import 'package:flutter/material.dart';
 // module's own screens once that module ships (Phase 1+).
 class AppTheme {
   static const Color brandTeal = Color(0xFF0D6B6B);
+  // Matches the app icon/splash artwork's own background — used on the
+  // splash and welcome screens so the transparent corners of the logo
+  // blend into the screen instead of showing a color seam.
+  static const Color logoBackground = Color(0xFF022C22);
 
   static ThemeData get base => _themeFrom(brandTeal);
 

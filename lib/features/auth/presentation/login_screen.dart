@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/password_field.dart';
 import '../../../shared/widgets/social_sign_in_buttons.dart';
 import '../state/auth_controller.dart';
 
@@ -38,10 +40,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await ref.read(authControllerProvider.notifier).login(
+      await ref
+          .read(authControllerProvider.notifier)
+          .login(
             login: _loginController.text.trim(),
             password: _passwordController.text,
           );
+      // Tells the OS password manager the credentials just used were
+      // real/valid, which is what actually triggers its "Save password?"
+      // prompt — it won't offer that on every keystroke, only here.
+      TextInput.finishAutofillContext();
     } on ApiException catch (e) {
       setState(() => _generalError = e.firstErrorFor('login') ?? e.message);
     } catch (_) {
@@ -62,48 +70,69 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_generalError != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(12),
+            child: AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_generalError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _generalError!,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
                     ),
-                    child: Text(_generalError!, style: TextStyle(color: Colors.red.shade700)),
+                    const SizedBox(height: 16),
+                  ],
+                  TextFormField(
+                    controller: _loginController,
+                    decoration: InputDecoration(
+                      labelText: '${l10n.emailAddress} / ${l10n.phoneNumber}',
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [
+                      AutofillHints.email,
+                      AutofillHints.username,
+                    ],
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? l10n.fieldRequired
+                        : null,
                   ),
                   const SizedBox(height: 16),
+                  PasswordField(
+                    controller: _passwordController,
+                    labelText: l10n.password,
+                    autofillHints: const [AutofillHints.password],
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? l10n.fieldRequired : null,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _submitting ? null : _submit,
+                    child: _submitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(l10n.loginButton),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => context.go('/register'),
+                    child: Text(l10n.dontHaveAccount),
+                  ),
+                  const SizedBox(height: 8),
+                  const SocialSignInButtons(),
                 ],
-                TextFormField(
-                  controller: _loginController,
-                  decoration: InputDecoration(labelText: '${l10n.emailAddress} / ${l10n.phoneNumber}'),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(labelText: l10n.password),
-                  obscureText: true,
-                  validator: (v) => (v == null || v.isEmpty) ? l10n.fieldRequired : null,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  child: _submitting
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(l10n.loginButton),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => context.go('/register'),
-                  child: Text(l10n.dontHaveAccount),
-                ),
-                const SizedBox(height: 8),
-                const SocialSignInButtons(),
-              ],
+              ),
             ),
           ),
         ),

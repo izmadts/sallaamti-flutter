@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/language_switch_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -11,17 +13,23 @@ class WelcomeScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      // Black background matches the logo's own black lockup and the
-      // native splash screen, so onboarding reads as one continuous brand
-      // moment rather than a jarring black-to-white cut.
-      backgroundColor: Colors.black,
+      // Matches the logo artwork's own background and the native splash
+      // screen, so onboarding reads as one continuous brand moment rather
+      // than a jarring color cut.
+      backgroundColor: AppTheme.logoBackground,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Image.asset('assets/app-logo.png', height: 30),
+        actions: const [LanguageSwitchButton()],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               const Spacer(),
-              Image.asset('assets/logo.jpg', width: 240),
+              Image.asset('assets/icon.png', width: 220),
               const SizedBox(height: 20),
               Text(
                 l10n.welcomeTitle,
