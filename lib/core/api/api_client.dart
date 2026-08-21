@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
@@ -35,6 +37,38 @@ class ApiClient {
 
   Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? data}) =>
       _request(() => _dio.post(path, data: data));
+
+  // Laravel reads booleans from multipart bodies via $request->boolean(),
+  // which only recognizes string forms ('1'/'true'/'on'/'yes') — a Dart
+  // `bool` serialized as FormData would arrive as the literal text "true",
+  // which boolean() also accepts, but converting explicitly here avoids
+  // relying on that overlap for values like `0`/`false`.
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    Map<String, dynamic> fields = const {},
+    Map<String, File> files = const {},
+  }) async {
+    final map = <String, dynamic>{};
+    fields.forEach((key, value) {
+      if (value == null) return;
+      if (value is bool) {
+        map[key] = value ? '1' : '0';
+      } else if (value is List) {
+        for (final item in value) {
+          map.putIfAbsent('$key[]', () => <String>[]);
+          (map['$key[]'] as List).add(item.toString());
+        }
+      } else {
+        map[key] = value.toString();
+      }
+    });
+
+    for (final entry in files.entries) {
+      map[entry.key] = await MultipartFile.fromFile(entry.value.path, filename: entry.value.path.split(Platform.pathSeparator).last);
+    }
+
+    return _request(() => _dio.post(path, data: FormData.fromMap(map)));
+  }
 
   Future<Map<String, dynamic>> _request(Future<Response> Function() call) async {
     try {
