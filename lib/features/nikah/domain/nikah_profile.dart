@@ -36,6 +36,7 @@ class NikahProfile {
   final bool isActive;
   final String paymentStatus;
   final String? paymentAmount;
+  final NikahPaymentInstructions paymentInstructions;
   final int? prefMinAge;
   final int? prefMaxAge;
   final String? prefCity;
@@ -82,6 +83,7 @@ class NikahProfile {
     required this.isActive,
     required this.paymentStatus,
     this.paymentAmount,
+    required this.paymentInstructions,
     this.prefMinAge,
     this.prefMaxAge,
     this.prefCity,
@@ -129,6 +131,9 @@ class NikahProfile {
         isActive: json['is_active'] as bool? ?? true,
         paymentStatus: json['payment_status'] as String,
         paymentAmount: json['payment_amount']?.toString(),
+        paymentInstructions: NikahPaymentInstructions.fromJson(
+          json['payment_instructions'] as Map<String, dynamic>? ?? const {},
+        ),
         prefMinAge: json['pref_min_age'] as int?,
         prefMaxAge: json['pref_max_age'] as int?,
         prefCity: json['pref_city'] as String?,
@@ -140,4 +145,38 @@ class NikahProfile {
       );
 
   bool get isComplete => hasCnicNumber && hasCnicFrontImage && hasCnicBackImage;
+}
+
+// Wherever to actually send the verification fee — configured by admins in
+// Settings, same source of truth the web payment page reads from. Any of
+// these can be null if that method hasn't been configured yet.
+class NikahPaymentInstructions {
+  final String? jazzcashNumber;
+  final String? jazzcashAccountTitle;
+  final String? bankName;
+  final String? bankAccountTitle;
+  final String? bankAccountNumber;
+  final String? bankAccountIban;
+
+  const NikahPaymentInstructions({
+    this.jazzcashNumber,
+    this.jazzcashAccountTitle,
+    this.bankName,
+    this.bankAccountTitle,
+    this.bankAccountNumber,
+    this.bankAccountIban,
+  });
+
+  factory NikahPaymentInstructions.fromJson(Map<String, dynamic> json) => NikahPaymentInstructions(
+        jazzcashNumber: json['jazzcash_number'] as String?,
+        jazzcashAccountTitle: json['jazzcash_account_title'] as String?,
+        bankName: json['bank_name'] as String?,
+        bankAccountTitle: json['bank_account_title'] as String?,
+        bankAccountNumber: json['bank_account_number'] as String?,
+        bankAccountIban: json['bank_account_iban'] as String?,
+      );
+
+  bool get hasJazzcash => jazzcashNumber != null && jazzcashNumber!.isNotEmpty;
+  bool get hasBankTransfer => bankName != null && bankName!.isNotEmpty;
+  bool get hasAnyMethod => hasJazzcash || hasBankTransfer;
 }

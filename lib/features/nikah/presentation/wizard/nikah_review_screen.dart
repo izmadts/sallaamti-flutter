@@ -26,6 +26,11 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
 
     try {
       await ref.read(nikahControllerProvider.notifier).submit();
+      // submit() only flips verification_status server-side and doesn't
+      // update the cached profile — refresh so anything reading it after
+      // this (including a user backing out before paying) sees the real
+      // state instead of what was cached before submission.
+      await ref.read(nikahControllerProvider.notifier).refresh();
       if (mounted) context.go('/nikah/payment');
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);

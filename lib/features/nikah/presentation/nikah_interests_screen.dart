@@ -71,7 +71,16 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Interests'),
-          bottom: const TabBar(tabs: [Tab(text: 'Received'), Tab(text: 'Sent')]),
+          bottom: const TabBar(
+            // Explicit colors — the default TabBarTheme resolves both label
+            // colors close to the module's own teal AppBar background,
+            // making the selected tab's text disappear entirely and the
+            // unselected one nearly unreadable.
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
+            tabs: [Tab(text: 'Received'), Tab(text: 'Sent')],
+          ),
         ),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
