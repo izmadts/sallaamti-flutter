@@ -12,6 +12,7 @@ import '../../features/auth/state/auth_controller.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/faq/presentation/faq_screen.dart';
 import '../../features/nikah/presentation/nikah_browse_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/nikah/presentation/nikah_home_screen.dart';
 import '../../features/nikah/presentation/nikah_interests_screen.dart';
 import '../../features/nikah/presentation/nikah_payment_screen.dart';
@@ -71,6 +72,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/otp', builder: (context, state) => const OtpScreen()),
       GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
+      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
       GoRoute(
         path: '/faq/:module',
         builder: (context, state) => FaqScreen(module: state.pathParameters['module']!),

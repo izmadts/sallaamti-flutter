@@ -32,7 +32,7 @@ simulator.)
 
 These need their own **mobile** OAuth credentials — separate, SHA-1-fingerprinted Android/iOS
 client IDs from the website's — registered in the Google Cloud Console and Facebook Developer
-Console specifically for this app (`com.izmadts.sallaamti_app`). Until those are set:
+Console specifically for this app (`com.sallaamti.app`). Until those are set:
 
 - Add the Android/iOS client IDs to the backend's `.env` as `GOOGLE_MOBILE_CLIENT_IDS`
   (comma-separated) — see `config/services.php` on the backend.

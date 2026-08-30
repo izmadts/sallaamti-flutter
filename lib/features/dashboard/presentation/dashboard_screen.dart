@@ -6,6 +6,7 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/language_switch_button.dart';
+import '../../../shared/widgets/notification_bell.dart';
 import '../../auth/state/auth_controller.dart';
 
 const _moduleEmoji = {
@@ -51,6 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       appBar: AppBar(
         title: Image.asset('assets/app-logo.png', height: 34),
         actions: [
+          const NotificationBell(),
           const LanguageSwitchButton(),
           IconButton(
             icon: const Icon(Icons.logout),

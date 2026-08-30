@@ -46,6 +46,9 @@ class ApiClient {
   Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? data}) =>
       _request(() => _dio.post(path, data: data));
 
+  Future<Map<String, dynamic>> delete(String path, {Map<String, dynamic>? query}) =>
+      _request(() => _dio.delete(path, queryParameters: query));
+
   // Laravel reads booleans from multipart bodies via $request->boolean(),
   // which only recognizes string forms ('1'/'true'/'on'/'yes') — a Dart
   // `bool` serialized as FormData would arrive as the literal text "true",

@@ -1,4 +1,4 @@
-package com.izmadts.sallaamti_app
+package com.sallaamti.app
 
 import io.flutter.embedding.android.FlutterActivity
 

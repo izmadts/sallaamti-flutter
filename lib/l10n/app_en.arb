@@ -60,6 +60,10 @@
   "faqTitle": "Frequently Asked Questions",
   "comingSoon": "This part of the app is coming soon.",
 
+  "notificationsTitle": "Notifications",
+  "notificationsEmpty": "Nothing here yet — you'll see interest requests, payment updates, and profile status here.",
+  "notificationsMarkAllRead": "Mark all read",
+
   "nikahSelectGender": "Please select your gender.",
   "nikahCnicFrontRequired": "Please upload the front of your CNIC.",
   "nikahCnicBackRequired": "Please upload the back of your CNIC.",

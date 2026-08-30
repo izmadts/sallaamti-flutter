@@ -50,3 +50,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase config/credentials — environment-specific, never committed.
+# google-services.json is re-downloadable from the Firebase console per
+# developer machine; a service-account key must never leave the backend
+# server at all (belongs in the Laravel app's gitignored storage instead).
+/android/app/google-services.json
+**/*firebase-adminsdk*.json
