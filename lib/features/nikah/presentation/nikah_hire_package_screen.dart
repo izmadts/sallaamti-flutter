@@ -52,9 +52,8 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
 
   Widget _copyableRow(String value, {TextStyle? style}) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value, style: style),
+        Expanded(child: Text(value, style: style)),
         const SizedBox(width: 4),
         InkWell(
           onTap: () => _copy(value.replaceAll('-', '')),
@@ -223,18 +222,16 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                                     Text('Account Title: ${_paymentInstructions.bankAccountTitle}', style: TextStyle(color: Colors.grey.shade700)),
                                   if ((_paymentInstructions.bankAccountNumber ?? '').isNotEmpty)
                                     Row(
-                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text('Account No: ', style: TextStyle(color: Colors.grey.shade700)),
-                                        _copyableRow(_paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700)),
+                                        Expanded(child: _copyableRow(_paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700))),
                                       ],
                                     ),
                                   if ((_paymentInstructions.bankAccountIban ?? '').isNotEmpty)
                                     Row(
-                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text('IBAN: ', style: TextStyle(color: Colors.grey.shade700)),
-                                        _copyableRow(_paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700)),
+                                        Expanded(child: _copyableRow(_paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700))),
                                       ],
                                     ),
                                 ],

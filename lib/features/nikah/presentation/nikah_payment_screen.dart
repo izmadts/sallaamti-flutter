@@ -37,9 +37,8 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
 
   Widget _copyableRow(String value, {TextStyle? style}) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value, style: style),
+        Expanded(child: Text(value, style: style)),
         const SizedBox(width: 4),
         InkWell(
           // Copy the plain digits only — dashes are display formatting, and
@@ -190,18 +189,16 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                             Text('Account Title: ${profile.paymentInstructions.bankAccountTitle}', style: TextStyle(color: Colors.grey.shade700)),
                           if ((profile.paymentInstructions.bankAccountNumber ?? '').isNotEmpty)
                             Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text('Account No: ', style: TextStyle(color: Colors.grey.shade700)),
-                                _copyableRow(profile.paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700)),
+                                Expanded(child: _copyableRow(profile.paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700))),
                               ],
                             ),
                           if ((profile.paymentInstructions.bankAccountIban ?? '').isNotEmpty)
                             Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text('IBAN: ', style: TextStyle(color: Colors.grey.shade700)),
-                                _copyableRow(profile.paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700)),
+                                Expanded(child: _copyableRow(profile.paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700))),
                               ],
                             ),
                         ],
