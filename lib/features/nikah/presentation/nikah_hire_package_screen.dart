@@ -25,10 +25,12 @@ class NikahHirePackageScreen extends ConsumerStatefulWidget {
 }
 
 class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen> {
+  static const _methodLabels = {'jazzcash': 'JazzCash', 'easypaisa': 'EasyPaisa', 'bank_transfer': 'Bank Transfer'};
+
   List<CounselorPackage> _packages = [];
   CounselorPackage? _selected;
   NikahPaymentInstructions _paymentInstructions = const NikahPaymentInstructions();
-  String _method = 'jazzcash';
+  String? _method;
   File? _screenshot;
   bool _loading = true;
   bool _submitting = false;
@@ -66,6 +68,15 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     );
   }
 
+  // Only offer a method the member can actually pay into — a method
+  // showing up as selectable with no account behind it just strands them
+  // at the submit step with nowhere to send the money.
+  List<String> get _availableMethods => [
+        if (_paymentInstructions.hasJazzcash) 'jazzcash',
+        if (_paymentInstructions.hasEasypaisa) 'easypaisa',
+        if (_paymentInstructions.hasBankTransfer) 'bank_transfer',
+      ];
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -78,6 +89,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
         _packages = result.packages;
         _paymentInstructions = result.paymentInstructions;
         if (result.packages.isNotEmpty) _selected = result.packages.first;
+        _method = _availableMethods.isNotEmpty ? _availableMethods.first : null;
       });
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
@@ -94,7 +106,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
   }
 
   Future<void> _submit() async {
-    if (_selected == null) return;
+    if (_selected == null || _method == null) return;
     if (_screenshot == null) {
       setState(() => _error = 'Please upload a payment screenshot.');
       return;
@@ -109,7 +121,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
       final repo = ref.read(nikahHireRepositoryProvider);
       await repo.submitPackage(
         packageId: _selected!.id,
-        paymentMethod: _method,
+        paymentMethod: _method!,
         screenshot: _screenshot!,
       );
       setState(() => _submitted = true);
@@ -243,12 +255,10 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                       DropdownButtonFormField<String>(
                         initialValue: _method,
                         decoration: InputDecoration(label: requiredLabel('Payment Method')),
-                        items: const [
-                          DropdownMenuItem(value: 'jazzcash', child: Text('JazzCash')),
-                          DropdownMenuItem(value: 'easypaisa', child: Text('EasyPaisa')),
-                          DropdownMenuItem(value: 'bank_transfer', child: Text('Bank Transfer')),
-                        ],
-                        onChanged: (v) => setState(() => _method = v!),
+                        items: _availableMethods
+                            .map((m) => DropdownMenuItem(value: m, child: Text(_methodLabels[m]!)))
+                            .toList(),
+                        onChanged: _availableMethods.isEmpty ? null : (v) => setState(() => _method = v),
                       ),
                       const SizedBox(height: 16),
                       SizedBox(
@@ -262,7 +272,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
-                        onPressed: (_submitting || _selected == null) ? null : _submit,
+                        onPressed: (_submitting || _selected == null || _method == null) ? null : _submit,
                         child: _submitting
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Text('Submit Payment'),
