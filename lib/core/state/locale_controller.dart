@@ -7,11 +7,20 @@ import '../storage/secure_store.dart';
 // language picker before anything else, per the "even a kid can explore"
 // brief: language comes before any English-only screen, not after.
 final localeControllerProvider = StateNotifierProvider<LocaleController, Locale?>(
-  (ref) => LocaleController(),
+  (ref) => LocaleController(ref),
 );
 
+// Separate from the Locale? state above: a saved locale is only known once
+// the async storage read finishes, and "haven't checked yet" must be
+// distinguishable from "checked, nothing saved" — otherwise a cold start
+// always observes a transient null and sends even a returning user to the
+// language picker before their saved choice loads (see SplashScreen).
+final localeRestoredProvider = StateProvider<bool>((ref) => false);
+
 class LocaleController extends StateNotifier<Locale?> {
-  LocaleController() : super(null) {
+  final Ref _ref;
+
+  LocaleController(this._ref) : super(null) {
     _restore();
   }
 
@@ -20,6 +29,7 @@ class LocaleController extends StateNotifier<Locale?> {
     if (code != null) {
       state = Locale(code);
     }
+    _ref.read(localeRestoredProvider.notifier).state = true;
   }
 
   Future<void> choose(String code) async {

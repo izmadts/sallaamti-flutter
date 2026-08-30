@@ -17,10 +17,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeControllerProvider);
+    final localeRestored = ref.watch(localeRestoredProvider);
     final auth = ref.watch(authControllerProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+
+      // Still reading from storage — wait for the rebuild this triggers
+      // once it resolves, rather than treating "not checked yet" the same
+      // as "checked, no saved locale."
+      if (!localeRestored) return;
 
       if (locale == null) {
         context.go('/language');
