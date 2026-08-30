@@ -156,11 +156,24 @@ class _ProfileStatusView extends StatelessWidget {
           onTap: () => context.push('/nikah/interests'),
         ),
         _HubTile(
+          emoji: '⭐',
+          title: 'Saved Profiles',
+          subtitle: 'Candidates you starred while browsing',
+          onTap: () => context.push('/nikah/saved'),
+        ),
+        _HubTile(
           emoji: '⚙️',
           title: l10n.nikahEditProfileTitle,
           subtitle: l10n.nikahEditProfileSubtitle,
           onTap: () => context.push('/nikah/wizard/step1'),
         ),
+        _HubTile(
+          emoji: '🚫',
+          title: 'Blocked Profiles',
+          subtitle: 'Manage who you\'ve blocked',
+          onTap: () => context.push('/nikah/blocked'),
+        ),
+        _ActiveToggleTile(isActive: profile.isActive),
         _HubTile(
           emoji: '❓',
           title: l10n.faqTitle,
@@ -168,6 +181,56 @@ class _ProfileStatusView extends StatelessWidget {
           onTap: () => context.push('/faq/nikah'),
         ),
       ],
+    );
+  }
+}
+
+// A profile visibility switch — "hidden from search" isn't the same as
+// admin suspension, see NikahSafetyController::toggleActive()'s own
+// comment on that distinction; this just lets a member pause being
+// discoverable without deleting anything.
+class _ActiveToggleTile extends ConsumerStatefulWidget {
+  final bool isActive;
+  const _ActiveToggleTile({required this.isActive});
+
+  @override
+  ConsumerState<_ActiveToggleTile> createState() => _ActiveToggleTileState();
+}
+
+class _ActiveToggleTileState extends ConsumerState<_ActiveToggleTile> {
+  bool _busy = false;
+
+  Future<void> _toggle() async {
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(nikahRepositoryProvider);
+      await repo.toggleActive();
+      await ref.read(nikahControllerProvider.notifier).refresh();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not update visibility — try again.')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          radius: 22,
+          backgroundColor: primary.withValues(alpha: 0.12),
+          child: Text(widget.isActive ? '👁️' : '🙈', style: const TextStyle(fontSize: 20)),
+        ),
+        title: Text(widget.isActive ? 'Visible in Search' : 'Hidden from Search', style: const TextStyle(fontWeight: FontWeight.w700)),
+        subtitle: Text(widget.isActive ? 'Other members can find your profile' : 'Your profile is paused'),
+        trailing: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Switch(value: widget.isActive, onChanged: (_) => _toggle()),
+      ),
     );
   }
 }

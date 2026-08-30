@@ -11,12 +11,15 @@ import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/auth/state/auth_controller.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/faq/presentation/faq_screen.dart';
+import '../../features/nikah/presentation/nikah_blocked_screen.dart';
 import '../../features/nikah/presentation/nikah_browse_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/nikah/presentation/nikah_home_screen.dart';
 import '../../features/nikah/presentation/nikah_interests_screen.dart';
+import '../../features/nikah/presentation/nikah_messages_screen.dart';
 import '../../features/nikah/presentation/nikah_payment_screen.dart';
 import '../../features/nikah/presentation/nikah_profile_detail_screen.dart';
+import '../../features/nikah/presentation/nikah_saved_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_review_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step1_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step2_screen.dart';
@@ -86,9 +89,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/nikah/payment', builder: (context, state) => const NikahPaymentScreen()),
       GoRoute(path: '/nikah/browse', builder: (context, state) => const NikahBrowseScreen()),
       GoRoute(path: '/nikah/interests', builder: (context, state) => const NikahInterestsScreen()),
+      GoRoute(path: '/nikah/saved', builder: (context, state) => const NikahSavedScreen()),
+      GoRoute(path: '/nikah/blocked', builder: (context, state) => const NikahBlockedScreen()),
       GoRoute(
         path: '/nikah/profile/:id',
         builder: (context, state) => NikahProfileDetailScreen(profileId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/nikah/interests/:interestId/messages',
+        builder: (context, state) => NikahMessagesScreen(interestId: int.parse(state.pathParameters['interestId']!)),
       ),
     ],
   );

@@ -11,6 +11,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/trust_badges.dart';
 import '../domain/nikah_card.dart';
 import '../state/nikah_controller.dart';
+import 'wizard/nikah_step1_screen.dart' show maritalStatusOptions;
 
 class NikahBrowseScreen extends ConsumerStatefulWidget {
   const NikahBrowseScreen({super.key});
@@ -27,6 +28,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
   bool _loading = true;
   bool _loadingMore = false;
   String? _error;
+  Map<String, String> _filters = {};
 
   @override
   void initState() {
@@ -60,7 +62,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
 
     try {
       final repo = ref.read(nikahRepositoryProvider);
-      final result = await repo.browse(page: _page);
+      final result = await repo.browse(page: _page, filters: _filters);
       setState(() {
         _profiles.addAll(result.profiles);
         _hasMore = result.hasMore;
@@ -80,7 +82,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
     _page++;
     try {
       final repo = ref.read(nikahRepositoryProvider);
-      final result = await repo.browse(page: _page);
+      final result = await repo.browse(page: _page, filters: _filters);
       if (mounted) {
         setState(() {
           _profiles.addAll(result.profiles);
@@ -94,12 +96,44 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
     }
   }
 
+  Future<void> _openFilters() async {
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _FilterSheet(initial: _filters),
+    );
+    if (result != null) {
+      setState(() => _filters = result);
+      _load(reset: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Browse Matches')),
+        appBar: AppBar(
+          title: const Text('Browse Matches'),
+          actions: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
+                if (_filters.isNotEmpty)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(color: Color(0xFFB8962E), shape: BoxShape.circle),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
         body: RefreshIndicator(
           onRefresh: () => _load(reset: true),
           child: _buildBody(context),
@@ -458,6 +492,127 @@ class _NikahGateNotice extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Kept to a handful of the fields the backend already supports (full list:
+// city/sect/education/ethnicity/language/family_type/state/country/age
+// range/marital_status/prayer_frequency/open_to_polygamy) — the ones a
+// member is actually likely to filter by, not every field just because the
+// API accepts it.
+class _FilterSheet extends StatefulWidget {
+  final Map<String, String> initial;
+  const _FilterSheet({required this.initial});
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  late final _cityController = TextEditingController(text: widget.initial['city']);
+  late final _sectController = TextEditingController(text: widget.initial['sect']);
+  late final _minAgeController = TextEditingController(text: widget.initial['min_age']);
+  late final _maxAgeController = TextEditingController(text: widget.initial['max_age']);
+  String? _maritalStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _maritalStatus = widget.initial['marital_status'];
+  }
+
+  @override
+  void dispose() {
+    _cityController.dispose();
+    _sectController.dispose();
+    _minAgeController.dispose();
+    _maxAgeController.dispose();
+    super.dispose();
+  }
+
+  void _apply() {
+    final filters = <String, String>{
+      if (_cityController.text.trim().isNotEmpty) 'city': _cityController.text.trim(),
+      if (_sectController.text.trim().isNotEmpty) 'sect': _sectController.text.trim(),
+      if (_minAgeController.text.trim().isNotEmpty) 'min_age': _minAgeController.text.trim(),
+      if (_maxAgeController.text.trim().isNotEmpty) 'max_age': _maxAgeController.text.trim(),
+      if (_maritalStatus != null) 'marital_status': _maritalStatus!,
+    };
+    Navigator.of(context).pop(filters);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Filter Matches', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _minAgeController,
+                  decoration: const InputDecoration(labelText: 'Min Age'),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _maxAgeController,
+                  decoration: const InputDecoration(labelText: 'Max Age'),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _cityController,
+            decoration: const InputDecoration(labelText: 'City'),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _sectController,
+            decoration: const InputDecoration(labelText: 'Sect'),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _maritalStatus,
+            decoration: const InputDecoration(labelText: 'Marital Status'),
+            items: [
+              const DropdownMenuItem(value: null, child: Text('Any')),
+              ...maritalStatusOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))),
+            ],
+            onChanged: (v) => setState(() => _maritalStatus = v),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(<String, String>{}),
+                  child: const Text('Clear'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(onPressed: _apply, child: const Text('Apply')),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
