@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +11,7 @@ import '../../../core/theme/module_themes.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
 import '../data/nikah_hire_repository.dart';
+import '../domain/nikah_profile.dart';
 
 // Shown right after hiring a counselor (nikah_counselor_picker_screen.dart)
 // — same payment-proof pattern as nikah_payment_screen.dart's one-time fee,
@@ -25,6 +27,7 @@ class NikahHirePackageScreen extends ConsumerStatefulWidget {
 class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen> {
   List<CounselorPackage> _packages = [];
   CounselorPackage? _selected;
+  NikahPaymentInstructions _paymentInstructions = const NikahPaymentInstructions();
   String _method = 'jazzcash';
   File? _screenshot;
   bool _loading = true;
@@ -38,6 +41,31 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     _load();
   }
 
+  Future<void> _copy(String value) async {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 2)));
+    }
+  }
+
+  Widget _copyableRow(String value, {TextStyle? style}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(value, style: style),
+        const SizedBox(width: 4),
+        InkWell(
+          onTap: () => _copy(value.replaceAll('-', '')),
+          borderRadius: BorderRadius.circular(20),
+          child: const Padding(
+            padding: EdgeInsets.all(4),
+            child: Icon(Icons.copy, size: 16, color: Colors.grey),
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -45,10 +73,11 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     });
     try {
       final repo = ref.read(nikahHireRepositoryProvider);
-      final packages = await repo.packages();
+      final result = await repo.packages();
       setState(() {
-        _packages = packages;
-        if (packages.isNotEmpty) _selected = packages.first;
+        _packages = result.packages;
+        _paymentInstructions = result.paymentInstructions;
+        if (result.packages.isNotEmpty) _selected = result.packages.first;
       });
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
@@ -151,6 +180,66 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                         onTap: () => setState(() => _selected = package),
                       ),
                       const SizedBox(height: 12),
+                      if (_paymentInstructions.hasAnyMethod)
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Send payment to', style: TextStyle(fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 12),
+                                if (_paymentInstructions.hasJazzcash) ...[
+                                  const Text('📱 JazzCash', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 2),
+                                  _copyableRow(_paymentInstructions.jazzcashNumber!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                  if ((_paymentInstructions.jazzcashAccountTitle ?? '').isNotEmpty)
+                                    Text(_paymentInstructions.jazzcashAccountTitle!, style: TextStyle(color: Colors.grey.shade600)),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (_paymentInstructions.hasEasypaisa) ...[
+                                  const Text('📱 EasyPaisa', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 2),
+                                  _copyableRow(_paymentInstructions.easypaisaNumber!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (_paymentInstructions.hasBankTransfer) ...[
+                                  const Text('🏦 Bank Transfer', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 2),
+                                  Text('Bank: ${_paymentInstructions.bankName}', style: TextStyle(color: Colors.grey.shade700)),
+                                  if ((_paymentInstructions.bankAccountTitle ?? '').isNotEmpty)
+                                    Text('Account Title: ${_paymentInstructions.bankAccountTitle}', style: TextStyle(color: Colors.grey.shade700)),
+                                  if ((_paymentInstructions.bankAccountNumber ?? '').isNotEmpty)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text('Account No: ', style: TextStyle(color: Colors.grey.shade700)),
+                                        _copyableRow(_paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700)),
+                                      ],
+                                    ),
+                                  if ((_paymentInstructions.bankAccountIban ?? '').isNotEmpty)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text('IBAN: ', style: TextStyle(color: Colors.grey.shade700)),
+                                        _copyableRow(_paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700)),
+                                      ],
+                                    ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
+                          child: const Text(
+                            'Payment details have not been configured yet. Please contact support before sending any payment.',
+                            style: TextStyle(color: Colors.deepOrange),
+                          ),
+                        ),
+                      const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         initialValue: _method,
                         decoration: InputDecoration(label: requiredLabel('Payment Method')),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../auth/state/auth_controller.dart';
+import '../domain/nikah_profile.dart';
 import 'nikah_repository.dart';
 
 class NikahCounselor {
@@ -12,8 +13,10 @@ class NikahCounselor {
   final String? avatar;
   final String? bio;
   final String? tier;
+  final String? city;
+  final String? gender;
 
-  NikahCounselor({required this.id, required this.name, this.avatar, this.bio, this.tier});
+  NikahCounselor({required this.id, required this.name, this.avatar, this.bio, this.tier, this.city, this.gender});
 
   factory NikahCounselor.fromJson(Map<String, dynamic> json) => NikahCounselor(
         id: json['id'] as int,
@@ -21,6 +24,8 @@ class NikahCounselor {
         avatar: json['avatar'] as String?,
         bio: json['bio'] as String?,
         tier: json['tier'] as String?,
+        city: json['city'] as String?,
+        gender: json['gender'] as String?,
       );
 }
 
@@ -88,24 +93,49 @@ class CounselorPackage {
   });
 
   factory CounselorPackage.fromJson(Map<String, dynamic> json) => CounselorPackage(
-        id: json['id'] as int,
+        id: _asInt(json['id']) ?? 0,
         name: json['name'] as String,
         tagline: json['tagline'] as String?,
         description: json['description'] as String?,
-        features: (json['features'] as List?) ?? [],
+        features: _asList(json['features']),
         price: num.tryParse(json['price'].toString()) ?? 0,
         currency: json['currency'] as String?,
-        durationDays: json['duration_days'] as int?,
-        proposalLimit: json['proposal_limit'] as int?,
+        durationDays: _asInt(json['duration_days']),
+        proposalLimit: _asInt(json['proposal_limit']),
       );
+
+  // A JSON array with non-sequential PHP keys serializes as a JSON object,
+  // not an array — 'as List' throws on that shape. Falls back to the map's
+  // values, or [] for anything else.
+  static List<dynamic> _asList(dynamic value) {
+    if (value is List) return value;
+    if (value is Map) return value.values.toList();
+    return [];
+  }
+
+  static int? _asInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+}
+
+class CounselorPackagesResult {
+  final List<CounselorPackage> packages;
+  final NikahPaymentInstructions paymentInstructions;
+  CounselorPackagesResult({required this.packages, required this.paymentInstructions});
 }
 
 class NikahHireRepository {
   final ApiClient _client;
   NikahHireRepository(this._client);
 
-  Future<List<NikahCounselor>> counselors() async {
-    final data = await _client.get('/nikah/counselors');
+  Future<List<NikahCounselor>> counselors({String? city, String? gender}) async {
+    final data = await _client.get('/nikah/counselors', query: {
+      if (city != null && city.isNotEmpty) 'city': city,
+      if (gender != null && gender.isNotEmpty) 'gender': gender,
+    });
     return (data['counselors'] as List).map((e) => NikahCounselor.fromJson(Map<String, dynamic>.from(e as Map))).toList();
   }
 
@@ -120,9 +150,14 @@ class NikahHireRepository {
     return HiredLead.fromJson(Map<String, dynamic>.from(data['lead'] as Map));
   }
 
-  Future<List<CounselorPackage>> packages() async {
+  Future<CounselorPackagesResult> packages() async {
     final data = await _client.get('/nikah/lead-packages');
-    return (data['packages'] as List).map((e) => CounselorPackage.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+    return CounselorPackagesResult(
+      packages: (data['packages'] as List).map((e) => CounselorPackage.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+      paymentInstructions: NikahPaymentInstructions.fromJson(
+        Map<String, dynamic>.from((data['payment_instructions'] as Map?) ?? const {}),
+      ),
+    );
   }
 
   Future<HiredLead> submitPackage({

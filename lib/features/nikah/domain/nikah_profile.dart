@@ -153,6 +153,7 @@ class NikahProfile {
 class NikahPaymentInstructions {
   final String? jazzcashNumber;
   final String? jazzcashAccountTitle;
+  final String? easypaisaNumber;
   final String? bankName;
   final String? bankAccountTitle;
   final String? bankAccountNumber;
@@ -161,6 +162,7 @@ class NikahPaymentInstructions {
   const NikahPaymentInstructions({
     this.jazzcashNumber,
     this.jazzcashAccountTitle,
+    this.easypaisaNumber,
     this.bankName,
     this.bankAccountTitle,
     this.bankAccountNumber,
@@ -170,6 +172,7 @@ class NikahPaymentInstructions {
   factory NikahPaymentInstructions.fromJson(Map<String, dynamic> json) => NikahPaymentInstructions(
         jazzcashNumber: json['jazzcash_number'] as String?,
         jazzcashAccountTitle: json['jazzcash_account_title'] as String?,
+        easypaisaNumber: json['easypaisa_number'] as String?,
         bankName: json['bank_name'] as String?,
         bankAccountTitle: json['bank_account_title'] as String?,
         bankAccountNumber: json['bank_account_number'] as String?,
@@ -177,6 +180,7 @@ class NikahPaymentInstructions {
       );
 
   bool get hasJazzcash => jazzcashNumber != null && jazzcashNumber!.isNotEmpty;
+  bool get hasEasypaisa => easypaisaNumber != null && easypaisaNumber!.isNotEmpty;
   bool get hasBankTransfer => bankName != null && bankName!.isNotEmpty;
-  bool get hasAnyMethod => hasJazzcash || hasBankTransfer;
+  bool get hasAnyMethod => hasJazzcash || hasEasypaisa || hasBankTransfer;
 }

@@ -30,6 +30,7 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
   bool _loading = true;
   bool _hiring = false;
   String? _error;
+  Map<String, String> _filters = {};
 
   @override
   void initState() {
@@ -44,7 +45,7 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
     });
     try {
       final repo = ref.read(nikahHireRepositoryProvider);
-      final counselors = await repo.counselors();
+      final counselors = await repo.counselors(city: _filters['city'], gender: _filters['gender']);
       setState(() => _counselors = counselors);
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
@@ -52,6 +53,18 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
       if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _openFilters() async {
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _CounselorFilterSheet(initial: _filters),
+    );
+    if (result != null) {
+      setState(() => _filters = result);
+      _load();
     }
   }
 
@@ -78,7 +91,27 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Choose a Nikah Counselor')),
+        appBar: AppBar(
+          title: const Text('Choose a Nikah Counselor'),
+          actions: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
+                if (_filters.isNotEmpty)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(color: Color(0xFFB8962E), shape: BoxShape.circle),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
         body: _buildBody(context),
       ),
     );
@@ -97,7 +130,13 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text('No counselors are available right now — please check back soon.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
+          child: Text(
+            _filters.isNotEmpty
+                ? 'No counselors match that filter — try widening your search.'
+                : 'No counselors are available right now — please check back soon.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
         ),
       );
     }
@@ -133,6 +172,16 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
                           children: [
                             Text(counselor.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                             Text('${_tierBadges[counselor.tier] ?? '🥉'} ${(counselor.tier ?? 'nikah_counselor').replaceAll('_', ' ')}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                            if ((counselor.city ?? '').isNotEmpty || (counselor.gender ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                [
+                                  if ((counselor.city ?? '').isNotEmpty) '📍 ${counselor.city}',
+                                  if (counselor.gender == 'female') '♀ Female' else if (counselor.gender == 'male') '♂ Male',
+                                ].join('   '),
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -152,6 +201,89 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
             ),
           ),
       ],
+    );
+  }
+}
+
+class _CounselorFilterSheet extends StatefulWidget {
+  final Map<String, String> initial;
+  const _CounselorFilterSheet({required this.initial});
+
+  @override
+  State<_CounselorFilterSheet> createState() => _CounselorFilterSheetState();
+}
+
+class _CounselorFilterSheetState extends State<_CounselorFilterSheet> {
+  late final _cityController = TextEditingController(text: widget.initial['city']);
+  String? _gender;
+
+  @override
+  void initState() {
+    super.initState();
+    _gender = widget.initial['gender'];
+  }
+
+  @override
+  void dispose() {
+    _cityController.dispose();
+    super.dispose();
+  }
+
+  void _apply() {
+    final filters = <String, String>{
+      if (_cityController.text.trim().isNotEmpty) 'city': _cityController.text.trim(),
+      if (_gender != null) 'gender': _gender!,
+    };
+    Navigator.of(context).pop(filters);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Filter Counselors', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _cityController,
+            decoration: const InputDecoration(labelText: 'City'),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _gender,
+            decoration: const InputDecoration(labelText: 'Gender'),
+            items: const [
+              DropdownMenuItem(value: null, child: Text('Any')),
+              DropdownMenuItem(value: 'male', child: Text('Male')),
+              DropdownMenuItem(value: 'female', child: Text('Female')),
+            ],
+            onChanged: (v) => setState(() => _gender = v),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(<String, String>{}),
+                  child: const Text('Clear'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(onPressed: _apply, child: const Text('Apply')),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
