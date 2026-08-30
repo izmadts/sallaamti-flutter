@@ -142,8 +142,10 @@ class _ModuleTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Material(
-      color: color.withValues(alpha: 0.12),
+      color: color,
       borderRadius: BorderRadius.circular(20),
+      elevation: 2,
+      shadowColor: color.withValues(alpha: 0.4),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => module == 'nikah'
@@ -159,7 +161,7 @@ class _ModuleTile extends StatelessWidget {
               Text(
                 _label(context),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w700, color: color.withValues(alpha: 0.9)),
+                style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
               ),
             ],
           ),

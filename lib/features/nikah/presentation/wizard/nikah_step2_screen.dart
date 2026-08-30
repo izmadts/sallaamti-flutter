@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
@@ -120,6 +121,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
       nextLabel: 'Next: About & Preferences',
       onNext: _next,
       busy: _busy,
+      theme: ModuleThemes.forModule('nikah'),
       errorText: _error,
       onBack: () => context.pop(),
       child: Column(
@@ -175,7 +177,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 16),
           const Text('Background', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
-          TextFormField(controller: _casteController, decoration: const InputDecoration(labelText: 'Caste (optional)')),
+          TextFormField(controller: _casteController, decoration: const InputDecoration(labelText: 'Caste')),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _familyType,
@@ -188,11 +190,11 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
             TextFormField(controller: _familyTypeOtherController, decoration: const InputDecoration(labelText: 'Enter family type')),
           ],
           const SizedBox(height: 16),
-          TextFormField(controller: _ethnicityController, decoration: const InputDecoration(labelText: 'Ethnicity (optional)')),
+          TextFormField(controller: _ethnicityController, decoration: const InputDecoration(labelText: 'Ethnicity')),
           const SizedBox(height: 16),
-          TextFormField(controller: _educationController, decoration: const InputDecoration(labelText: 'Education (optional)')),
+          TextFormField(controller: _educationController, decoration: const InputDecoration(labelText: 'Education')),
           const SizedBox(height: 16),
-          TextFormField(controller: _professionController, decoration: const InputDecoration(labelText: 'Profession (optional)')),
+          TextFormField(controller: _professionController, decoration: const InputDecoration(labelText: 'Profession')),
           const SizedBox(height: 16),
           const Text('Languages Spoken', style: TextStyle(fontWeight: FontWeight.w600)),
           Wrap(
@@ -209,7 +211,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _languageOtherController,
-            decoration: const InputDecoration(labelText: 'Other language (optional)'),
+            decoration: const InputDecoration(labelText: 'Other language'),
           ),
         ],
       ),

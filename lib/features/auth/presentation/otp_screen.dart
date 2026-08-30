@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/error_banner.dart';
 import '../state/auth_controller.dart';
 
 // Two short steps rather than one dense form — deliberately mirrors the
@@ -106,12 +107,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_error != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
-                    child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
+                Center(
+                  child: CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    child: const Text('🔑', style: TextStyle(fontSize: 28)),
                   ),
+                ),
+                const SizedBox(height: 24),
+                if (_error != null) ...[
+                  ErrorBanner(message: _error!),
                   const SizedBox(height: 16),
                 ],
                 if (_step == 0) ..._requestStepFields(l10n) else ..._verifyStepFields(l10n),

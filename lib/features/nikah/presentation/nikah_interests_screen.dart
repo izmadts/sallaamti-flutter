@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
 import '../domain/nikah_interest.dart';
@@ -66,32 +67,35 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Interests'),
-          bottom: const TabBar(
-            // Explicit colors — the default TabBarTheme resolves both label
-            // colors close to the module's own teal AppBar background,
-            // making the selected tab's text disappear entirely and the
-            // unselected one nearly unreadable.
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
-            tabs: [Tab(text: 'Received'), Tab(text: 'Sent')],
+    return Theme(
+      data: ModuleThemes.forModule('nikah'),
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Interests'),
+            bottom: const TabBar(
+              // Explicit colors — the default TabBarTheme resolves both label
+              // colors close to the module's own AppBar background, making
+              // the selected tab's text disappear entirely and the
+              // unselected one nearly unreadable.
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              indicatorColor: Colors.white,
+              tabs: [Tab(text: 'Received'), Tab(text: 'Sent')],
+            ),
           ),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!)))
+                  : TabBarView(
+                      children: [
+                        _list(_received, showActions: true),
+                        _list(_sent, showActions: false),
+                      ],
+                    ),
         ),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!)))
-                : TabBarView(
-                    children: [
-                      _list(_received, showActions: true),
-                      _list(_sent, showActions: false),
-                    ],
-                  ),
       ),
     );
   }
@@ -115,32 +119,54 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
               onTap: () => context.push('/nikah/profile/${interest.profileId}'),
               child: Padding(
                 padding: const EdgeInsets.all(14),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    NikahAvatar(photoUrl: interest.photoUrl, radius: 26),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            interest.name ?? '${interest.age ?? '?'} yrs • ${interest.city ?? ''}',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                    Row(
+                      children: [
+                        NikahAvatar(photoUrl: interest.photoUrl, radius: 26),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                interest.name ?? '${interest.age ?? '?'} yrs • ${interest.city ?? ''}',
+                                style: const TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              if (interest.profession != null) Text(interest.profession!, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                              const SizedBox(height: 4),
+                              _StatusPill(status: interest.status),
+                            ],
                           ),
-                          if (interest.profession != null) Text(interest.profession!, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                          const SizedBox(height: 4),
-                          _StatusPill(status: interest.status),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     if (showActions && interest.status == 'pending') ...[
-                      IconButton(
-                        icon: const Icon(Icons.check_circle, color: Colors.green),
-                        onPressed: () => _respond(interest.interestId, true),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.cancel, color: Colors.red),
-                        onPressed: () => _respond(interest.interestId, false),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _respond(interest.interestId, true),
+                              icon: const Icon(Icons.check, size: 18),
+                              label: const Text('Accept'),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _respond(interest.interestId, false),
+                              icon: const Icon(Icons.close, size: 18),
+                              label: const Text('Decline'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red.shade700,
+                                side: BorderSide(color: Colors.red.shade200),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],

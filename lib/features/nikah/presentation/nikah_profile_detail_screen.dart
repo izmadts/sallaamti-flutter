@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
+import '../../../shared/widgets/trust_badges.dart';
 import '../data/nikah_repository.dart';
 import '../state/nikah_controller.dart';
 
@@ -102,7 +104,9 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
     final card = detail.profile;
     final primary = Theme.of(context).colorScheme.primary;
 
-    return Scaffold(
+    return Theme(
+      data: ModuleThemes.forModule('nikah'),
+      child: Scaffold(
       appBar: AppBar(
         actions: [
           IconButton(
@@ -128,46 +132,33 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
                 child: Text('${detail.matchPercentage}% match', style: TextStyle(color: primary, fontWeight: FontWeight.w700)),
               ),
             ),
+            const SizedBox(height: 16),
+            Center(child: TrustBadges(trustBadges: card.trustBadges)),
             const SizedBox(height: 20),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: card.trustBadges.entries.where((e) => e.value).map((e) {
-                final label = switch (e.key) {
-                  'payment' => '💳 Fee Paid',
-                  'cnic' => '🪪 ID Verified',
-                  'guardian' => '👪 Guardian Verified',
-                  _ => e.key,
-                };
-                return Chip(label: Text(label, style: const TextStyle(fontSize: 12)));
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            _infoRow('Marital Status', card.maritalStatus.replaceAll('_', ' ')),
-            _infoRow('Height', card.height),
-            _infoRow('City', card.country != null ? '${card.city}, ${card.country}' : card.city),
-            _infoRow('Sect', card.sect),
-            _infoRow('Prayer', card.prayerFrequency),
-            _infoRow('Hijab/Beard', card.hijabOrBeard),
-            _infoRow('Diet', card.diet),
-            _infoRow('Education', card.education),
-            _infoRow('Profession', card.profession),
-            _infoRow('Family Type', card.familyType),
-            _infoRow('Ethnicity', card.ethnicity),
-            _infoRow('Language', card.language),
-            if (card.about != null && card.about!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Text('About', style: TextStyle(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Text(card.about!),
-            ],
-            if (card.expectations != null && card.expectations!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Text('Looking For', style: TextStyle(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Text(card.expectations!),
-            ],
-            const SizedBox(height: 28),
+            _section('Basic Info', [
+              _row('Marital Status', card.maritalStatus.replaceAll('_', ' ')),
+              _row('Height', card.height),
+              _row('City', card.country != null ? '${card.city}, ${card.country}' : card.city),
+            ]),
+            _section('Deen & Lifestyle', [
+              _row('Sect', card.sect),
+              _row('Prayer', card.prayerFrequency),
+              _row('Hijab/Beard', card.hijabOrBeard),
+              _row('Diet', card.diet),
+            ]),
+            _section('Background', [
+              _row('Education', card.education),
+              _row('Profession', card.profession),
+              _row('Family Type', card.familyType),
+              _row('Ethnicity', card.ethnicity),
+              _row('Language', card.language),
+            ]),
+            if ((card.about != null && card.about!.isNotEmpty) || (card.expectations != null && card.expectations!.isNotEmpty))
+              _section('About', [
+                if (card.about != null && card.about!.isNotEmpty) _longText('About', card.about!),
+                if (card.expectations != null && card.expectations!.isNotEmpty) _longText('Looking For', card.expectations!),
+              ]),
+            const SizedBox(height: 8),
             if (detail.interestStatus == 'accepted')
               Center(child: Text('✅ ${l10n.nikahYouAreConnected}', style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.green)))
             else if (detail.isMineSent)
@@ -186,17 +177,56 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
           ],
         ),
       ),
+      ),
     );
   }
 
-  Widget _infoRow(String label, String? value) {
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
+  // Hides the whole card, not just a blank title, when every field in it
+  // is missing — e.g. a profile with no sect/prayer/hijab/diet set at all
+  // shouldn't show an empty "Deen & Lifestyle" card.
+  Widget _section(String title, List<Widget?> rows) {
+    final visibleRows = rows.whereType<Widget>().toList();
+    if (visibleRows.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            const SizedBox(height: 10),
+            ...visibleRows,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget? _row(String label, String? value) {
+    if (value == null || value.isEmpty) return null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(width: 120, child: Text(label, style: TextStyle(color: Colors.grey.shade600))),
           Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600))),
+        ],
+      ),
+    );
+  }
+
+  Widget _longText(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey.shade600)),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );

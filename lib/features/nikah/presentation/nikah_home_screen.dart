@@ -181,11 +181,16 @@ class _HubTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Text(emoji, style: const TextStyle(fontSize: 28)),
+        leading: CircleAvatar(
+          radius: 22,
+          backgroundColor: primary.withValues(alpha: 0.12),
+          child: Text(emoji, style: const TextStyle(fontSize: 22)),
+        ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_right),
@@ -212,11 +217,18 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 40),
-        Center(child: Text(emoji, style: const TextStyle(fontSize: 56))),
+        Center(
+          child: CircleAvatar(
+            radius: 44,
+            backgroundColor: primary.withValues(alpha: 0.12),
+            child: Text(emoji, style: const TextStyle(fontSize: 40)),
+          ),
+        ),
         const SizedBox(height: 20),
         Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),

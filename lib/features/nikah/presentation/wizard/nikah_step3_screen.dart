@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
@@ -92,6 +93,7 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
       nextLabel: 'Next: Photos & Verification',
       onNext: _next,
       busy: _busy,
+      theme: ModuleThemes.forModule('nikah'),
       errorText: _error,
       onBack: () => context.pop(),
       child: Column(
@@ -101,13 +103,13 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _aboutController,
-            decoration: const InputDecoration(labelText: 'About yourself (optional)'),
+            decoration: const InputDecoration(labelText: 'About yourself'),
             maxLines: 4,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _expectationsController,
-            decoration: const InputDecoration(labelText: 'What are you looking for? (optional)'),
+            decoration: const InputDecoration(labelText: 'What are you looking for?'),
             maxLines: 4,
           ),
           const SizedBox(height: 24),
@@ -135,15 +137,15 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
             ],
           ),
           const SizedBox(height: 16),
-          TextFormField(controller: _prefCityController, decoration: const InputDecoration(labelText: 'Preferred city (optional)')),
+          TextFormField(controller: _prefCityController, decoration: const InputDecoration(labelText: 'Preferred city')),
           const SizedBox(height: 16),
-          TextFormField(controller: _prefSectController, decoration: const InputDecoration(labelText: 'Preferred sect (optional)')),
+          TextFormField(controller: _prefSectController, decoration: const InputDecoration(labelText: 'Preferred sect')),
           const SizedBox(height: 16),
-          TextFormField(controller: _prefEducationController, decoration: const InputDecoration(labelText: 'Preferred education (optional)')),
+          TextFormField(controller: _prefEducationController, decoration: const InputDecoration(labelText: 'Preferred education')),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _prefMaritalStatus,
-            decoration: const InputDecoration(labelText: 'Preferred marital status (optional)'),
+            decoration: const InputDecoration(labelText: 'Preferred marital status'),
             items: maritalStatusOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
             onChanged: (v) => setState(() => _prefMaritalStatus = v),
           ),

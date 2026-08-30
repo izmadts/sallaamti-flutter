@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'error_banner.dart';
+
 // Shared shell for every multi-step wizard in the app (Nikah profile
 // creation first, more later) — a progress dots row, the step's own form
 // as the body, a single primary action button with its own loading state,
@@ -15,6 +17,10 @@ class StepWizardScaffold extends StatelessWidget {
   final bool busy;
   final String? errorText;
   final VoidCallback? onBack;
+  // Lets a specific wizard (Nikah's rose, say) tint its whole flow —
+  // omit it and the wizard just inherits whatever theme is already
+  // ambient, so this stays reusable for a future module's wizard too.
+  final ThemeData? theme;
 
   const StepWizardScaffold({
     super.key,
@@ -27,10 +33,20 @@ class StepWizardScaffold extends StatelessWidget {
     this.busy = false,
     this.errorText,
     this.onBack,
+    this.theme,
   });
 
   @override
   Widget build(BuildContext context) {
+    final scaffold = _buildScaffold(context);
+    return theme != null ? Theme(data: theme!, child: scaffold) : scaffold;
+  }
+
+  Widget _buildScaffold(BuildContext context) {
+    // A plain color lookup, not Theme.of(context) — this method's context
+    // sits above the Theme this widget wraps itself in, so Theme.of here
+    // would still resolve to whatever was ambient before it.
+    final primaryColor = (theme ?? Theme.of(context)).colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -52,7 +68,7 @@ class StepWizardScaffold extends StatelessWidget {
                       height: 5,
                       margin: EdgeInsets.only(right: i == totalSteps - 1 ? 0 : 6),
                       decoration: BoxDecoration(
-                        color: active ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
+                        color: active ? primaryColor : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -72,11 +88,7 @@ class StepWizardScaffold extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (errorText != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
-                        child: Text(errorText!, style: TextStyle(color: Colors.red.shade700)),
-                      ),
+                      ErrorBanner(message: errorText!),
                       const SizedBox(height: 16),
                     ],
                     child,

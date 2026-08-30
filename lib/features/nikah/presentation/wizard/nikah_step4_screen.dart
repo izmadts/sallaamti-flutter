@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/image_pick_field.dart';
+import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
 
@@ -95,6 +97,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
       nextLabel: 'Next: Review',
       onNext: _next,
       busy: _busy,
+      theme: ModuleThemes.forModule('nikah'),
       errorText: _error,
       onBack: () => context.pop(),
       child: Form(
@@ -111,7 +114,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _cnicController,
-              decoration: const InputDecoration(labelText: 'CNIC Number'),
+              decoration: InputDecoration(label: requiredLabel('CNIC Number')),
               validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
             ),
             const SizedBox(height: 12),
@@ -137,7 +140,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
               ],
             ),
             const SizedBox(height: 24),
-            const Text('Your Photo (optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const Text('Your Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(
               'Only shown to a match after you both accept each other\'s interest.',
@@ -163,7 +166,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _visibility,
-              decoration: const InputDecoration(labelText: 'Profile Visibility'),
+              decoration: InputDecoration(label: requiredLabel('Profile Visibility')),
               items: const [
                 DropdownMenuItem(value: 'public', child: Text('Public — visible in Browse')),
                 DropdownMenuItem(value: 'private', child: Text('Private — hidden from Browse')),

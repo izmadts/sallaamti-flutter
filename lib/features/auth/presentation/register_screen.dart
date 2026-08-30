@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/password_field.dart';
 import '../../../shared/widgets/social_sign_in_buttons.dart';
 import '../state/auth_controller.dart';
@@ -90,18 +91,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_generalError != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _generalError!,
-                        style: TextStyle(color: Colors.red.shade700),
-                      ),
+                  Center(
+                    child: CircleAvatar(
+                      radius: 32,
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      child: const Text('✨', style: TextStyle(fontSize: 28)),
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (_generalError != null) ...[
+                    ErrorBanner(message: _generalError!),
                     const SizedBox(height: 16),
                   ],
                   TextFormField(

@@ -10,11 +10,14 @@ class NikahCard {
   final String city;
   final String? country;
   final String? about;
+  final String? gender;
   final Map<String, bool> trustBadges;
   final int matchPercentage;
   final bool hasSentInterest;
   final bool isSaved;
   final String? photoUrl;
+  final DateTime? createdAt;
+  final DateTime? lastActiveAt;
   // Only present when fetched via the detailed single-profile endpoint.
   final String? expectations;
   final String? familyType;
@@ -35,11 +38,14 @@ class NikahCard {
     required this.city,
     this.country,
     this.about,
+    this.gender,
     required this.trustBadges,
     required this.matchPercentage,
     required this.hasSentInterest,
     required this.isSaved,
     this.photoUrl,
+    this.createdAt,
+    this.lastActiveAt,
     this.expectations,
     this.familyType,
     this.ethnicity,
@@ -60,11 +66,14 @@ class NikahCard {
         city: json['city'] as String,
         country: json['country'] as String?,
         about: json['about'] as String?,
+        gender: json['gender'] as String?,
         trustBadges: Map<String, bool>.from(json['trust_badges'] as Map? ?? {}),
         matchPercentage: json['match_percentage'] as int? ?? 0,
         hasSentInterest: json['has_sent_interest'] as bool? ?? false,
         isSaved: json['is_saved'] as bool? ?? false,
         photoUrl: json['photo_url'] as String?,
+        createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
+        lastActiveAt: json['last_active_at'] != null ? DateTime.tryParse(json['last_active_at'] as String) : null,
         expectations: json['expectations'] as String?,
         familyType: json['family_type'] as String?,
         ethnicity: json['ethnicity'] as String?,

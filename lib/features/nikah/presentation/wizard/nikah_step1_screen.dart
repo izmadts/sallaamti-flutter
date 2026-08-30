@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
 import '../../../../core/data/country_states_repository.dart';
+import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
@@ -151,6 +152,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       onNext: _next,
       busy: _busy,
       errorText: _error,
+      theme: ModuleThemes.forModule('nikah'),
       child: Form(
         key: _formKey,
         child: Column(

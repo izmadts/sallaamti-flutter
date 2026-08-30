@@ -7,8 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/image_pick_field.dart';
+import '../../../shared/widgets/required_label.dart';
 import '../state/nikah_controller.dart';
 
 class NikahPaymentScreen extends ConsumerStatefulWidget {
@@ -94,7 +97,9 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_submitted) {
-      return Scaffold(
+      return Theme(
+        data: ModuleThemes.forModule('nikah'),
+        child: Scaffold(
         appBar: AppBar(title: Text(l10n.nikahPaymentSubmittedTitle)),
         body: Center(
           child: Padding(
@@ -120,10 +125,13 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
             ),
           ),
         ),
+        ),
       );
     }
 
-    return Scaffold(
+    return Theme(
+      data: ModuleThemes.forModule('nikah'),
+      child: Scaffold(
       appBar: AppBar(title: const Text('Verification Fee')),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -132,11 +140,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_error != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
-                  child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
-                ),
+                ErrorBanner(message: _error!),
                 const SizedBox(height: 16),
               ],
               Card(
@@ -217,7 +221,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
                 initialValue: _method,
-                decoration: const InputDecoration(labelText: 'Payment Method'),
+                decoration: InputDecoration(label: requiredLabel('Payment Method')),
                 items: const [
                   DropdownMenuItem(value: 'jazzcash', child: Text('JazzCash')),
                   DropdownMenuItem(value: 'bank_transfer', child: Text('Bank Transfer')),
@@ -244,6 +248,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

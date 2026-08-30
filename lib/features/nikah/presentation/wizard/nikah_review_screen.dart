@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_exception.dart';
+import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../shared/widgets/error_banner.dart';
 import '../../state/nikah_controller.dart';
 
 class NikahReviewScreen extends ConsumerStatefulWidget {
@@ -50,7 +52,9 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
+    return Theme(
+      data: ModuleThemes.forModule('nikah'),
+      child: Scaffold(
       appBar: AppBar(title: const Text('Review Your Profile')),
       body: SafeArea(
         child: Column(
@@ -60,11 +64,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
                 padding: const EdgeInsets.all(24),
                 children: [
                   if (_error != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
-                      child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
-                    ),
+                    ErrorBanner(message: _error!),
                     const SizedBox(height: 16),
                   ],
                   LinearProgressIndicator(value: profile.completenessPercentage / 100),
@@ -126,6 +126,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
