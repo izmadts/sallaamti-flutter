@@ -28,6 +28,7 @@ import '../../features/nikah/presentation/wizard/nikah_step1_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step2_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step3_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step4_screen.dart';
+import '../../features/volunteer/presentation/volunteer_screen.dart';
 import '../state/locale_controller.dart';
 
 // A tiny ChangeNotifier bridge so GoRouter's redirect re-evaluates whenever
@@ -84,6 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => FaqScreen(module: state.pathParameters['module']!),
       ),
       GoRoute(path: '/nikah', builder: (context, state) => const NikahHomeScreen()),
+      GoRoute(path: '/volunteer', builder: (context, state) => const VolunteerScreen()),
       GoRoute(path: '/nikah/wizard/step1', builder: (context, state) => const NikahStep1Screen()),
       GoRoute(path: '/nikah/wizard/step2', builder: (context, state) => const NikahStep2Screen()),
       GoRoute(path: '/nikah/wizard/step3', builder: (context, state) => const NikahStep3Screen()),

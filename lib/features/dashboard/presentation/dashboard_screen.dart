@@ -150,9 +150,11 @@ class _ModuleTile extends StatelessWidget {
       shadowColor: color.withValues(alpha: 0.4),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => module == 'nikah'
-            ? context.push('/nikah')
-            : ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
+        onTap: () => switch (module) {
+          'nikah' => context.push('/nikah'),
+          'volunteer' => context.push('/volunteer'),
+          _ => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
