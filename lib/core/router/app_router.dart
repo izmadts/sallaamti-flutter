@@ -13,6 +13,9 @@ import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/faq/presentation/faq_screen.dart';
 import '../../features/nikah/presentation/nikah_blocked_screen.dart';
 import '../../features/nikah/presentation/nikah_browse_screen.dart';
+import '../../features/nikah/presentation/nikah_counselor_chat_screen.dart';
+import '../../features/nikah/presentation/nikah_counselor_picker_screen.dart';
+import '../../features/nikah/presentation/nikah_hire_package_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/nikah/presentation/nikah_home_screen.dart';
 import '../../features/nikah/presentation/nikah_interests_screen.dart';
@@ -91,6 +94,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/nikah/interests', builder: (context, state) => const NikahInterestsScreen()),
       GoRoute(path: '/nikah/saved', builder: (context, state) => const NikahSavedScreen()),
       GoRoute(path: '/nikah/blocked', builder: (context, state) => const NikahBlockedScreen()),
+      GoRoute(path: '/nikah/counselor/pick', builder: (context, state) => const NikahCounselorPickerScreen()),
+      GoRoute(path: '/nikah/counselor/package', builder: (context, state) => const NikahHirePackageScreen()),
+      GoRoute(
+        path: '/nikah/counselor/chat/:leadId',
+        builder: (context, state) => NikahCounselorChatScreen(leadId: int.parse(state.pathParameters['leadId']!)),
+      ),
       GoRoute(
         path: '/nikah/profile/:id',
         builder: (context, state) => NikahProfileDetailScreen(profileId: int.parse(state.pathParameters['id']!)),

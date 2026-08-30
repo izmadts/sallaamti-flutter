@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../data/nikah_hire_repository.dart';
 import '../domain/nikah_profile.dart';
 import '../state/nikah_controller.dart';
 
@@ -142,6 +143,8 @@ class _ProfileStatusView extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 20),
+        const _CounselorSection(),
         const SizedBox(height: 20),
         _HubTile(
           emoji: '🔎',
@@ -331,6 +334,91 @@ class _ErrorView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Entirely optional bridge into the counselor-assisted flow — shows a
+// "bring in a counselor" invitation until hired, then swaps to a status
+// card once a Lead exists. Self-contained (own load/error state) so it
+// doesn't complicate NikahHomeScreen's own profile-status loading above.
+class _CounselorSection extends ConsumerStatefulWidget {
+  const _CounselorSection();
+
+  @override
+  ConsumerState<_CounselorSection> createState() => _CounselorSectionState();
+}
+
+class _CounselorSectionState extends ConsumerState<_CounselorSection> {
+  HiredLead? _lead;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final repo = ref.read(nikahHireRepositoryProvider);
+      final lead = await repo.myLead();
+      if (mounted) setState(() => _lead = lead);
+    } catch (_) {
+      // Non-fatal — the invitation card just shows as a fallback, same as
+      // "not hired yet".
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const SizedBox.shrink();
+
+    final primary = Theme.of(context).colorScheme.primary;
+    final lead = _lead;
+
+    if (lead == null) {
+      return Card(
+        color: primary.withValues(alpha: 0.06),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: CircleAvatar(radius: 22, backgroundColor: primary.withValues(alpha: 0.15), child: const Text('🤝', style: TextStyle(fontSize: 20))),
+          title: const Text('Want hands-on help?', style: TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: const Text('Bring in a Nikah Counselor to search and guide you personally'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/nikah/counselor/pick'),
+        ),
+      );
+    }
+
+    final counselor = lead.counselor;
+    final status = switch (lead.packagePaymentStatus) {
+      null => 'Choose a package to get started',
+      'submitted' => 'Payment under review',
+      'rejected' => lead.packagePaymentRejectionReason ?? 'Payment needs attention',
+      _ => 'Active',
+    };
+
+    return Card(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          radius: 22,
+          backgroundColor: primary.withValues(alpha: 0.12),
+          backgroundImage: (counselor?.avatar ?? '').isNotEmpty ? NetworkImage(counselor!.avatar!) : null,
+          child: (counselor?.avatar ?? '').isEmpty ? const Icon(Icons.person) : null,
+        ),
+        title: Text(counselor?.name ?? 'Your Nikah Counselor', style: const TextStyle(fontWeight: FontWeight.w700)),
+        subtitle: Text(status),
+        trailing: IconButton(
+          icon: const Icon(Icons.chat_bubble_outline),
+          tooltip: 'Message',
+          onPressed: () => context.push('/nikah/counselor/chat/${lead.id}'),
+        ),
+        onTap: lead.packagePaymentStatus == null ? () => context.push('/nikah/counselor/package') : null,
+      ),
     );
   }
 }
