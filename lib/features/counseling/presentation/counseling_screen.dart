@@ -33,6 +33,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
   bool _loadingSlots = false;
   CounselingSlot? _selectedSlot;
   bool _noAvailability = false;
+  String? _slotsError;
   final _preferredTimeController = TextEditingController();
   DateTime? _preferredAt;
 
@@ -80,6 +81,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
     setState(() {
       _loadingSlots = true;
       _selectedSlot = null;
+      _slotsError = null;
     });
     try {
       final slots = await ref.read(counselingRepositoryProvider).slots(
@@ -88,17 +90,30 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
           );
       setState(() {
         _slots = slots;
-        _noAvailability = slots.where((s) => !s.booked).isEmpty;
+        // Empty means no schedule at all for this day - distinct from
+        // "has a schedule but every slot is already booked", which still
+        // needs the grid rendered (see _hasOpenSlot) so the member can see
+        // why, not just a generic "no availability" message.
+        _noAvailability = slots.isEmpty;
+      });
+    } on ApiException catch (e) {
+      setState(() {
+        _slots = [];
+        _noAvailability = true;
+        _slotsError = e.displayMessage;
       });
     } catch (_) {
       setState(() {
         _slots = [];
         _noAvailability = true;
+        _slotsError = 'Could not load times. Please try again.';
       });
     } finally {
       if (mounted) setState(() => _loadingSlots = false);
     }
   }
+
+  bool get _hasOpenSlot => _slots.any((s) => !s.booked);
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -141,11 +156,11 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
       setState(() => _submitError = 'Please describe your situation in at least 20 characters.');
       return;
     }
-    if (_noAvailability && _preferredAt == null) {
+    if (!_hasOpenSlot && _preferredAt == null) {
       setState(() => _submitError = 'Please choose a preferred date and time.');
       return;
     }
-    if (!_noAvailability && _selectedSlot == null) {
+    if (_hasOpenSlot && _selectedSlot == null) {
       setState(() => _submitError = 'Please choose a time slot.');
       return;
     }
@@ -163,9 +178,9 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
             isAnonymous: _isAnonymous,
             isUrgent: _isUrgent,
             contactMethod: _contactMethod!,
-            counselorId: _noAvailability ? null : _selectedSlot!.counselorId,
-            scheduledAt: _noAvailability ? null : _selectedSlot!.dateTime,
-            preferredAt: _noAvailability ? _preferredAt : null,
+            counselorId: _hasOpenSlot ? _selectedSlot!.counselorId : null,
+            scheduledAt: _hasOpenSlot ? _selectedSlot!.dateTime : null,
+            preferredAt: _hasOpenSlot ? null : _preferredAt,
           );
       setState(() => _submitted = true);
     } on ApiException catch (e) {
@@ -331,6 +346,23 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
           const SizedBox(height: 12),
           if (_loadingSlots)
             const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+          else if (_slotsError != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
+                  child: Text(_slotsError!, style: TextStyle(color: Colors.red.shade700)),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _loadSlots,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Retry'),
+                ),
+              ],
+            )
           else if (_noAvailability)
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -378,6 +410,23 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
             if (_counselorId != null && _slots.any((s) => s.booked)) ...[
               const SizedBox(height: 8),
               Text('Greyed-out times are already booked.', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            ],
+            if (!_hasOpenSlot) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
+                child: const Text(
+                  'This counselor is fully booked on this day — pick another date, or tell us your preferred date and time and a counselor will follow up to confirm.',
+                  style: TextStyle(color: Colors.deepOrange),
+                ),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _pickPreferredDateTime,
+                icon: const Icon(Icons.access_time, size: 16),
+                label: Text(_preferredTimeController.text.isEmpty ? 'Pick a preferred date & time' : _preferredTimeController.text),
+              ),
             ],
           ],
           const SizedBox(height: 24),
