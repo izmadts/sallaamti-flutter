@@ -153,6 +153,7 @@ class _ModuleTile extends StatelessWidget {
         onTap: () => switch (module) {
           'nikah' => context.push('/nikah'),
           'volunteer' => context.push('/volunteer'),
+          'donation' => context.push('/donate'),
           _ => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
         },
         child: Padding(
