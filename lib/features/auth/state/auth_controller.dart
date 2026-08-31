@@ -107,6 +107,14 @@ class AuthController extends StateNotifier<AuthState> {
     _registerPushSafely();
   }
 
+  // Pushes a freshly-fetched user (after a profile/module update) back into
+  // the shared auth state, so the dashboard and every other screen reading
+  // authControllerProvider reflect the change immediately — no re-login
+  // needed just because the avatar or module visibility changed.
+  void setUser(AppUser user) {
+    state = AuthState.authenticated(user);
+  }
+
   Future<void> logout() async {
     // Best-effort, and must happen before the token is cleared below — the
     // unregister call needs to still be authenticated to reach this device's

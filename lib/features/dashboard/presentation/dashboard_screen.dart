@@ -8,6 +8,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/language_switch_button.dart';
 import '../../../shared/widgets/notification_bell.dart';
 import '../../auth/state/auth_controller.dart';
+import '../../profile/presentation/account_sheet.dart';
 
 const _moduleEmoji = {
   'nikah': '💍',
@@ -55,9 +56,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const NotificationBell(),
           const LanguageSwitchButton(),
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: l10n.logout,
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            icon: CircleAvatar(
+              radius: 15,
+              backgroundColor: Colors.white24,
+              backgroundImage: (user?.avatarUrl.isNotEmpty ?? false) ? NetworkImage(user!.avatarUrl) : null,
+              child: (user?.avatarUrl.isEmpty ?? true) ? const Icon(Icons.person, size: 18, color: Colors.white) : null,
+            ),
+            tooltip: 'Account',
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (context) => const AccountSheet(),
+            ),
           ),
         ],
       ),
