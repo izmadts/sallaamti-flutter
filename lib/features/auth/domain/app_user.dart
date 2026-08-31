@@ -13,6 +13,7 @@ class AppUser {
   final List<String> roles;
   final Map<String, bool> modules;
   final bool hasNikahProfile;
+  final bool mustChangePassword;
 
   AppUser({
     required this.id,
@@ -26,6 +27,7 @@ class AppUser {
     required this.roles,
     required this.modules,
     required this.hasNikahProfile,
+    this.mustChangePassword = false,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
@@ -40,5 +42,21 @@ class AppUser {
         roles: (json['roles'] as List? ?? []).map((e) => e.toString()).toList(),
         modules: Map<String, bool>.from(json['modules'] as Map? ?? {}),
         hasNikahProfile: json['has_nikah_profile'] as bool? ?? false,
+        mustChangePassword: json['must_change_password'] as bool? ?? false,
+      );
+
+  AppUser copyWith({bool? mustChangePassword}) => AppUser(
+        id: id,
+        name: name,
+        username: username,
+        email: email,
+        phone: phone,
+        gender: gender,
+        city: city,
+        avatarUrl: avatarUrl,
+        roles: roles,
+        modules: modules,
+        hasNikahProfile: hasNikahProfile,
+        mustChangePassword: mustChangePassword ?? this.mustChangePassword,
       );
 }

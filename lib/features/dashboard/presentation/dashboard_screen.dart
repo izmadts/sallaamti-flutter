@@ -36,6 +36,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     _modulesFuture = _loadModules();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybePromptPasswordChange());
+  }
+
+  void _maybePromptPasswordChange() {
+    final user = ref.read(authControllerProvider).user;
+    if (user == null || !user.mustChangePassword || !mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set Your Own Password'),
+        content: const Text(
+          'Your Nikah Counselor set up a temporary password for you. For your account\'s security, please choose your own password.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Ignore')),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.push('/change-password');
+            },
+            child: const Text('Change Password'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<List<String>> _loadModules() async {

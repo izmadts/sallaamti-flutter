@@ -30,6 +30,18 @@ class ProfileRepository {
     return AppUser.fromJson(Map<String, dynamic>.from(data['user'] as Map));
   }
 
+  Future<AppUser> updatePassword({
+    required String currentPassword,
+    required String password,
+  }) async {
+    final data = await _client.post('/profile/password', data: {
+      'current_password': currentPassword,
+      'password': password,
+      'password_confirmation': password,
+    });
+    return AppUser.fromJson(Map<String, dynamic>.from(data['user'] as Map));
+  }
+
   Future<AppUser> updateModules({
     required bool nikah,
     required bool quran,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../donation/presentation/donation_history_screen.dart';
+import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 
 class AccountSheet extends ConsumerWidget {
@@ -50,6 +51,14 @@ class AccountSheet extends ConsumerWidget {
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+              },
+            ),
+            _MenuTile(
+              icon: Icons.password,
+              label: 'Change Password',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
               },
             ),
             _MenuTile(

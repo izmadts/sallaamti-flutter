@@ -17,6 +17,7 @@ import '../../features/nikah/presentation/nikah_counselor_chat_screen.dart';
 import '../../features/nikah/presentation/nikah_counselor_picker_screen.dart';
 import '../../features/nikah/presentation/nikah_hire_package_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/profile/presentation/change_password_screen.dart';
 import '../../features/nikah/presentation/nikah_home_screen.dart';
 import '../../features/nikah/presentation/nikah_interests_screen.dart';
 import '../../features/nikah/presentation/nikah_messages_screen.dart';
@@ -83,6 +84,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/otp', builder: (context, state) => const OtpScreen()),
       GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
+      GoRoute(path: '/change-password', builder: (context, state) => const ChangePasswordScreen()),
       GoRoute(
         path: '/faq/:module',
         builder: (context, state) => FaqScreen(module: state.pathParameters['module']!),
