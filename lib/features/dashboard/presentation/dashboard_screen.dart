@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/language_switch_button.dart';
 import '../../../shared/widgets/notification_bell.dart';
 import '../../auth/state/auth_controller.dart';
@@ -51,16 +52,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: Image.asset('assets/app-logo.png', height: 34),
         actions: [
           const NotificationBell(),
           const LanguageSwitchButton(),
           IconButton(
-            icon: CircleAvatar(
+            icon: AuthedAvatar(
+              url: user?.avatarUrl,
               radius: 15,
               backgroundColor: Colors.white24,
-              backgroundImage: (user?.avatarUrl.isNotEmpty ?? false) ? NetworkImage(user!.avatarUrl) : null,
-              child: (user?.avatarUrl.isEmpty ?? true) ? const Icon(Icons.person, size: 18, color: Colors.white) : null,
+              fallback: const Icon(Icons.person, size: 18, color: Colors.white),
             ),
             tooltip: 'Account',
             onPressed: () => showModalBottomSheet(

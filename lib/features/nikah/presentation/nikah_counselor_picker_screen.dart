@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/authed_avatar.dart';
 import '../data/nikah_hire_repository.dart';
 
 const _tierBadges = {
@@ -159,11 +160,11 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
+                      AuthedAvatar(
+                        url: counselor.avatar,
                         radius: 28,
                         backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        backgroundImage: (counselor.avatar ?? '').isNotEmpty ? NetworkImage(counselor.avatar!) : null,
-                        child: (counselor.avatar ?? '').isEmpty ? const Icon(Icons.person) : null,
+                        fallback: const Icon(Icons.person),
                       ),
                       const SizedBox(width: 14),
                       Expanded(

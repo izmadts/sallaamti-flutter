@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../shared/widgets/authed_avatar.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../donation/presentation/donation_history_screen.dart';
 import 'edit_profile_screen.dart';
@@ -22,11 +23,11 @@ class AccountSheet extends ConsumerWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                AuthedAvatar(
+                  url: user?.avatarUrl,
                   radius: 28,
                   backgroundColor: Colors.teal.withValues(alpha: 0.1),
-                  backgroundImage: (user?.avatarUrl.isNotEmpty ?? false) ? NetworkImage(user!.avatarUrl) : null,
-                  child: (user?.avatarUrl.isEmpty ?? true) ? const Icon(Icons.person) : null,
+                  fallback: const Icon(Icons.person),
                 ),
                 const SizedBox(width: 14),
                 Expanded(

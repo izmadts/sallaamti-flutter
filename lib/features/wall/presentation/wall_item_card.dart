@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/widgets/authed_avatar.dart';
 import '../data/wall_repository.dart';
 import 'wall_comments_screen.dart';
 
@@ -120,13 +121,11 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
+                    AuthedAvatar(
+                      url: _item.author?.avatar,
                       radius: 16,
                       backgroundColor: isDua ? const Color(0xFF6D4AAE).withValues(alpha: 0.15) : Colors.teal.withValues(alpha: 0.1),
-                      backgroundImage: (_item.author?.avatar ?? '').isNotEmpty ? NetworkImage(_item.author!.avatar!) : null,
-                      child: (_item.author?.avatar ?? '').isEmpty
-                          ? Text(isDua ? '🤲' : (_item.author?.name.characters.first ?? '?'), style: const TextStyle(fontSize: 13))
-                          : null,
+                      fallback: Text(isDua ? '🤲' : (_item.author?.name.characters.first ?? '?'), style: const TextStyle(fontSize: 13)),
                     ),
                     const SizedBox(width: 10),
                     Expanded(

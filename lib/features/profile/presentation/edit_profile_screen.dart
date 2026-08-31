@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../shared/widgets/authed_avatar.dart';
 import '../../auth/state/auth_controller.dart';
 import '../data/profile_repository.dart';
 
@@ -136,16 +137,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 48,
-                    backgroundColor: Colors.teal.withValues(alpha: 0.1),
-                    backgroundImage: _newAvatar != null
-                        ? FileImage(_newAvatar!)
-                        : (user?.avatarUrl.isNotEmpty ?? false)
-                            ? NetworkImage(user!.avatarUrl) as ImageProvider
-                            : null,
-                    child: (_newAvatar == null && (user?.avatarUrl.isEmpty ?? true)) ? const Icon(Icons.person, size: 40) : null,
-                  ),
+                  if (_newAvatar != null)
+                    CircleAvatar(radius: 48, backgroundColor: Colors.teal.withValues(alpha: 0.1), backgroundImage: FileImage(_newAvatar!))
+                  else
+                    AuthedAvatar(
+                      url: user?.avatarUrl,
+                      radius: 48,
+                      backgroundColor: Colors.teal.withValues(alpha: 0.1),
+                      fallback: const Icon(Icons.person, size: 40),
+                    ),
                   Positioned(
                     right: 0,
                     bottom: 0,

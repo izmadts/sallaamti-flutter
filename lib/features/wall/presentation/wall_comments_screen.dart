@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/authed_avatar.dart';
 import '../data/wall_repository.dart';
 
 class WallCommentsScreen extends ConsumerStatefulWidget {
@@ -180,11 +181,11 @@ class _CommentTile extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
+        AuthedAvatar(
+          url: comment.author?.avatar,
           radius: 14,
           backgroundColor: Colors.teal.withValues(alpha: 0.1),
-          backgroundImage: (comment.author?.avatar ?? '').isNotEmpty ? NetworkImage(comment.author!.avatar!) : null,
-          child: (comment.author?.avatar ?? '').isEmpty ? Text(comment.author?.name.characters.first ?? '?', style: const TextStyle(fontSize: 11)) : null,
+          fallback: Text(comment.author?.name.characters.first ?? '?', style: const TextStyle(fontSize: 11)),
         ),
         const SizedBox(width: 10),
         Expanded(
