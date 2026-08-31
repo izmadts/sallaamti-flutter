@@ -154,6 +154,7 @@ class _ModuleTile extends StatelessWidget {
           'nikah' => context.push('/nikah'),
           'volunteer' => context.push('/volunteer'),
           'donation' => context.push('/donate'),
+          'wall' => context.push('/wall'),
           _ => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
         },
         child: Padding(
