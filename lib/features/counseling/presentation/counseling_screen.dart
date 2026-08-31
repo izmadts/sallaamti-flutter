@@ -67,7 +67,9 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
         if (meta.categories.isNotEmpty) _category = meta.categories.first;
         if (meta.contactMethods.isNotEmpty) _contactMethod = meta.contactMethods.first;
       });
-      await _loadSlots();
+      // "Any Available" (the default) skips the slot grid entirely — see
+      // _loadSlots()'s own comment.
+      if (_counselorId != null) await _loadSlots();
     } on ApiException catch (e) {
       setState(() => _metaError = e.displayMessage);
     } catch (_) {
@@ -77,6 +79,11 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
     }
   }
 
+  // Only called when a specific counselor is selected — "Any Available"
+  // means no one particular schedule applies, so rather than aggregate
+  // (and potentially misrepresent) multiple counselors' slots together,
+  // the member just states a preferred date/time and a counselor follows
+  // up to confirm, same as the "fully booked" fallback below.
   Future<void> _loadSlots() async {
     setState(() {
       _loadingSlots = true;
@@ -331,13 +338,35 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
               ...meta.counselors.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))),
             ],
             onChanged: (v) {
-              setState(() => _counselorId = v);
-              _loadSlots();
+              setState(() {
+                _counselorId = v;
+                _selectedSlot = null;
+                _slots = [];
+                _noAvailability = false;
+                _slotsError = null;
+              });
+              if (v != null) _loadSlots();
             },
           ),
           const SizedBox(height: 20),
           const Text('Choose a Time', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
+          if (_counselorId == null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.teal.shade50, borderRadius: BorderRadius.circular(12)),
+              child: const Text(
+                'Since any counselor can take this, just tell us what time works for you and a counselor will confirm.',
+                style: TextStyle(color: Colors.teal),
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _pickPreferredDateTime,
+              icon: const Icon(Icons.access_time, size: 16),
+              label: Text(_preferredTimeController.text.isEmpty ? 'Pick a preferred date & time' : _preferredTimeController.text),
+            ),
+          ] else ...[
           OutlinedButton.icon(
             onPressed: _pickDate,
             icon: const Icon(Icons.calendar_today, size: 16),
@@ -388,8 +417,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
               spacing: 8,
               runSpacing: 8,
               children: _slots.map((slot) {
-                final time = '${slot.dateTime.hour.toString().padLeft(2, '0')}:${slot.dateTime.minute.toString().padLeft(2, '0')}'
-                    '${_counselorId == null ? ' · ${slot.counselorName ?? ''}' : ''}';
+                final time = '${slot.dateTime.hour.toString().padLeft(2, '0')}:${slot.dateTime.minute.toString().padLeft(2, '0')}';
 
                 if (slot.booked) {
                   return Chip(
@@ -407,7 +435,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
                 );
               }).toList(),
             ),
-            if (_counselorId != null && _slots.any((s) => s.booked)) ...[
+            if (_slots.any((s) => s.booked)) ...[
               const SizedBox(height: 8),
               Text('Greyed-out times are already booked.', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             ],
@@ -428,6 +456,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
                 label: Text(_preferredTimeController.text.isEmpty ? 'Pick a preferred date & time' : _preferredTimeController.text),
               ),
             ],
+          ],
           ],
           const SizedBox(height: 24),
           ElevatedButton(
