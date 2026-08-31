@@ -126,8 +126,8 @@ class _WallScreenState extends ConsumerState<WallScreen> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _openSubmitDua,
-          icon: const Text('🤲'),
-          label: const Text('Share a Dua'),
+          icon: const Text('📣'),
+          label: const Text('Post to Wall'),
         ),
         body: SafeArea(
           child: Column(

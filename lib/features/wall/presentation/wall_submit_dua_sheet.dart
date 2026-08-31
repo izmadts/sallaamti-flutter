@@ -62,14 +62,14 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
         children: [
           Row(
             children: [
-              const Text('🤲', style: TextStyle(fontSize: 28)),
+              const Text('📣', style: TextStyle(fontSize: 28)),
               const SizedBox(width: 8),
-              const Text('Share a Dua Request', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              const Text('Post to the Wall', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Our team reviews every request before it appears on the Wall.',
+            'Right now you can share a dua request — our team reviews it before it appears on the Wall.',
             style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
           ),
           const SizedBox(height: 16),
