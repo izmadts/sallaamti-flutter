@@ -28,6 +28,7 @@ import '../../features/nikah/presentation/wizard/nikah_step1_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step2_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step3_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step4_screen.dart';
+import '../../features/counseling/presentation/counseling_screen.dart';
 import '../../features/donation/presentation/donation_screen.dart';
 import '../../features/volunteer/presentation/volunteer_screen.dart';
 import '../../features/wall/presentation/wall_screen.dart';
@@ -90,6 +91,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/volunteer', builder: (context, state) => const VolunteerScreen()),
       GoRoute(path: '/donate', builder: (context, state) => const DonationScreen()),
       GoRoute(path: '/wall', builder: (context, state) => const WallScreen()),
+      GoRoute(path: '/counseling', builder: (context, state) => const CounselingScreen()),
       GoRoute(path: '/nikah/wizard/step1', builder: (context, state) => const NikahStep1Screen()),
       GoRoute(path: '/nikah/wizard/step2', builder: (context, state) => const NikahStep2Screen()),
       GoRoute(path: '/nikah/wizard/step3', builder: (context, state) => const NikahStep3Screen()),
