@@ -56,12 +56,14 @@ class CounselingSlot {
   final int counselorId;
   final String? counselorName;
   final DateTime dateTime;
-  CounselingSlot({required this.counselorId, this.counselorName, required this.dateTime});
+  final bool booked;
+  CounselingSlot({required this.counselorId, this.counselorName, required this.dateTime, this.booked = false});
 
   factory CounselingSlot.fromJson(Map<String, dynamic> json) => CounselingSlot(
         counselorId: _asInt(json['counselor_id']) ?? 0,
         counselorName: json['counselor_name'] as String?,
         dateTime: DateTime.parse(json['datetime'] as String),
+        booked: json['booked'] as bool? ?? false,
       );
 }
 

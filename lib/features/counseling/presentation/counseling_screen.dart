@@ -88,7 +88,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
           );
       setState(() {
         _slots = slots;
-        _noAvailability = slots.isEmpty;
+        _noAvailability = slots.where((s) => !s.booked).isEmpty;
       });
     } catch (_) {
       setState(() {
@@ -351,21 +351,35 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
                 ),
               ],
             )
-          else
+          else ...[
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _slots
-                  .map((slot) => ChoiceChip(
-                        label: Text(
-                          '${slot.dateTime.hour.toString().padLeft(2, '0')}:${slot.dateTime.minute.toString().padLeft(2, '0')}'
-                          '${_counselorId == null ? ' · ${slot.counselorName ?? ''}' : ''}',
-                        ),
-                        selected: _selectedSlot == slot,
-                        onSelected: (_) => setState(() => _selectedSlot = slot),
-                      ))
-                  .toList(),
+              children: _slots.map((slot) {
+                final time = '${slot.dateTime.hour.toString().padLeft(2, '0')}:${slot.dateTime.minute.toString().padLeft(2, '0')}'
+                    '${_counselorId == null ? ' · ${slot.counselorName ?? ''}' : ''}';
+
+                if (slot.booked) {
+                  return Chip(
+                    label: Text(time, style: TextStyle(decoration: TextDecoration.lineThrough, color: Colors.grey.shade400)),
+                    avatar: Icon(Icons.lock_outline, size: 16, color: Colors.grey.shade400),
+                    backgroundColor: Colors.grey.shade100,
+                    side: BorderSide(color: Colors.grey.shade300),
+                  );
+                }
+
+                return ChoiceChip(
+                  label: Text(time),
+                  selected: _selectedSlot == slot,
+                  onSelected: (_) => setState(() => _selectedSlot = slot),
+                );
+              }).toList(),
             ),
+            if (_counselorId != null && _slots.any((s) => s.booked)) ...[
+              const SizedBox(height: 8),
+              Text('Greyed-out times are already booked.', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            ],
+          ],
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _submitting ? null : _submit,
