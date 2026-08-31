@@ -98,7 +98,7 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               child: const Text('📌 Pinned', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
             ),
-          if (!isDua && _item.photoUrl != null)
+          if (_item.photoUrl != null)
             AspectRatio(
               aspectRatio: 16 / 10,
               child: Image.network(

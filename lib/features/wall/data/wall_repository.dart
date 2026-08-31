@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
@@ -163,8 +165,13 @@ class WallRepository {
     );
   }
 
-  Future<void> submitDua({required String body, bool isAnonymous = false}) =>
-      _client.post('/wall/dua', data: {'body': body, 'is_anonymous': isAnonymous});
+  Future<void> submitDua({required String body, bool isAnonymous = false, File? image}) =>
+      _client.postMultipart('/wall/dua', fields: {
+        'body': body,
+        'is_anonymous': isAnonymous,
+      }, files: {
+        if (image != null) 'image': image,
+      });
 
   Future<WallItem> react(String type, int id, String reactionType) async {
     final data = await _client.post('/wall/$type/$id/react', data: {'type': reactionType});

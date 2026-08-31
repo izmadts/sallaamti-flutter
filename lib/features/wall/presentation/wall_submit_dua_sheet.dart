@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../shared/widgets/image_pick_field.dart';
 import '../data/wall_repository.dart';
 
 class WallSubmitDuaSheet extends ConsumerStatefulWidget {
@@ -14,6 +18,7 @@ class WallSubmitDuaSheet extends ConsumerStatefulWidget {
 class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
   final _bodyController = TextEditingController();
   bool _isAnonymous = false;
+  File? _image;
   bool _submitting = false;
   String? _error;
 
@@ -21,6 +26,11 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
   void dispose() {
     _bodyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) setState(() => _image = File(picked.path));
   }
 
   Future<void> _submit() async {
@@ -36,7 +46,7 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
     });
 
     try {
-      await ref.read(wallRepositoryProvider).submitDua(body: body, isAnonymous: _isAnonymous);
+      await ref.read(wallRepositoryProvider).submitDua(body: body, isAnonymous: _isAnonymous, image: _image);
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
@@ -88,6 +98,19 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
             maxLines: 6,
             maxLength: 1000,
           ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 140,
+              child: ImagePickField(
+                label: 'Add a Photo (Optional)',
+                file: _image,
+                alreadyUploaded: false,
+                onTap: _pickImage,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Post anonymously'),
