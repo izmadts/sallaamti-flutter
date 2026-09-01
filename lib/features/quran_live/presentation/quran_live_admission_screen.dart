@@ -264,8 +264,9 @@ class _ParentStep extends ConsumerWidget {
         countryStatesAsync.when(
           data: (cs) => DropdownButtonFormField<String>(
             initialValue: cs.countries.contains(country) ? country : null,
+            isExpanded: true,
             decoration: InputDecoration(label: requiredLabel('Country')),
-            items: cs.countries.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            items: cs.countries.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
             onChanged: (v) {
               if (v != null) onCountryChanged(v);
             },
@@ -332,6 +333,7 @@ class _StudentStep extends StatelessWidget {
             Expanded(
               child: DropdownButtonFormField<String>(
                 initialValue: studentGender,
+                isExpanded: true,
                 decoration: InputDecoration(label: requiredLabel('Gender')),
                 items: const [
                   DropdownMenuItem(value: 'male', child: Text('Male')),
@@ -355,8 +357,9 @@ class _StudentStep extends StatelessWidget {
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: educationGrade,
+          isExpanded: true,
           decoration: const InputDecoration(labelText: 'Current Education Grade (optional)'),
-          items: grades.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+          items: grades.map((g) => DropdownMenuItem(value: g, child: Text(g, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onGradeChanged,
         ),
         const SizedBox(height: 8),
@@ -430,15 +433,21 @@ class _PreferencesStep extends StatelessWidget {
           }).toList(),
         ),
         const SizedBox(height: 16),
+        const Text('Preferred Time', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        const SizedBox(height: 2),
+        Text("Our academy's available class slots, shown in Pakistan Time (PKT).", style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+        const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           initialValue: preferredTime,
-          decoration: const InputDecoration(labelText: 'Preferred Time'),
-          items: meta.times.map((t) => DropdownMenuItem(value: t, child: Text('$t (UTC+05:00)'))).toList(),
+          isExpanded: true,
+          decoration: const InputDecoration(),
+          items: meta.times.map((t) => DropdownMenuItem(value: t, child: Text('$t PKT', overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onPreferredTimeChanged,
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: meta.timezones.contains(timezone) ? timezone : null,
+          isExpanded: true,
           decoration: const InputDecoration(labelText: 'Your Timezone'),
           items: meta.timezones.map((tz) => DropdownMenuItem(value: tz, child: Text(tz, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: (v) {
@@ -448,32 +457,39 @@ class _PreferencesStep extends StatelessWidget {
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: teacherPreference,
+          isExpanded: true,
           decoration: InputDecoration(label: requiredLabel('Teacher Preference')),
-          items: meta.teacherPreferences.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+          items: meta.teacherPreferences.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onTeacherPreferenceChanged,
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: selectedLevel,
+          isExpanded: true,
           decoration: const InputDecoration(labelText: 'Which Level are you applying for?'),
-          items: meta.levels.map((l) => DropdownMenuItem(value: l.title, child: Text(l.levelNumber != null ? '${l.levelNumber} — ${l.title}' : l.title))).toList(),
+          items: meta.levels
+              .map((l) => DropdownMenuItem(value: l.title, child: Text(l.levelNumber != null ? '${l.levelNumber} — ${l.title}' : l.title, overflow: TextOverflow.ellipsis)))
+              .toList(),
           onChanged: onSelectedLevelChanged,
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: previousLevel,
+          isExpanded: true,
           decoration: const InputDecoration(labelText: 'Previous Level Completed (if any)'),
           items: [
             const DropdownMenuItem(value: null, child: Text('None / First time')),
-            ...meta.levels.map((l) => DropdownMenuItem(value: l.title, child: Text(l.levelNumber != null ? '${l.levelNumber} — ${l.title}' : l.title))),
+            ...meta.levels.map((l) => DropdownMenuItem(
+                value: l.title, child: Text(l.levelNumber != null ? '${l.levelNumber} — ${l.title}' : l.title, overflow: TextOverflow.ellipsis))),
           ],
           onChanged: onPreviousLevelChanged,
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: classType,
+          isExpanded: true,
           decoration: const InputDecoration(labelText: 'Class Type Preference'),
-          items: meta.classTypes.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+          items: meta.classTypes.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onClassTypeChanged,
         ),
         const SizedBox(height: 16),

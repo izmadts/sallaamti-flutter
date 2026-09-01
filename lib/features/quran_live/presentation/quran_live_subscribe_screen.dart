@@ -75,10 +75,6 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
       setState(() => _error = 'Please attach your payment screenshot.');
       return;
     }
-    if (_referenceController.text.trim().isEmpty) {
-      setState(() => _error = 'Please enter the transaction reference.');
-      return;
-    }
 
     setState(() {
       _busy = true;
@@ -268,7 +264,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
               const SizedBox(height: 16),
               TextFormField(
                 controller: _referenceController,
-                decoration: InputDecoration(label: requiredLabel('Transaction Reference')),
+                decoration: const InputDecoration(labelText: 'Transaction Reference (optional)'),
               ),
               const SizedBox(height: 16),
               SizedBox(
