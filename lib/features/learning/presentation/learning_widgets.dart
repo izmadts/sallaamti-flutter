@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/html_text.dart';
+import '../../../shared/widgets/info_pill.dart';
 import '../data/learning_repository.dart';
 
 // The Learning-specific pieces its screens share — a course card and a
@@ -90,45 +91,17 @@ class LearningCourseCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  // Wrap, not Row — a long category name ("CMS Development")
+                  // next to a long level ("Beginner to Advanced") overflowed
+                  // the card's width with a plain Row, since it can't wrap
+                  // pills onto a second line the way this can.
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
-                      if (course.category != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(999)),
-                          child: Text(
-                            course.category!,
-                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      if (course.level != null) ...[
-                        if (course.category != null) const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            course.level!,
-                            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
-                      if (course.isEnrolled) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            '✓ Enrolled',
-                            style: TextStyle(color: Colors.green.shade700, fontSize: 11, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
+                      if (course.category != null) InfoPill(text: course.category!, color: color, filled: true),
+                      if (course.level != null) InfoPill(text: course.level!, color: color),
+                      if (course.isEnrolled) InfoPill(text: '✓ Enrolled', color: Colors.green.shade700),
                     ],
                   ),
                   const SizedBox(height: 10),
