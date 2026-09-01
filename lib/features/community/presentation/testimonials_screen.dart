@@ -197,6 +197,46 @@ class _TestimonialList extends StatelessWidget {
   }
 }
 
+// CircleAvatar's backgroundImage has no error builder — a photo that 404s
+// just leaves an empty coloured circle. Falling back to the initial keeps
+// the card readable either way.
+class _TestimonialAvatar extends StatefulWidget {
+  final String name;
+  final String? photoUrl;
+
+  const _TestimonialAvatar({required this.name, this.photoUrl});
+
+  @override
+  State<_TestimonialAvatar> createState() => _TestimonialAvatarState();
+}
+
+class _TestimonialAvatarState extends State<_TestimonialAvatar> {
+  bool _failed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    final showPhoto = widget.photoUrl != null && !_failed;
+
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: color.withValues(alpha: 0.1),
+      backgroundImage: showPhoto ? NetworkImage(widget.photoUrl!) : null,
+      onBackgroundImageError: showPhoto
+          ? (_, _) {
+              if (mounted) setState(() => _failed = true);
+            }
+          : null,
+      child: showPhoto
+          ? null
+          : Text(
+              widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
+              style: TextStyle(fontWeight: FontWeight.w800, color: color),
+            ),
+    );
+  }
+}
+
 class _TestimonialCard extends StatelessWidget {
   final MemberTestimonial testimonial;
   final bool showStatus;
@@ -224,20 +264,7 @@ class _TestimonialCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                backgroundImage: testimonial.photoUrl != null ? NetworkImage(testimonial.photoUrl!) : null,
-                child: testimonial.photoUrl == null
-                    ? Text(
-                        testimonial.name.isNotEmpty ? testimonial.name[0].toUpperCase() : '?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      )
-                    : null,
-              ),
+              _TestimonialAvatar(name: testimonial.name, photoUrl: testimonial.photoUrl),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
