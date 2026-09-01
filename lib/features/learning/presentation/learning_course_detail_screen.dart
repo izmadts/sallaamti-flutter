@@ -56,22 +56,43 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
     }
   }
 
-  Future<void> _claimCertificate() async {
+  // Submits the request — it comes back pending, not a downloadable file
+  // (an admin has to approve it first), so this only reloads to show that
+  // state rather than trying to download anything.
+  Future<void> _requestCertificate() async {
     setState(() {
       _busy = true;
       _error = null;
     });
 
     try {
-      final repository = ref.read(learningRepositoryProvider);
-      final certificate = await repository.generateCertificate(widget.courseId);
-      final file = await repository.downloadCertificate(certificate);
+      await ref.read(learningRepositoryProvider).generateCertificate(widget.courseId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Certificate requested! You\'ll be notified once it\'s reviewed.')),
+      );
+      _reload();
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.displayMessage);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Could not submit your request — please try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
+  Future<void> _downloadCertificate(LearningCertificate certificate) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      final file = await ref.read(learningRepositoryProvider).downloadCertificate(certificate);
       if (!mounted) return;
       await SharePlus.instance.share(
         ShareParams(files: [XFile(file.path)], subject: 'Sallaamti Certificate'),
       );
-      _reload();
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
@@ -241,7 +262,8 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
             _CertificateCard(
               detail: detail,
               busy: _busy,
-              onClaim: _claimCertificate,
+              onRequest: _requestCertificate,
+              onDownload: () => _downloadCertificate(detail.certificate!),
             ),
           ],
         ],
@@ -405,51 +427,56 @@ class _FinalQuizCard extends StatelessWidget {
 class _CertificateCard extends StatelessWidget {
   final LearningCourseDetail detail;
   final bool busy;
-  final VoidCallback onClaim;
+  final VoidCallback onRequest;
+  final VoidCallback onDownload;
 
-  const _CertificateCard({required this.detail, required this.busy, required this.onClaim});
+  const _CertificateCard({
+    required this.detail,
+    required this.busy,
+    required this.onRequest,
+    required this.onDownload,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final earned = detail.certificate != null;
+    final certificate = detail.certificate;
     final eligible = detail.certificateEligible;
+    // Locked until the course is actually finished; from there a request
+    // goes to admin, and only their approval unlocks the download — there's
+    // no self-service instant certificate any more.
+    final emoji = !eligible
+        ? '🔒'
+        : certificate == null
+            ? '🏅'
+            : certificate.isPending
+                ? '⏳'
+                : certificate.isRejected
+                    ? '❌'
+                    : '🏅';
+    final gold = eligible && (certificate == null || certificate.isApproved);
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: eligible
-              ? [const Color(0xFFB8962E), const Color(0xFFD4AF37)]
-              : [Colors.grey.shade200, Colors.grey.shade100],
-        ),
+        gradient: gold ? const LinearGradient(colors: [Color(0xFFB8962E), Color(0xFFD4AF37)]) : null,
+        color: gold ? null : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         children: [
-          Text(eligible ? '🏅' : '🔒', style: const TextStyle(fontSize: 36)),
+          Text(emoji, style: const TextStyle(fontSize: 36)),
           const SizedBox(height: 8),
           Text(
-            earned ? 'Your certificate is ready' : 'Course Certificate',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: eligible ? Colors.white : Colors.grey.shade700,
-            ),
+            _title(certificate),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: gold ? Colors.white : Colors.grey.shade700),
           ),
           const SizedBox(height: 4),
           Text(
-            earned
-                ? detail.certificate!.certificateNumber
-                : eligible
-                    ? 'You\'ve finished everything — claim your certificate.'
-                    : 'Complete every lesson and pass the quizzes to unlock this.',
+            _subtitle(certificate, eligible),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: eligible ? Colors.white70 : Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 12.5, color: gold ? Colors.white70 : Colors.grey.shade600),
           ),
-          if (eligible) ...[
+          if (eligible && (certificate == null || certificate.isRejected)) ...[
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
@@ -460,16 +487,49 @@ class _CertificateCard extends StatelessWidget {
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                onPressed: busy ? null : onClaim,
+                onPressed: busy ? null : onRequest,
+                icon: busy
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.send_outlined),
+                label: Text(busy ? 'Submitting…' : (certificate == null ? 'Request Certificate' : 'Request Again')),
+              ),
+            ),
+          ] else if (certificate != null && certificate.isApproved) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF8A6D1F),
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: busy ? null : onDownload,
                 icon: busy
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.download_outlined),
-                label: Text(busy ? 'Preparing…' : (earned ? 'Download Certificate' : 'Claim Certificate')),
+                label: Text(busy ? 'Preparing…' : 'Download Certificate'),
               ),
             ),
           ],
         ],
       ),
     );
+  }
+
+  String _title(LearningCertificate? certificate) {
+    if (certificate == null) return 'Course Certificate';
+    if (certificate.isPending) return 'Request submitted';
+    if (certificate.isRejected) return 'Not approved';
+    return 'Your certificate is ready';
+  }
+
+  String _subtitle(LearningCertificate? certificate, bool eligible) {
+    if (!eligible) return 'Complete every lesson and pass the quizzes to unlock this.';
+    if (certificate == null) return 'You\'ve finished everything — request your certificate.';
+    if (certificate.isPending) return 'Awaiting admin review — you\'ll be notified once it\'s decided.';
+    if (certificate.isRejected) return certificate.rejectionReason?.isNotEmpty == true ? certificate.rejectionReason! : 'You can submit another request.';
+    return certificate.certificateNumber ?? '';
   }
 }

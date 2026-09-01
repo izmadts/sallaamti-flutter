@@ -212,27 +212,39 @@ class LearningLessonSummary {
 
 class LearningCertificate {
   final int id;
-  final String certificateNumber;
+  // Null while pending/rejected — a course-completion request has neither
+  // a real number nor an issue date until an admin approves it.
+  final String? certificateNumber;
   final String title;
   final String? type;
   final int? courseId;
+  final String status;
+  final String? rejectionReason;
   final DateTime? issuedAt;
 
   LearningCertificate({
     required this.id,
-    required this.certificateNumber,
+    this.certificateNumber,
     required this.title,
     this.type,
     this.courseId,
+    required this.status,
+    this.rejectionReason,
     this.issuedAt,
   });
 
+  bool get isPending => status == 'pending';
+  bool get isApproved => status == 'approved';
+  bool get isRejected => status == 'rejected';
+
   factory LearningCertificate.fromJson(Map<String, dynamic> json) => LearningCertificate(
         id: _asInt(json['id']) ?? 0,
-        certificateNumber: json['certificate_number'] as String? ?? '',
+        certificateNumber: json['certificate_number'] as String?,
         title: json['title'] as String? ?? 'Certificate',
         type: json['type'] as String?,
         courseId: _asInt(json['course_id']),
+        status: json['status'] as String? ?? 'approved',
+        rejectionReason: json['rejection_reason'] as String?,
         issuedAt: json['issued_at'] != null ? DateTime.tryParse(json['issued_at'] as String) : null,
       );
 }

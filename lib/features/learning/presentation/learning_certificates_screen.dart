@@ -131,11 +131,19 @@ class _CertificateTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIdCard = certificate.type == 'volunteer_id' || certificate.type == 'nikah_counselor_id';
+    // Volunteer/Nikah Counselor ID cards and admin-issued certificates are
+    // always already approved by the time they exist at all — only a
+    // course-completion request can sit pending or come back rejected.
+    final pendingOrRejected = !certificate.isApproved;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFFB8962E), Color(0xFFD4AF37)]),
+        gradient: pendingOrRejected
+            ? null
+            : const LinearGradient(colors: [Color(0xFFB8962E), Color(0xFFD4AF37)]),
+        color: pendingOrRejected ? Colors.white : null,
+        border: pendingOrRejected ? Border.all(color: Colors.grey.shade200) : null,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -143,7 +151,16 @@ class _CertificateTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(isIdCard ? '🪪' : '🏅', style: const TextStyle(fontSize: 30)),
+              Text(
+                isIdCard
+                    ? '🪪'
+                    : certificate.isPending
+                        ? '⏳'
+                        : certificate.isRejected
+                            ? '❌'
+                            : '🏅',
+                style: const TextStyle(fontSize: 30),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -151,14 +168,28 @@ class _CertificateTile extends StatelessWidget {
                   children: [
                     Text(
                       certificate.title,
-                      style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: pendingOrRejected ? Colors.grey.shade800 : Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      certificate.certificateNumber,
-                      style: const TextStyle(fontSize: 12, color: Colors.white70, letterSpacing: 0.4),
-                    ),
-                    if (certificate.issuedAt != null)
+                    if (certificate.isApproved)
+                      Text(
+                        certificate.certificateNumber ?? '',
+                        style: const TextStyle(fontSize: 12, color: Colors.white70, letterSpacing: 0.4),
+                      )
+                    else
+                      Text(
+                        certificate.isPending ? 'Awaiting admin review' : 'Not approved',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: certificate.isPending ? Colors.amber.shade800 : Colors.red.shade600,
+                        ),
+                      ),
+                    if (certificate.isApproved && certificate.issuedAt != null)
                       Text(
                         'Issued ${DateFormat('d MMM yyyy').format(certificate.issuedAt!)}',
                         style: const TextStyle(fontSize: 11.5, color: Colors.white70),
@@ -168,23 +199,29 @@ class _CertificateTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF8A6D1F),
-                minimumSize: const Size.fromHeight(44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          if (certificate.isRejected && (certificate.rejectionReason ?? '').isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(certificate.rejectionReason!, style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600)),
+          ],
+          if (certificate.isApproved) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF8A6D1F),
+                  minimumSize: const Size.fromHeight(44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: downloading ? null : onDownload,
+                icon: downloading
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.download_outlined, size: 18),
+                label: Text(downloading ? 'Preparing…' : 'Download PDF'),
               ),
-              onPressed: downloading ? null : onDownload,
-              icon: downloading
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.download_outlined, size: 18),
-              label: Text(downloading ? 'Preparing…' : 'Download PDF'),
             ),
-          ),
+          ],
         ],
       ),
     );
