@@ -36,6 +36,23 @@
   "resendCode": "کوڈ دوبارہ بھیجیں",
   "sendCode": "کوڈ بھیجیں",
 
+  "forgotPassword": "پاسورڈ بھول گئے؟",
+  "forgotPasswordTitle": "پاسورڈ دوبارہ ترتیب دیں",
+  "forgotPasswordIntro": "اپنے اکاؤنٹ کا ای میل پتہ درج کریں، ہم آپ کو 6 ہندسوں کا کوڈ بھیجیں گے۔",
+  "sendResetCode": "کوڈ بھیجیں",
+  "resetCodeSentTo": "اگر یہ پتہ رجسٹرڈ ہے تو ہم نے {email} پر 6 ہندسوں کا کوڈ بھیج دیا ہے۔ یہ 10 منٹ میں ختم ہو جائے گا۔",
+  "@resetCodeSentTo": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "resetCode": "ری سیٹ کوڈ",
+  "newPassword": "نیا پاسورڈ",
+  "resetPasswordButton": "پاسورڈ تبدیل کریں",
+  "invalidEmail": "درست ای میل پتہ درج کریں۔",
+  "passwordsDoNotMatch": "پاسورڈ آپس میں میل نہیں کھاتے۔",
+  "passwordTooShort": "کم از کم 8 حروف استعمال کریں۔",
+  "backToLogin": "لاگ ان پر واپس جائیں",
+  "useADifferentEmail": "کوئی اور ای میل استعمال کریں",
+
   "dashboardWelcome": "السلام علیکم، {name}!",
   "@dashboardWelcome": {
     "placeholders": { "name": { "type": "String" } }

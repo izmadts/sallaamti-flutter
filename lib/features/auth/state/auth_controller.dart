@@ -93,6 +93,15 @@ class AuthController extends StateNotifier<AuthState> {
     _registerPushSafely();
   }
 
+  Future<String> forgotPassword(String email) => _repository.forgotPassword(email);
+
+  Future<void> resetPassword({required String email, required String code, required String password}) async {
+    final result = await _repository.resetPassword(email: email, code: code, password: password);
+    await SecureStore.saveToken(result.token);
+    state = AuthState.authenticated(result.user);
+    _registerPushSafely();
+  }
+
   Future<void> socialGoogle(String idToken) async {
     final result = await _repository.socialGoogle(idToken);
     await SecureStore.saveToken(result.token);

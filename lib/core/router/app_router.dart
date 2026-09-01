@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/language_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
@@ -73,7 +74,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (locale == null) return '/language';
 
-      const guestOnly = ['/language', '/welcome', '/login', '/register', '/otp'];
+      const guestOnly = ['/language', '/welcome', '/login', '/register', '/otp', '/forgot-password'];
       final isGuestOnlyRoute = guestOnly.contains(path);
 
       if (auth.status == AuthStatus.checking) return null;
@@ -95,6 +96,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/otp', builder: (context, state) => const OtpScreen()),
+      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
       GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: '/change-password', builder: (context, state) => const ChangePasswordScreen()),

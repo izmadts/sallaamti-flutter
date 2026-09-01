@@ -36,6 +36,23 @@
   "resendCode": "Resend Code",
   "sendCode": "Send Code",
 
+  "forgotPassword": "Forgot your password?",
+  "forgotPasswordTitle": "Reset Password",
+  "forgotPasswordIntro": "Enter the email address on your account and we'll send you a 6-digit reset code.",
+  "sendResetCode": "Send Reset Code",
+  "resetCodeSentTo": "We've sent a 6-digit code to {email}, if that address is registered. It expires in 10 minutes.",
+  "@resetCodeSentTo": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "resetCode": "Reset Code",
+  "newPassword": "New Password",
+  "resetPasswordButton": "Reset Password",
+  "invalidEmail": "Enter a valid email address.",
+  "passwordsDoNotMatch": "Those passwords don't match.",
+  "passwordTooShort": "Use at least 8 characters.",
+  "backToLogin": "Back to log in",
+  "useADifferentEmail": "Use a different email",
+
   "dashboardWelcome": "Assalamu Alaikum, {name}!",
   "@dashboardWelcome": {
     "placeholders": { "name": { "type": "String" } }

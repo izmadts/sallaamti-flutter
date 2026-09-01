@@ -61,6 +61,30 @@ class AuthRepository {
     return AuthResult.fromJson(data);
   }
 
+  // Step 1 of forgot-password. The backend answers the same way whether or
+  // not the address is registered (so it can't be used to discover which
+  // emails have accounts), so there's nothing here to branch on.
+  Future<String> forgotPassword(String email) async {
+    final data = await _client.post('/auth/password/forgot', data: {'email': email});
+    return data['message'] as String? ?? '';
+  }
+
+  // Step 2 — a successful reset signs the member straight in, so this returns
+  // a token like login does rather than dropping them back on the login form.
+  Future<AuthResult> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+  }) async {
+    final data = await _client.post('/auth/password/reset', data: {
+      'email': email,
+      'code': code,
+      'password': password,
+      'password_confirmation': password,
+    });
+    return AuthResult.fromJson(data);
+  }
+
   Future<AuthResult> socialGoogle(String idToken) async {
     final data = await _client.post('/auth/social/google', data: {'id_token': idToken});
     return AuthResult.fromJson(data);
