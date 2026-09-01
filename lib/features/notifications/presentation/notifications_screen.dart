@@ -15,7 +15,28 @@ import '../data/notification_repository.dart';
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
-  String? _resolveInAppRoute(String? url) {
+  // Quran Live's own notification `data.type`s (see the app's FCM handling —
+  // these arrive from Api\V1's QuranFeeReminder/QuranClassReminder/
+  // QuranClassAssigned/QuranLivePaymentConfirmed/QuranClassLinkPosted
+  // notifications) all land on My Class; everything else here is Nikah, the
+  // only module this inbox originally covered.
+  static const _quranLiveTypes = {
+    'quran_fee_due',
+    'quran_class_today',
+    'quran_class_assigned',
+    'quran_payment_confirmed',
+    'quran_class_link_posted',
+  };
+
+  String? _resolveInAppRoute(String? url, String? type) {
+    if (_quranLiveTypes.contains(type)) return '/quran-live/my-class';
+    // The web route names all start with 'quran-live.', but the URL PATHS
+    // themselves don't consistently — /my-quran-class (my-class) vs
+    // /quran-live/{course}/... (fee reminder) — so 'quran' alone is the
+    // substring that's actually present in every one of them. No other
+    // module's routes contain that word.
+    if (url != null && Uri.tryParse(url)?.path.contains('quran') == true) return '/quran-live/my-class';
+
     if (url == null) return null;
     final uri = Uri.tryParse(url);
     if (uri == null) return null;
@@ -34,6 +55,11 @@ class NotificationsScreen extends ConsumerWidget {
       'payment_confirmed' => Icons.payments_outlined,
       'profile_verified' => Icons.verified_outlined,
       'profile_rejected' => Icons.error_outline,
+      'quran_fee_due' => Icons.payments_outlined,
+      'quran_class_today' => Icons.calendar_today_outlined,
+      'quran_class_assigned' => Icons.groups_outlined,
+      'quran_payment_confirmed' => Icons.check_circle_outline,
+      'quran_class_link_posted' => Icons.videocam_outlined,
       _ => Icons.notifications_outlined,
     };
   }
@@ -105,7 +131,7 @@ class NotificationsScreen extends ConsumerWidget {
                         await ref.read(notificationRepositoryProvider).markRead(n.id);
                         ref.invalidate(notificationsListProvider);
                       }
-                      final route = _resolveInAppRoute(n.url);
+                      final route = _resolveInAppRoute(n.url, n.type);
                       if (route != null && context.mounted) context.push(route);
                     },
                   ),

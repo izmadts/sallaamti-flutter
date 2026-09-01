@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/info_pill.dart';
 import '../data/quran_live_repository.dart';
 
 class QuranLiveCourseDetailScreen extends ConsumerStatefulWidget {
@@ -79,15 +80,20 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                             Text('Teacher: ${course.teacher?.name ?? 'TBA'} · ${course.classTime ?? ''}', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                             const SizedBox(height: 4),
                             Text('Rs. ${course.monthlyFee}/month', style: const TextStyle(color: Color(0xFFB8962E), fontWeight: FontWeight.w800)),
-                            if (course.minAge != null || course.maxAge != null) ...[
+                            if (course.minAge != null || course.maxAge != null || course.genderPreference != null && course.genderPreference != 'both') ...[
                               const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(color: const Color(0xFFE0F2F1), borderRadius: BorderRadius.circular(999)),
-                                child: Text(
-                                  '🎂 Ages ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}',
-                                  style: const TextStyle(color: Color(0xFF0D6B6B), fontSize: 12, fontWeight: FontWeight.w700),
-                                ),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  if (course.minAge != null || course.maxAge != null)
+                                    InfoPill(text: '🎂 Ages ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}', color: const Color(0xFF0D6B6B)),
+                                  // 'both' means no restriction — showing it as
+                                  // a badge would read as a restriction that
+                                  // doesn't exist.
+                                  if (course.genderPreference == 'male') const InfoPill(text: '♂ Boys only', color: Color(0xFF0D6B6B)),
+                                  if (course.genderPreference == 'female') const InfoPill(text: '♀ Girls only', color: Color(0xFF0D6B6B)),
+                                ],
                               ),
                             ],
                             if (course.topics.isNotEmpty) ...[
@@ -168,8 +174,6 @@ class _AdmissionStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subscription = admission.subscription;
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -178,42 +182,104 @@ class _AdmissionStatusCard extends StatelessWidget {
           children: [
             Text(admission.studentName.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade400, letterSpacing: 0.5)),
             const SizedBox(height: 8),
-            if (subscription == null || subscription.paymentStatus == 'unpaid') ...[
-              Text('💳 This month\'s fee payment required.', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () => context.push('/quran-live/$courseId/subscribe/${admission.id}'),
-                child: const Text('Pay This Month\'s Fee'),
-              ),
-            ] else if (subscription.paymentStatus == 'submitted') ...[
-              const Text('⏳ Payment under review.', style: TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600)),
-            ] else if (subscription.paymentStatus == 'rejected') ...[
-              Text('❌ Rejected: ${subscription.paymentRejectionReason ?? ''}', style: const TextStyle(color: Colors.red)),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () => context.push('/quran-live/$courseId/subscribe/${admission.id}'),
-                child: const Text('Resubmit Payment'),
-              ),
-            ] else if (subscription.paymentStatus == 'confirmed') ...[
-              Text('✅ Active for ${subscription.month}', style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              if (admission.todaysLink != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Today\'s Class Link is ready — see My Class to join.', style: TextStyle(fontSize: 13)),
-                    ],
-                  ),
-                )
-              else
-                Text('Today\'s link hasn\'t been posted yet by your teacher. Check back closer to class time.', style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5)),
-            ],
+            _body(context),
           ],
         ),
       ),
+    );
+  }
+
+  // admission.status used to be ignored entirely here — every branch below
+  // assumed "this admission is approved and just needs paying," which meant
+  // a still-PENDING or already-REJECTED application showed the exact same
+  // "Pay This Month's Fee" prompt as an approved one.
+  Widget _body(BuildContext context) {
+    if (admission.isPending) {
+      return Text(
+        '⏳ Your application is under review — our team will assign a class group shortly.',
+        style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+      );
+    }
+
+    if (admission.isRejected) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('❌ This application wasn\'t approved.', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+          if ((admission.adminNotes ?? '').isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(admission.adminNotes!, style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+          ],
+        ],
+      );
+    }
+
+    if (admission.isCompleted) {
+      return const Text('🎓 Course completed — congratulations!', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700));
+    }
+
+    if (admission.isDropped) {
+      return Text(
+        'This admission is no longer active. Contact us if you\'d like to re-enroll.',
+        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+      );
+    }
+
+    // isAssigned from here — the group is set, so it's a normal fee cycle.
+    final subscription = admission.subscription;
+
+    if (subscription == null || subscription.paymentStatus == 'unpaid') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('💳 This month\'s fee payment required.', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () => context.push('/quran-live/$courseId/subscribe/${admission.id}'),
+            child: const Text('Pay This Month\'s Fee'),
+          ),
+        ],
+      );
+    }
+
+    if (subscription.paymentStatus == 'submitted') {
+      return const Text('⏳ Payment under review.', style: TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600));
+    }
+
+    if (subscription.paymentStatus == 'rejected') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('❌ Rejected: ${subscription.paymentRejectionReason ?? ''}', style: const TextStyle(color: Colors.red)),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () => context.push('/quran-live/$courseId/subscribe/${admission.id}'),
+            child: const Text('Resubmit Payment'),
+          ),
+        ],
+      );
+    }
+
+    // confirmed
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('✅ Active for ${subscription.month}', style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        if (admission.todaysLink != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Today\'s Class Link is ready — see My Class to join.', style: TextStyle(fontSize: 13)),
+              ],
+            ),
+          )
+        else
+          Text('Today\'s link hasn\'t been posted yet by your teacher. Check back closer to class time.', style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5)),
+      ],
     );
   }
 }

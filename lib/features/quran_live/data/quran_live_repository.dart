@@ -208,6 +208,7 @@ class QuranLiveAdmissionInfo {
   final int courseId;
   final String studentName;
   final String status;
+  final String? adminNotes;
   final QuranLiveSubscriptionInfo? subscription;
   final QuranLiveLinkInfo? todaysLink;
 
@@ -216,15 +217,23 @@ class QuranLiveAdmissionInfo {
     required this.courseId,
     required this.studentName,
     required this.status,
+    this.adminNotes,
     this.subscription,
     this.todaysLink,
   });
+
+  bool get isPending => status == 'pending';
+  bool get isRejected => status == 'rejected';
+  bool get isAssigned => status == 'assigned';
+  bool get isCompleted => status == 'completed';
+  bool get isDropped => status == 'dropped';
 
   factory QuranLiveAdmissionInfo.fromJson(Map<String, dynamic> json) => QuranLiveAdmissionInfo(
         id: _asInt(json['id']) ?? 0,
         courseId: _asInt(json['course_id']) ?? 0,
         studentName: json['student_name'] as String,
         status: json['status'] as String,
+        adminNotes: json['admin_notes'] as String?,
         subscription: json['subscription'] != null ? QuranLiveSubscriptionInfo.fromJson(Map<String, dynamic>.from(json['subscription'] as Map)) : null,
         todaysLink: json['todays_link'] != null ? QuranLiveLinkInfo.fromJson(Map<String, dynamic>.from(json['todays_link'] as Map)) : null,
       );
@@ -235,6 +244,7 @@ class QuranLiveApplicationInfo {
   final String studentName;
   final String courseTitle;
   final String status;
+  final String? adminNotes;
   final String? preferredTime;
   final String? teacherPreference;
 
@@ -243,6 +253,7 @@ class QuranLiveApplicationInfo {
     required this.studentName,
     required this.courseTitle,
     required this.status,
+    this.adminNotes,
     this.preferredTime,
     this.teacherPreference,
   });
@@ -252,6 +263,7 @@ class QuranLiveApplicationInfo {
         studentName: json['student_name'] as String,
         courseTitle: json['course_title'] as String,
         status: json['status'] as String,
+        adminNotes: json['admin_notes'] as String?,
         preferredTime: json['preferred_time'] as String?,
         teacherPreference: json['teacher_preference'] as String?,
       );

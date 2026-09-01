@@ -129,7 +129,16 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                                       margin: const EdgeInsets.only(bottom: 8),
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(10)),
-                                      child: Text('${a.studentName} — ${a.courseTitle} — ${_titleCase(a.status)}', style: const TextStyle(fontSize: 13)),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('${a.studentName} — ${a.courseTitle} — ${_titleCase(a.status)}', style: const TextStyle(fontSize: 13)),
+                                          if (a.status == 'rejected' && (a.adminNotes ?? '').isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Text(a.adminNotes!, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                          ],
+                                        ],
+                                      ),
                                     )),
                               ],
                               const SizedBox(height: 8),

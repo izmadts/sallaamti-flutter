@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/info_pill.dart';
 import '../data/quran_live_repository.dart';
 
 const _categoryColors = {
@@ -131,24 +132,17 @@ class _CourseCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(999)),
-                    child: Text(course.category ?? 'Live Class', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                  ),
-                  if (course.minAge != null || course.maxAge != null) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(999)),
-                      child: Text(
-                        '🎂 ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}',
-                        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
+                  InfoPill(text: course.category ?? 'Live Class', color: color, filled: true),
+                  if (course.minAge != null || course.maxAge != null)
+                    InfoPill(text: '🎂 ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}', color: color),
+                  // 'both' is "no restriction" — a badge for it would imply
+                  // one exists where it doesn't.
+                  if (course.genderPreference == 'male') InfoPill(text: '♂ Boys only', color: color),
+                  if (course.genderPreference == 'female') InfoPill(text: '♀ Girls only', color: color),
                 ],
               ),
               const SizedBox(height: 10),

@@ -23,7 +23,11 @@ class QuranLiveAdmissionScreen extends ConsumerStatefulWidget {
 }
 
 class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScreen> {
-  late Future<QuranLiveMeta> _metaFuture;
+  late Future<(QuranLiveMeta, QuranLiveCourseInfo)> _initFuture;
+  // Mirrored out of _initFuture once it resolves so _advance() (a plain
+  // sync method, not itself future-aware) can check the course's own
+  // age/gender restriction before letting the student step proceed.
+  QuranLiveCourseInfo? _course;
 
   int _step = 0;
   bool _busy = false;
@@ -53,7 +57,18 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
   @override
   void initState() {
     super.initState();
-    _metaFuture = ref.read(quranLiveRepositoryProvider).meta();
+    _initFuture = _loadInit();
+  }
+
+  Future<(QuranLiveMeta, QuranLiveCourseInfo)> _loadInit() async {
+    final repository = ref.read(quranLiveRepositoryProvider);
+    final results = await Future.wait([repository.meta(), repository.courseDetail(widget.courseId)]);
+
+    final meta = results[0] as QuranLiveMeta;
+    final (course, _) = results[1] as (QuranLiveCourseInfo, List<QuranLiveAdmissionInfo>);
+    _course = course;
+
+    return (meta, course);
   }
 
   @override
@@ -79,6 +94,26 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
       if (_studentNameController.text.trim().isEmpty || _studentGender == null || _studentAgeController.text.trim().isEmpty) {
         setState(() => _error = 'Please fill in the student\'s name, gender, and age.');
         return;
+      }
+
+      // Checked here (client-side, before the round trip) as well as
+      // server-side (QuranLiveController::admissionRules' ageRule/genderRule)
+      // — catching it now saves a submit-and-fail on the very last step.
+      final course = _course;
+      final age = int.tryParse(_studentAgeController.text.trim());
+      if (course != null && age != null) {
+        if (course.minAge != null && age < course.minAge!) {
+          setState(() => _error = 'This class is for ages ${course.minAge}${course.maxAge != null ? '–${course.maxAge}' : '+'}.');
+          return;
+        }
+        if (course.maxAge != null && age > course.maxAge!) {
+          setState(() => _error = 'This class is for ages ${course.minAge ?? 1}–${course.maxAge}.');
+          return;
+        }
+        if (course.genderPreference != null && course.genderPreference != 'both' && _studentGender != course.genderPreference) {
+          setState(() => _error = 'This class is for ${course.genderPreference} students only.');
+          return;
+        }
       }
     }
 
@@ -141,8 +176,8 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
   Widget build(BuildContext context) {
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
-      child: FutureBuilder<QuranLiveMeta>(
-        future: _metaFuture,
+      child: FutureBuilder<(QuranLiveMeta, QuranLiveCourseInfo)>(
+        future: _initFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -159,7 +194,7 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
                     children: [
                       Text(message, textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      ElevatedButton(onPressed: () => setState(() => _metaFuture = ref.read(quranLiveRepositoryProvider).meta()), child: const Text('Retry')),
+                      ElevatedButton(onPressed: () => setState(() => _initFuture = _loadInit()), child: const Text('Retry')),
                     ],
                   ),
                 ),
@@ -167,7 +202,7 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
             );
           }
 
-          final meta = snapshot.data!;
+          final (meta, course) = snapshot.data!;
           return StepWizardScaffold(
             title: 'Admission',
             stepIndex: _step,
@@ -186,6 +221,7 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
                   onCountryChanged: (v) => setState(() => _country = v),
                 ),
               1 => _StudentStep(
+                  course: course,
                   studentNameController: _studentNameController,
                   studentAgeController: _studentAgeController,
                   studentGender: _studentGender,
@@ -289,6 +325,7 @@ class _ParentStep extends ConsumerWidget {
 }
 
 class _StudentStep extends StatelessWidget {
+  final QuranLiveCourseInfo course;
   final TextEditingController studentNameController;
   final TextEditingController studentAgeController;
   final String? studentGender;
@@ -300,6 +337,7 @@ class _StudentStep extends StatelessWidget {
   final ValueChanged<bool> onLearnedChanged;
 
   const _StudentStep({
+    required this.course,
     required this.studentNameController,
     required this.studentAgeController,
     required this.studentGender,
@@ -310,6 +348,9 @@ class _StudentStep extends StatelessWidget {
     required this.learnedQuranBefore,
     required this.onLearnedChanged,
   });
+
+  bool get _hasRestriction =>
+      course.minAge != null || course.maxAge != null || (course.genderPreference != null && course.genderPreference != 'both');
 
   @override
   Widget build(BuildContext context) {
@@ -322,6 +363,33 @@ class _StudentStep extends StatelessWidget {
           'Admitting more than one child? Use each child\'s own name — that\'s what tells them apart.',
           style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
         ),
+        // Shown up front so a family finds out before filling in every
+        // field, not after tapping Submit on the last step.
+        if (_hasRestriction) ...[
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: const Color(0xFFE0F2F1), borderRadius: BorderRadius.circular(12)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('ℹ️', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    [
+                      if (course.minAge != null || course.maxAge != null)
+                        'Ages ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}',
+                      if (course.genderPreference == 'male') 'boys only',
+                      if (course.genderPreference == 'female') 'girls only',
+                    ].join(', '),
+                    style: const TextStyle(color: Color(0xFF0D6B6B), fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         TextFormField(
           controller: studentNameController,
