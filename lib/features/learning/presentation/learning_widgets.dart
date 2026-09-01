@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/html_text.dart';
 import '../data/learning_repository.dart';
 
 // The Learning-specific pieces its screens share — a course card and a
@@ -139,8 +140,13 @@ class LearningCourseCard extends StatelessWidget {
                   ),
                   if ((course.description ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),
+                    // Card preview needs a short flat snippet, not
+                    // HtmlText's full block rendering (headings/lists have
+                    // no room here) — description is Trix-authored HTML, so
+                    // it's stripped to plain text first rather than shown
+                    // with its markup, or truncated mid-tag.
                     Text(
-                      course.description!,
+                      stripHtmlToText(course.description),
                       style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.35),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

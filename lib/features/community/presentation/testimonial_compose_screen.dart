@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../shared/widgets/error_banner.dart';
+import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
 import '../../auth/state/auth_controller.dart';
@@ -44,7 +45,7 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
 
     _name = TextEditingController(text: widget.existing?.name ?? accountName);
     _location = TextEditingController(text: widget.existing?.location ?? accountCity);
-    _content = TextEditingController(text: _htmlToPlainText(widget.existing?.content));
+    _content = TextEditingController(text: stripHtmlToText(widget.existing?.content));
     _rating = widget.existing?.rating ?? 5;
   }
 
@@ -54,22 +55,6 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
     _location.dispose();
     _content.dispose();
     super.dispose();
-  }
-
-  static String _htmlToPlainText(String? html) {
-    if (html == null || html.isEmpty) return '';
-
-    return html
-        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'</(p|div|h[1-6]|li)>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'<[^>]+>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'")
-        .trim();
   }
 
   Future<void> _pickPhoto() async {

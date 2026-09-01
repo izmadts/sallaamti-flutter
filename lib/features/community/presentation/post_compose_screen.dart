@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../shared/widgets/error_banner.dart';
+import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
 import '../data/community_repository.dart';
@@ -46,7 +47,7 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
     _excerpt = TextEditingController(text: widget.existing?.excerpt ?? '');
     // body arrives as HTML from the API; strip it back to something editable
     // rather than showing the author their own text wrapped in tags.
-    _body = TextEditingController(text: _htmlToPlainText(widget.existing?.body));
+    _body = TextEditingController(text: stripHtmlToText(widget.existing?.body));
   }
 
   @override
@@ -55,22 +56,6 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
     _excerpt.dispose();
     _body.dispose();
     super.dispose();
-  }
-
-  static String _htmlToPlainText(String? html) {
-    if (html == null || html.isEmpty) return '';
-
-    return html
-        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'</(p|div|h[1-6]|li)>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'<[^>]+>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'")
-        .trim();
   }
 
   Future<void> _pickCover() async {

@@ -7,6 +7,7 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
+import '../../../shared/widgets/html_text.dart';
 import '../data/learning_repository.dart';
 import 'learning_widgets.dart';
 
@@ -156,7 +157,12 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
           ),
           if ((course.description ?? '').isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text(course.description!, style: TextStyle(fontSize: 14.5, height: 1.5, color: Colors.grey.shade700)),
+            // Authored via Trix on the web admin form — real HTML, not
+            // plain text, so it needs HtmlText rather than a bare Text().
+            HtmlText(
+              html: course.description!,
+              baseStyle: TextStyle(fontSize: 14.5, height: 1.5, color: Colors.grey.shade700),
+            ),
           ],
           if (_error != null) ...[
             const SizedBox(height: 16),
