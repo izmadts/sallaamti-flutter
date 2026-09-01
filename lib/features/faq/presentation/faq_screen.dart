@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/state_views.dart';
 import '../../auth/state/auth_controller.dart';
 import '../data/faq_repository.dart';
 
@@ -66,7 +67,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: () => setState(_load),
-                      child: Text(l10n.continueLabel),
+                      child: Text(l10n.retry),
                     ),
                   ],
                 ),
@@ -76,8 +77,15 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
           final faqs = snapshot.data ?? [];
 
+          // An empty FAQ list means nothing has been written for this module
+          // yet — not that the feature is unbuilt, which is what the old
+          // "coming soon" text told the member.
           if (faqs.isEmpty) {
-            return Center(child: Text(l10n.comingSoon));
+            return EmptyStateView(
+              emoji: '💡',
+              title: l10n.faqEmptyTitle,
+              subtitle: l10n.faqEmptySubtitle,
+            );
           }
 
           return ListView.separated(

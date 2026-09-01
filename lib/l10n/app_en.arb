@@ -77,6 +77,9 @@
   "loading": "Loading…",
   "faqTitle": "Frequently Asked Questions",
   "comingSoon": "This part of the app is coming soon.",
+  "retry": "Retry",
+  "faqEmptyTitle": "No questions here yet",
+  "faqEmptySubtitle": "We haven't added FAQs for this section yet. Get in touch if there's something you'd like to know.",
 
   "notificationsTitle": "Notifications",
   "notificationsEmpty": "Nothing here yet — you'll see interest requests, payment updates, and profile status here.",

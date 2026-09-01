@@ -10,6 +10,28 @@ import 'package:flutter/material.dart';
 //
 // Anything outside that subset degrades to its text content rather than
 // showing raw tags to the member.
+/// Strips markup down to plain text — for a card preview or an editable
+/// text field, where HtmlText's full block rendering (headings, lists,
+/// images) would be wrong: those need a short, flat snippet, not a
+/// rendered document. Block-level tags become a space so words from
+/// adjacent paragraphs don't run together.
+String stripHtmlToText(String? html) {
+  if (html == null || html.isEmpty) return '';
+
+  return html
+      .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+      .replaceAll(RegExp(r'</(p|div|h[1-6]|li)>', caseSensitive: false), '\n')
+      .replaceAll(RegExp(r'<[^>]+>'), '')
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&apos;', "'")
+      .trim();
+}
+
 class HtmlText extends StatelessWidget {
   final String html;
   final TextStyle? baseStyle;
