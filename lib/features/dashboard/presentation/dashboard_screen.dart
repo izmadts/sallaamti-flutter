@@ -67,7 +67,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Future<List<String>> _loadModules() async {
     final client = ref.read(apiClientProvider);
     final data = await client.get('/dashboard');
-    return (data['modules'] as List).map((e) => e.toString()).toList();
+    final modules = (data['modules'] as List).map((e) => e.toString()).toList();
+    // 'quran' and 'quran_live' are two different backend systems gated by
+    // the same toggle, but on mobile they share one dashboard tile — 'quran'
+    // now opens a chooser (QuranHubScreen) between Live Classes and
+    // Self-Paced Learning, so 'quran_live' never needs its own tile here.
+    return modules.where((m) => m != 'quran_live').toList();
   }
 
   @override
@@ -194,6 +199,7 @@ class _ModuleTile extends StatelessWidget {
           'donation' => context.push('/donate'),
           'wall' => context.push('/wall'),
           'counseling' => context.push('/counseling'),
+          'quran' => context.push('/quran-hub'),
           _ => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
         },
         child: Padding(

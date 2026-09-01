@@ -31,6 +31,13 @@ import '../../features/nikah/presentation/wizard/nikah_step3_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step4_screen.dart';
 import '../../features/counseling/presentation/counseling_screen.dart';
 import '../../features/donation/presentation/donation_screen.dart';
+import '../../features/quran_live/presentation/quran_hub_screen.dart';
+import '../../features/quran_live/presentation/quran_live_admission_screen.dart';
+import '../../features/quran_live/presentation/quran_live_course_detail_screen.dart';
+import '../../features/quran_live/presentation/quran_live_courses_screen.dart';
+import '../../features/quran_live/presentation/quran_live_my_class_screen.dart';
+import '../../features/quran_live/presentation/quran_live_my_progress_screen.dart';
+import '../../features/quran_live/presentation/quran_live_subscribe_screen.dart';
 import '../../features/volunteer/presentation/volunteer_screen.dart';
 import '../../features/wall/presentation/wall_screen.dart';
 import '../state/locale_controller.dart';
@@ -94,6 +101,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/donate', builder: (context, state) => const DonationScreen()),
       GoRoute(path: '/wall', builder: (context, state) => const WallScreen()),
       GoRoute(path: '/counseling', builder: (context, state) => const CounselingScreen()),
+      GoRoute(path: '/quran-hub', builder: (context, state) => const QuranHubScreen()),
+      GoRoute(path: '/quran-live', builder: (context, state) => const QuranLiveCoursesScreen()),
+      GoRoute(path: '/quran-live/my-class', builder: (context, state) => const QuranLiveMyClassScreen()),
+      GoRoute(
+        path: '/quran-live/my-progress',
+        builder: (context, state) {
+          final child = state.uri.queryParameters['child'];
+          return QuranLiveMyProgressScreen(childId: child != null ? int.tryParse(child) : null);
+        },
+      ),
+      GoRoute(
+        path: '/quran-live/:id',
+        builder: (context, state) => QuranLiveCourseDetailScreen(courseId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/quran-live/:id/admission',
+        builder: (context, state) => QuranLiveAdmissionScreen(courseId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/quran-live/:id/subscribe/:admissionId',
+        builder: (context, state) => QuranLiveSubscribeScreen(
+          courseId: int.parse(state.pathParameters['id']!),
+          admissionId: int.parse(state.pathParameters['admissionId']!),
+        ),
+      ),
       GoRoute(path: '/nikah/wizard/step1', builder: (context, state) => const NikahStep1Screen()),
       GoRoute(path: '/nikah/wizard/step2', builder: (context, state) => const NikahStep2Screen()),
       GoRoute(path: '/nikah/wizard/step3', builder: (context, state) => const NikahStep3Screen()),
