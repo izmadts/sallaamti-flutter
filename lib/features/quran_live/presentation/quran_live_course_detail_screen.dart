@@ -33,7 +33,20 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Live Class Details')),
+        appBar: AppBar(
+          title: const Text('Live Class Details'),
+          actions: [
+            // This screen's own admission card tells a confirmed parent to
+            // "see My Class to join" but had no way to actually get there —
+            // the only way in was via this icon on the catalog list screen,
+            // one navigation hop back.
+            IconButton(
+              icon: const Icon(Icons.school_outlined),
+              tooltip: 'My Class',
+              onPressed: () => context.push('/quran-live/my-class'),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: FutureBuilder<(QuranLiveCourseInfo, List<QuranLiveAdmissionInfo>)>(
             future: _future,
@@ -267,14 +280,29 @@ class _AdmissionStatusCard extends StatelessWidget {
         Text('✅ Active for ${subscription.month}', style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         if (admission.todaysLink != null)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Today\'s Class Link is ready — see My Class to join.', style: TextStyle(fontSize: 13)),
-              ],
+          Material(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => context.push('/quran-live/my-class'),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFBBF7D0))),
+                child: const Row(
+                  children: [
+                    Icon(Icons.videocam, color: Color(0xFF16A34A), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Today\'s class link is ready',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF166534)),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: Color(0xFF16A34A)),
+                  ],
+                ),
+              ),
             ),
           )
         else
