@@ -30,6 +30,14 @@ import '../../features/nikah/presentation/wizard/nikah_step1_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step2_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step3_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step4_screen.dart';
+import '../../features/community/data/community_repository.dart';
+import '../../features/community/presentation/blog_screen.dart';
+import '../../features/community/presentation/community_hub_screen.dart';
+import '../../features/community/presentation/post_compose_screen.dart';
+import '../../features/community/presentation/post_detail_screen.dart';
+import '../../features/community/presentation/posts_screen.dart';
+import '../../features/community/presentation/testimonial_compose_screen.dart';
+import '../../features/community/presentation/testimonials_screen.dart';
 import '../../features/counseling/presentation/counseling_screen.dart';
 import '../../features/donation/presentation/donation_screen.dart';
 import '../../features/learning/presentation/learning_certificates_screen.dart';
@@ -134,6 +142,31 @@ final routerProvider = Provider<GoRouter>((ref) {
           admissionId: int.parse(state.pathParameters['admissionId']!),
         ),
       ),
+      // Community — blog reading, member-authored posts, and testimonials.
+      // The compose routes take the item being edited via `extra` rather than
+      // refetching it by id: the caller already has it, and passing it keeps
+      // the form from flashing empty while a redundant request lands.
+      GoRoute(path: '/community', builder: (context, state) => const CommunityHubScreen()),
+      GoRoute(path: '/community/blog', builder: (context, state) => const BlogScreen()),
+      GoRoute(
+        path: '/community/blog/:id',
+        builder: (context, state) => BlogDetailScreen(articleId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(path: '/community/posts', builder: (context, state) => const PostsScreen()),
+      GoRoute(
+        path: '/community/posts/compose',
+        builder: (context, state) => PostComposeScreen(existing: state.extra as MemberPost?),
+      ),
+      GoRoute(
+        path: '/community/posts/:id',
+        builder: (context, state) => PostDetailScreen(postId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(path: '/community/testimonials', builder: (context, state) => const TestimonialsScreen()),
+      GoRoute(
+        path: '/community/testimonials/compose',
+        builder: (context, state) => TestimonialComposeScreen(existing: state.extra as MemberTestimonial?),
+      ),
+
       // Self-paced learning. Each segment after /learning is a distinct
       // static prefix (track/course/lesson/...) rather than a bare
       // '/learning/:something', so no route can shadow another regardless of

@@ -20,6 +20,7 @@ const _moduleEmoji = {
   'donation': '💝',
   'volunteer': '🙌',
   'wall': '📣',
+  'community': '📰',
 };
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -177,6 +178,7 @@ class _ModuleTile extends StatelessWidget {
       'donation' => l10n.moduleDonation,
       'volunteer' => l10n.moduleVolunteer,
       'wall' => l10n.moduleWall,
+      'community' => l10n.moduleCommunity,
       _ => module,
     };
   }
@@ -201,6 +203,7 @@ class _ModuleTile extends StatelessWidget {
           'counseling' => context.push('/counseling'),
           'quran' => context.push('/quran-hub'),
           'skills' => context.push('/learning/track/skills'),
+          'community' => context.push('/community'),
           _ => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
         },
         child: Padding(

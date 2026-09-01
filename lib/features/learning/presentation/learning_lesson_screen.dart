@@ -7,10 +7,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../data/learning_repository.dart';
-import 'learning_widgets.dart';
 
 class LearningLessonScreen extends ConsumerStatefulWidget {
   final int lessonId;
@@ -120,7 +120,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
                   }
 
                   if (snapshot.hasError) {
-                    return LearningErrorView(
+                    return RetryErrorView(
                       message: snapshot.error is ApiException
                           ? (snapshot.error as ApiException).displayMessage
                           : 'Something went wrong.',

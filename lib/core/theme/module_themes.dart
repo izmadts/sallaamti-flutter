@@ -74,6 +74,7 @@ class ModuleThemes {
     'donation': Color(0xFFB8962E), // gold
     'volunteer': Color(0xFFD2691E), // orange
     'wall': Color(0xFF0D6B6B), // brand teal
+    'community': Color(0xFF1D5FB8), // blue — blog, member posts, testimonials
   };
 
   static Color seedFor(String moduleKey) => _seeds[moduleKey] ?? AppTheme.brandTeal;

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../data/learning_repository.dart';
-import 'learning_widgets.dart';
 
 // One screen for both quiz kinds — a lesson quiz and a course's final quiz
 // are identical to sit, they differ only in which endpoint they load from
@@ -104,7 +104,7 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
               }
 
               if (snapshot.hasError) {
-                return LearningErrorView(
+                return RetryErrorView(
                   message: snapshot.error is ApiException
                       ? (snapshot.error as ApiException).displayMessage
                       : 'Something went wrong.',
@@ -170,7 +170,7 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
         ],
         const SizedBox(height: 20),
         if (quiz.questions.isEmpty)
-          LearningEmptyView(
+          EmptyStateView(
             emoji: '📋',
             title: 'No questions yet',
             subtitle: 'This quiz is still being prepared.',

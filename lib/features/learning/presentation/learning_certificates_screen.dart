@@ -5,9 +5,9 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../data/learning_repository.dart';
-import 'learning_widgets.dart';
 
 // Every certificate the member holds — course certificates plus any ID cards
 // issued to them (volunteer, Nikah Counselor), the same set the web's
@@ -71,7 +71,7 @@ class _LearningCertificatesScreenState extends ConsumerState<LearningCertificate
               }
 
               if (snapshot.hasError) {
-                return LearningErrorView(
+                return RetryErrorView(
                   message: snapshot.error is ApiException
                       ? (snapshot.error as ApiException).displayMessage
                       : 'Something went wrong.',
@@ -91,7 +91,7 @@ class _LearningCertificatesScreenState extends ConsumerState<LearningCertificate
                       const SizedBox(height: 14),
                     ],
                     if (certificates.isEmpty)
-                      LearningEmptyView(
+                      EmptyStateView(
                         emoji: '🏅',
                         title: 'No certificates yet',
                         subtitle: 'Finish a course — every lesson and its quizzes — and your certificate appears here.',

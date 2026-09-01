@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../data/learning_repository.dart';
 import 'learning_widgets.dart';
@@ -98,7 +99,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
                   }
 
                   if (snapshot.hasError) {
-                    return LearningErrorView(
+                    return RetryErrorView(
                       message: snapshot.error is ApiException
                           ? (snapshot.error as ApiException).displayMessage
                           : 'Something went wrong.',
@@ -196,7 +197,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
           const Text('Lessons', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
           if (detail.lessons.isEmpty)
-            LearningEmptyView(
+            EmptyStateView(
               emoji: '📝',
               title: 'No lessons yet',
               subtitle: 'This course is still being prepared. Check back soon.',

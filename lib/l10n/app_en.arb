@@ -68,6 +68,7 @@
   "moduleDonation": "Donate",
   "moduleVolunteer": "Volunteer",
   "moduleWall": "Sallaamti Wall",
+  "moduleCommunity": "Community",
 
   "errorGeneric": "Something went wrong. Please try again.",
   "errorNetwork": "Couldn't connect. Check your internet connection.",

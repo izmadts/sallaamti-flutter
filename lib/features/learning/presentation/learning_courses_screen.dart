@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../shared/widgets/state_views.dart';
 import '../data/learning_repository.dart';
 import 'learning_widgets.dart';
 
@@ -72,7 +73,7 @@ class _LearningCoursesScreenState extends ConsumerState<LearningCoursesScreen> {
               }
 
               if (snapshot.hasError) {
-                return LearningErrorView(
+                return RetryErrorView(
                   message: snapshot.error is ApiException
                       ? (snapshot.error as ApiException).displayMessage
                       : 'Something went wrong.',
@@ -119,7 +120,7 @@ class _LearningCoursesScreenState extends ConsumerState<LearningCoursesScreen> {
                     ],
                     const SizedBox(height: 18),
                     if (catalog.courses.isEmpty)
-                      LearningEmptyView(
+                      EmptyStateView(
                         emoji: _track.emoji,
                         title: 'No courses yet',
                         subtitle: _category != null
