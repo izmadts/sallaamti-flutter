@@ -31,6 +31,12 @@ import '../../features/nikah/presentation/wizard/nikah_step3_screen.dart';
 import '../../features/nikah/presentation/wizard/nikah_step4_screen.dart';
 import '../../features/counseling/presentation/counseling_screen.dart';
 import '../../features/donation/presentation/donation_screen.dart';
+import '../../features/learning/presentation/learning_certificates_screen.dart';
+import '../../features/learning/presentation/learning_course_detail_screen.dart';
+import '../../features/learning/presentation/learning_courses_screen.dart';
+import '../../features/learning/presentation/learning_lesson_screen.dart';
+import '../../features/learning/presentation/learning_my_courses_screen.dart';
+import '../../features/learning/presentation/learning_quiz_screen.dart';
 import '../../features/quran_live/presentation/quran_hub_screen.dart';
 import '../../features/quran_live/presentation/quran_live_admission_screen.dart';
 import '../../features/quran_live/presentation/quran_live_course_detail_screen.dart';
@@ -124,6 +130,40 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => QuranLiveSubscribeScreen(
           courseId: int.parse(state.pathParameters['id']!),
           admissionId: int.parse(state.pathParameters['admissionId']!),
+        ),
+      ),
+      // Self-paced learning. Each segment after /learning is a distinct
+      // static prefix (track/course/lesson/...) rather than a bare
+      // '/learning/:something', so no route can shadow another regardless of
+      // declaration order.
+      GoRoute(path: '/learning/my-courses', builder: (context, state) => const LearningMyCoursesScreen()),
+      GoRoute(path: '/learning/certificates', builder: (context, state) => const LearningCertificatesScreen()),
+      GoRoute(
+        path: '/learning/track/:track',
+        builder: (context, state) => LearningCoursesScreen(trackKey: state.pathParameters['track']!),
+      ),
+      GoRoute(
+        path: '/learning/course/:id',
+        builder: (context, state) => LearningCourseDetailScreen(courseId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/learning/course/:id/quiz',
+        builder: (context, state) => LearningQuizScreen(
+          ownerId: int.parse(state.pathParameters['id']!),
+          isFinal: true,
+          trackKey: state.uri.queryParameters['track'] ?? 'quran',
+        ),
+      ),
+      GoRoute(
+        path: '/learning/lesson/:id',
+        builder: (context, state) => LearningLessonScreen(lessonId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/learning/lesson/:id/quiz',
+        builder: (context, state) => LearningQuizScreen(
+          ownerId: int.parse(state.pathParameters['id']!),
+          isFinal: false,
+          trackKey: state.uri.queryParameters['track'] ?? 'quran',
         ),
       ),
       GoRoute(path: '/nikah/wizard/step1', builder: (context, state) => const NikahStep1Screen()),
