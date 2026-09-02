@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/authed_avatar.dart';
+import '../../../shared/widgets/html_text.dart';
 import '../data/wall_repository.dart';
 import 'wall_comments_screen.dart';
 
@@ -152,7 +153,12 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
                   const SizedBox(height: 6),
                 ],
                 Text(
-                  _item.body,
+                  // A 'post' item's body can be Trix-authored HTML from the
+                  // web admin panel — this is a compact feed card, not a
+                  // detail view, so a flat stripped snippet (matching
+                  // learning_widgets.dart's course-card pattern) is right
+                  // here, not full HtmlText block rendering.
+                  stripHtmlToText(_item.body),
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
