@@ -35,6 +35,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
   // counselor" CTA both disappear in favor of that Lead's package status.
   HiredLead? _lead;
   bool _loadingLead = true;
+  bool _releasing = false;
 
   @override
   void initState() {
@@ -50,6 +51,33 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
       // Non-fatal — falls back to showing the self-service flow only.
     } finally {
       if (mounted) setState(() => _loadingLead = false);
+    }
+  }
+
+  Future<void> _release() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Go back to self-service?'),
+        content: const Text('This does not undo any payment already sent.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Go Back')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _releasing = true);
+    try {
+      await ref.read(nikahHireRepositoryProvider).release();
+      await _loadLead();
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Something went wrong. Please try again.')));
+    } finally {
+      if (mounted) setState(() => _releasing = false);
     }
   }
 
@@ -315,11 +343,23 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
 
   Widget _buildHiredState(BuildContext context, HiredLead lead) {
     final status = lead.packagePaymentStatus;
+    final canRelease = status != 'submitted' && status != 'confirmed';
 
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Nikah Counselor')),
+        appBar: AppBar(
+          title: const Text('Nikah Counselor'),
+          actions: [
+            if (canRelease)
+              TextButton(
+                onPressed: _releasing ? null : _release,
+                child: _releasing
+                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Go Back'),
+              ),
+          ],
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),

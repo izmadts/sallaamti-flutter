@@ -150,6 +150,10 @@ class NikahHireRepository {
     return HiredLead.fromJson(Map<String, dynamic>.from(data['lead'] as Map));
   }
 
+  // Undoes hire() — only accepted server-side while no package payment is
+  // submitted/confirmed for this Lead yet.
+  Future<void> release() => _client.post('/nikah/release-counselor');
+
   Future<CounselorPackagesResult> packages() async {
     final data = await _client.get('/nikah/lead-packages');
     return CounselorPackagesResult(
