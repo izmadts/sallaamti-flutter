@@ -34,45 +34,39 @@ class AppBottomNav extends ConsumerWidget {
     final isWall = currentPath == '/wall';
     final isRecentModule = !isHome && !isWall && moduleForPath(currentPath) == recentModule;
 
-    return Material(
-      elevation: 12,
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 62,
-          child: Row(
-            children: [
-              _NavItem(
-                emoji: '🏠',
-                label: l10n.navHome,
-                active: isHome,
-                onTap: () => context.go('/dashboard'),
-              ),
-              _NavItem(
-                emoji: moduleEmoji['wall'] ?? '📣',
-                label: moduleShortLabel(context, 'wall'),
-                active: isWall,
-                onTap: () => context.go('/wall'),
-              ),
-              _NavItem(
-                emoji: moduleEmoji[recentModule] ?? '⭐',
-                label: moduleShortLabel(context, recentModule),
-                active: isRecentModule,
-                onTap: () {
-                  final route = moduleRoute(recentModule);
-                  if (route != null) context.push(route);
-                },
-              ),
-              _NavItem(
-                icon: Icons.grid_view_rounded,
-                label: l10n.navMore,
-                active: false,
-                onTap: () => _openMoreSheet(context, ref, metaAsync.valueOrNull),
-              ),
-            ],
-          ),
+    // Index is purely for NavigationBar's own highlight bookkeeping — the
+    // real "what's active" answer is currentPath above, so None-of-the-
+    // above (a deep detail screen) just leaves every tab unselected rather
+    // than forcing one to light up incorrectly.
+    final selectedIndex = isHome ? 0 : (isWall ? 1 : (isRecentModule ? 2 : -1));
+
+    return NavigationBar(
+      selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+      onDestinationSelected: (index) {
+        switch (index) {
+          case 0:
+            context.go('/dashboard');
+          case 1:
+            context.go('/wall');
+          case 2:
+            final route = moduleRoute(recentModule);
+            if (route != null) context.push(route);
+          case 3:
+            _openMoreSheet(context, ref, metaAsync.valueOrNull);
+        }
+      },
+      destinations: [
+        NavigationDestination(icon: const Text('🏠', style: TextStyle(fontSize: 20)), label: l10n.navHome),
+        NavigationDestination(
+          icon: Text(moduleEmoji['wall'] ?? '📣', style: const TextStyle(fontSize: 20)),
+          label: moduleShortLabel(context, 'wall'),
         ),
-      ),
+        NavigationDestination(
+          icon: Text(moduleEmoji[recentModule] ?? '⭐', style: const TextStyle(fontSize: 20)),
+          label: moduleShortLabel(context, recentModule),
+        ),
+        NavigationDestination(icon: const Icon(Icons.grid_view_rounded), label: l10n.navMore),
+      ],
     );
   }
 
@@ -82,49 +76,6 @@ class AppBottomNav extends ConsumerWidget {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (sheetContext) => _MoreSheet(meta: meta),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final String? emoji;
-  final IconData? icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  const _NavItem({this.emoji, this.icon, required this.label, required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? Theme.of(context).colorScheme.primary : Colors.grey.shade500;
-
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (emoji != null)
-              Text(emoji!, style: TextStyle(fontSize: active ? 22 : 20))
-            else
-              Icon(icon, size: active ? 24 : 22, color: color),
-            const SizedBox(height: 3),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Text(
-                label,
-                // A wrapped 2nd line would overflow this bar's fixed height
-                // and bleed into the system gesture-nav area below it — see
-                // moduleShortLabel()'s docs for how that actually looked.
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, fontWeight: active ? FontWeight.w800 : FontWeight.w600, color: color),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
