@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/state/locale_controller.dart';
 import '../../core/state/navigation_state.dart';
+import '../../features/auth/state/auth_controller.dart';
 import '../../features/dashboard/data/dashboard_repository.dart';
 import '../../features/profile/presentation/account_sheet.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -25,6 +27,16 @@ class AppBottomNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Visibility lives here (reactive, via ref.watch) rather than being
+    // decided once in main.dart and baked into an Overlay/OverlayEntry
+    // closure — that outer wrapper's shape needs to stay fixed across
+    // rebuilds (see main.dart's comment on why), so it always includes
+    // this widget and lets it decide for itself whether to render anything.
+    final isAuthenticated = ref.watch(authControllerProvider).status == AuthStatus.authenticated;
+    if (!isAuthenticated) {
+      return const SizedBox.shrink();
+    }
+
     final l10n = AppLocalizations.of(context)!;
     final currentPath = ref.watch(currentPathProvider);
     final recentModule = ref.watch(recentModuleProvider) ?? _fallbackRecentModule;
@@ -40,19 +52,29 @@ class AppBottomNav extends ConsumerWidget {
     // than forcing one to light up incorrectly.
     final selectedIndex = isHome ? 0 : (isWall ? 1 : (isRecentModule ? 2 : -1));
 
+    // AppBottomNav sits in the outer Scaffold's bottomNavigationBar slot,
+    // a SIBLING of body (and therefore of GoRouter's own Navigator) in the
+    // widget tree — not a descendant. context.go()/push() walk ancestors
+    // looking for a GoRouter to talk to and find none from here, so this
+    // goes straight to the router instance instead (see rootNavigatorKey's
+    // docs in app_router.dart for the full story and why this was
+    // completely silent: the resulting error got lost inside Flutter's own
+    // error-report renderer rather than surfacing as a visible crash).
+    final router = ref.read(routerProvider);
+
     return NavigationBar(
       selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
       onDestinationSelected: (index) {
         switch (index) {
           case 0:
-            context.go('/dashboard');
+            router.go('/dashboard');
           case 1:
-            context.go('/wall');
+            router.go('/wall');
           case 2:
             final route = moduleRoute(recentModule);
-            if (route != null) context.push(route);
+            if (route != null) router.push(route);
           case 3:
-            _openMoreSheet(context, ref, metaAsync.valueOrNull);
+            _openMoreSheet(ref, metaAsync.valueOrNull);
         }
       },
       destinations: [
@@ -70,9 +92,14 @@ class AppBottomNav extends ConsumerWidget {
     );
   }
 
-  void _openMoreSheet(BuildContext context, WidgetRef ref, DashboardMeta? meta) {
+  void _openMoreSheet(WidgetRef ref, DashboardMeta? meta) {
+    // rootNavigatorKey's context, not AppBottomNav's own — see the comment
+    // in build() above.
+    final navigatorContext = rootNavigatorKey.currentContext;
+    if (navigatorContext == null) return;
+
     showModalBottomSheet(
-      context: context,
+      context: navigatorContext,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (sheetContext) => _MoreSheet(meta: meta),
@@ -172,6 +199,14 @@ class _MoreSheet extends ConsumerWidget {
               icon: Icons.language,
               label: isUrdu ? 'زبان: اردو (Switch to English)' : 'Language: English (Switch to Urdu)',
               onTap: () => ref.read(localeControllerProvider.notifier).choose(isUrdu ? 'en' : 'ur'),
+            ),
+            _MoreTile(
+              icon: Icons.help_outline,
+              label: 'FAQ',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/faq/general');
+              },
             ),
             const Divider(height: 24),
             _MoreTile(

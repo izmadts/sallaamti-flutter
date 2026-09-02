@@ -68,10 +68,23 @@ class _RouterRefresh extends ChangeNotifier {
   }
 }
 
+// AppBottomNav lives in the outer Scaffold's bottomNavigationBar slot (see
+// main.dart), which is a SIBLING of body (and therefore of this Router and
+// its Navigator) in the widget tree — not a descendant. context.go()/push()
+// and showModalBottomSheet() both walk ANCESTORS looking for a GoRouter/
+// Navigator, so calling them from AppBottomNav's own context finds neither,
+// no matter how correctly everything else is wired. This key gives that
+// widget a real, Navigator-descended BuildContext to hand to
+// showModalBottomSheet(); GoRouter navigation itself sidesteps the problem
+// entirely by calling the router instance's own go()/push() methods
+// directly (via ref.read(routerProvider)) instead of the context extension.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _RouterRefresh(ref);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     refreshListenable: refresh,
     redirect: (context, state) {
