@@ -7,6 +7,7 @@ import '../../core/state/locale_controller.dart';
 import '../../core/state/navigation_state.dart';
 import '../../features/dashboard/data/dashboard_repository.dart';
 import '../../features/profile/presentation/account_sheet.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../modules.dart';
 
 // The app's global bottom nav — added once, at the MaterialApp.router level
@@ -24,6 +25,7 @@ class AppBottomNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final currentPath = ref.watch(currentPathProvider);
     final recentModule = ref.watch(recentModuleProvider) ?? _fallbackRecentModule;
     final metaAsync = ref.watch(dashboardMetaProvider);
@@ -42,19 +44,19 @@ class AppBottomNav extends ConsumerWidget {
             children: [
               _NavItem(
                 emoji: '🏠',
-                label: 'Home',
+                label: l10n.navHome,
                 active: isHome,
                 onTap: () => context.go('/dashboard'),
               ),
               _NavItem(
                 emoji: moduleEmoji['wall'] ?? '📣',
-                label: 'Wall',
+                label: moduleShortLabel(context, 'wall'),
                 active: isWall,
                 onTap: () => context.go('/wall'),
               ),
               _NavItem(
                 emoji: moduleEmoji[recentModule] ?? '⭐',
-                label: moduleLabel(context, recentModule),
+                label: moduleShortLabel(context, recentModule),
                 active: isRecentModule,
                 onTap: () {
                   final route = moduleRoute(recentModule);
@@ -63,7 +65,7 @@ class AppBottomNav extends ConsumerWidget {
               ),
               _NavItem(
                 icon: Icons.grid_view_rounded,
-                label: 'More',
+                label: l10n.navMore,
                 active: false,
                 onTap: () => _openMoreSheet(context, ref, metaAsync.valueOrNull),
               ),
@@ -107,9 +109,18 @@ class _NavItem extends StatelessWidget {
             else
               Icon(icon, size: active ? 24 : 22, color: color),
             const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(fontSize: 11, fontWeight: active ? FontWeight.w800 : FontWeight.w600, color: color),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Text(
+                label,
+                // A wrapped 2nd line would overflow this bar's fixed height
+                // and bleed into the system gesture-nav area below it — see
+                // moduleShortLabel()'s docs for how that actually looked.
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, fontWeight: active ? FontWeight.w800 : FontWeight.w600, color: color),
+              ),
             ),
           ],
         ),

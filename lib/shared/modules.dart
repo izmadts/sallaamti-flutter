@@ -33,6 +33,28 @@ String moduleLabel(BuildContext context, String module) {
   };
 }
 
+// moduleLabel()'s strings (e.g. "Nikah Matchmaking", "Family Counseling")
+// are meant for a dashboard tile or header, with room to wrap — the bottom
+// nav's 3rd tab has neither: at ~11px in a quarter-width tab, a 2-word
+// label wraps to a 2nd line that overflows the bar's fixed height and
+// bleeds into the system gesture-nav area (the OS dims whatever's there,
+// which is what made this look like unrelated ghost text). Short,
+// single-word labels for exactly the modules that can land in that slot.
+String moduleShortLabel(BuildContext context, String module) {
+  final l10n = AppLocalizations.of(context)!;
+  return switch (module) {
+    'nikah' => l10n.navNikahShort,
+    'quran' => l10n.navQuranShort,
+    'skills' => l10n.navSkillsShort,
+    'counseling' => l10n.navCounselingShort,
+    'donation' => l10n.moduleDonation,
+    'volunteer' => l10n.moduleVolunteer,
+    'wall' => l10n.navWallShort,
+    'community' => l10n.moduleCommunity,
+    _ => moduleLabel(context, module),
+  };
+}
+
 // Where tapping this module actually goes — mirrors dashboard_screen.dart's
 // _ModuleTile.onTap switch exactly, so every entry point (dashboard grid,
 // bottom nav, More sheet) lands in the same place.

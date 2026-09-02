@@ -70,6 +70,14 @@
   "moduleWall": "سلامتی وال",
   "moduleCommunity": "کمیونٹی",
 
+  "navHome": "ہوم",
+  "navMore": "مزید",
+  "navWallShort": "وال",
+  "navNikahShort": "نکاح",
+  "navQuranShort": "قرآن",
+  "navSkillsShort": "سکلز",
+  "navCounselingShort": "کاؤنسلنگ",
+
   "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔",
   "errorNetwork": "رابطہ نہیں ہو سکا۔ اپنا انٹرنیٹ کنکشن چیک کریں۔",
   "fieldRequired": "یہ خانہ ضروری ہے",

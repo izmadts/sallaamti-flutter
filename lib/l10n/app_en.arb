@@ -70,6 +70,14 @@
   "moduleWall": "Sallaamti Wall",
   "moduleCommunity": "Community",
 
+  "navHome": "Home",
+  "navMore": "More",
+  "navWallShort": "Wall",
+  "navNikahShort": "Nikah",
+  "navQuranShort": "Quran",
+  "navSkillsShort": "Skills",
+  "navCounselingShort": "Counsel",
+
   "errorGeneric": "Something went wrong. Please try again.",
   "errorNetwork": "Couldn't connect. Check your internet connection.",
   "fieldRequired": "This field is required",

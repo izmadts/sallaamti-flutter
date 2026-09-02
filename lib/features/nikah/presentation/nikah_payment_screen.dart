@@ -280,32 +280,44 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                   ),
                 ),
               const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                initialValue: _method,
-                decoration: InputDecoration(label: requiredLabel('Payment Method')),
-                items: const [
-                  DropdownMenuItem(value: 'jazzcash', child: Text('JazzCash')),
-                  DropdownMenuItem(value: 'bank_transfer', child: Text('Bank Transfer')),
-                ],
-                onChanged: (v) => setState(() => _method = v!),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 160,
-                child: ImagePickField(
-                  label: 'Payment Screenshot',
-                  file: _screenshot,
-                  alreadyUploaded: false,
-                  onTap: _pickScreenshot,
+              // Mirrors nikah/payment.blade.php's own status branching — the
+              // backend already rejects a resubmission once confirmed (see
+              // Api\V1\NikahPaymentController::store()), but showing the
+              // form at all to an already-paid member is exactly the
+              // "why is it asking me again" confusion that guard doesn't
+              // prevent on its own.
+              if (profile?.paymentStatus == 'submitted')
+                _statusBanner('⏳ ${l10n.nikahPaymentUnderReviewMessage}', Colors.orange)
+              else if (profile?.paymentStatus == 'confirmed')
+                _statusBanner('✅ Payment confirmed. Your profile is now awaiting admin verification.', Colors.green)
+              else ...[
+                DropdownButtonFormField<String>(
+                  initialValue: _method,
+                  decoration: InputDecoration(label: requiredLabel('Payment Method')),
+                  items: const [
+                    DropdownMenuItem(value: 'jazzcash', child: Text('JazzCash')),
+                    DropdownMenuItem(value: 'bank_transfer', child: Text('Bank Transfer')),
+                  ],
+                  onChanged: (v) => setState(() => _method = v!),
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _busy ? null : _submit,
-                child: _busy
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(l10n.nikahSubmitPaymentProof),
-              ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 160,
+                  child: ImagePickField(
+                    label: 'Payment Screenshot',
+                    file: _screenshot,
+                    alreadyUploaded: false,
+                    onTap: _pickScreenshot,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _busy ? null : _submit,
+                  child: _busy
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text(l10n.nikahSubmitPaymentProof),
+                ),
+              ],
               const SizedBox(height: 28),
               const Divider(),
               const SizedBox(height: 16),
