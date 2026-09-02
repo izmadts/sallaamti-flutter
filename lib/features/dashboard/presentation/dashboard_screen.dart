@@ -114,10 +114,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: () => context.push('/faq/general'),
-                child: Text(l10n.faqTitle),
-              ),
             ],
           ),
         ),
