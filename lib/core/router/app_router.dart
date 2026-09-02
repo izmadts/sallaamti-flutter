@@ -54,7 +54,9 @@ import '../../features/quran_live/presentation/quran_live_my_progress_screen.dar
 import '../../features/quran_live/presentation/quran_live_subscribe_screen.dart';
 import '../../features/volunteer/presentation/volunteer_screen.dart';
 import '../../features/wall/presentation/wall_screen.dart';
+import '../../shared/modules.dart';
 import '../state/locale_controller.dart';
+import '../state/navigation_state.dart';
 
 // A tiny ChangeNotifier bridge so GoRouter's redirect re-evaluates whenever
 // auth or locale state changes, without recreating the router (which would
@@ -93,6 +95,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (auth.status == AuthStatus.authenticated && isGuestOnlyRoute && path != '/language') {
         return '/dashboard';
       }
+
+      // Side effect, not a redirect decision — feeds the global bottom nav
+      // (AppBottomNav) both the active-tab highlight and the "recently
+      // opened module" 3rd tab. Scheduled for after this build/frame since
+      // redirect runs during routing itself, and mutating a provider mid-
+      // routing can trigger a rebuild while the router is still resolving.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(currentPathProvider.notifier).state = path;
+        final module = moduleForPath(path);
+        if (module != null) {
+          ref.read(recentModuleProvider.notifier).state = module;
+        }
+      });
 
       return null;
     },

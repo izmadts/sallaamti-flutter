@@ -5,23 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/modules.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/language_switch_button.dart';
 import '../../../shared/widgets/notification_bell.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../profile/presentation/account_sheet.dart';
-
-const _moduleEmoji = {
-  'nikah': '💍',
-  'quran': '📖',
-  'quran_live': '🕌',
-  'skills': '💻',
-  'counseling': '🤝',
-  'donation': '💝',
-  'volunteer': '🙌',
-  'wall': '📣',
-  'community': '📰',
-};
+import '../data/dashboard_repository.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -31,12 +21,9 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  late Future<List<String>> _modulesFuture;
-
   @override
   void initState() {
     super.initState();
-    _modulesFuture = _loadModules();
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybePromptPasswordChange());
   }
 
@@ -65,22 +52,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Future<List<String>> _loadModules() async {
-    final client = ref.read(apiClientProvider);
-    final data = await client.get('/dashboard');
-    final modules = (data['modules'] as List).map((e) => e.toString()).toList();
-    // 'quran' and 'quran_live' are two different backend systems gated by
-    // the same toggle, but on mobile they share one dashboard tile — 'quran'
-    // now opens a chooser (QuranHubScreen) between Live Classes and
-    // Self-Paced Learning, so 'quran_live' never needs its own tile here.
-    return modules.where((m) => m != 'quran_live').toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
+    final metaAsync = ref.watch(dashboardMetaProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -119,36 +96,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Text(l10n.modulesTitle, style: TextStyle(color: Colors.grey.shade600)),
               const SizedBox(height: 20),
               Expanded(
-                child: FutureBuilder<List<String>>(
-                  future: _modulesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (snapshot.hasError) {
-                      final message = snapshot.error is ApiException
-                          ? (snapshot.error as ApiException).message
-                          : l10n.errorGeneric;
-                      return Center(child: Text(message, textAlign: TextAlign.center));
-                    }
-
-                    final modules = snapshot.data ?? [];
-
-                    return GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        childAspectRatio: 1.05,
-                      ),
-                      itemCount: modules.length,
-                      itemBuilder: (context, index) {
-                        final module = modules[index];
-                        return _ModuleTile(module: module);
-                      },
-                    );
+                child: metaAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, _) {
+                    final message = error is ApiException ? error.message : l10n.errorGeneric;
+                    return Center(child: Text(message, textAlign: TextAlign.center));
                   },
+                  data: (meta) => GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: 1.05,
+                    ),
+                    itemCount: meta.modules.length,
+                    itemBuilder: (context, index) => _ModuleTile(module: meta.modules[index]),
+                  ),
                 ),
               ),
               TextButton(
@@ -167,26 +130,11 @@ class _ModuleTile extends StatelessWidget {
   final String module;
   const _ModuleTile({required this.module});
 
-  String _label(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return switch (module) {
-      'nikah' => l10n.moduleNikah,
-      'quran' => l10n.moduleQuran,
-      'quran_live' => l10n.moduleQuranLive,
-      'skills' => l10n.moduleSkills,
-      'counseling' => l10n.moduleCounseling,
-      'donation' => l10n.moduleDonation,
-      'volunteer' => l10n.moduleVolunteer,
-      'wall' => l10n.moduleWall,
-      'community' => l10n.moduleCommunity,
-      _ => module,
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final color = ModuleThemes.seedFor(module);
     final l10n = AppLocalizations.of(context)!;
+    final route = moduleRoute(module);
 
     return Material(
       color: color,
@@ -195,26 +143,18 @@ class _ModuleTile extends StatelessWidget {
       shadowColor: color.withValues(alpha: 0.4),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => switch (module) {
-          'nikah' => context.push('/nikah'),
-          'volunteer' => context.push('/volunteer'),
-          'donation' => context.push('/donate'),
-          'wall' => context.push('/wall'),
-          'counseling' => context.push('/counseling'),
-          'quran' => context.push('/quran-hub'),
-          'skills' => context.push('/learning/track/skills'),
-          'community' => context.push('/community'),
-          _ => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
-        },
+        onTap: () => route != null
+            ? context.push(route)
+            : ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_moduleEmoji[module] ?? '⭐', style: const TextStyle(fontSize: 36)),
+              Text(moduleEmoji[module] ?? '⭐', style: const TextStyle(fontSize: 36)),
               const SizedBox(height: 10),
               Text(
-                _label(context),
+                moduleLabel(context, module),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
               ),
