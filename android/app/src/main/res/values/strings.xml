@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Facebook Login app (developers.facebook.com) — the "login" Meta App,
+         deliberately separate from the one used for social-media posting.
+         Key hash for this release keystore: HsyMQWdbXIlJVYbUVaNOUV3xPO4= -->
+    <string name="facebook_app_id">2851979021835143</string>
+    <string name="facebook_client_token">78d61a788bca3b8f21bf3a0f1baa6309</string>
+    <string name="fb_login_protocol_scheme">fb2851979021835143</string>
+</resources>
