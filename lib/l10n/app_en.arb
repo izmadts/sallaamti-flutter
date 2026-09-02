@@ -86,8 +86,6 @@
   "notificationsMarkAllRead": "Mark all read",
 
   "nikahSelectGender": "Please select your gender.",
-  "nikahCnicFrontRequired": "Please upload the front of your CNIC.",
-  "nikahCnicBackRequired": "Please upload the back of your CNIC.",
   "nikahFinishVerificationFirst": "Please go back and finish the Verification step before submitting.",
   "nikahPaymentScreenshotRequired": "Please attach a screenshot of your payment.",
   "nikahInterestSent": "Interest sent!",

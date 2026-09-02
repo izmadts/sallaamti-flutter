@@ -94,8 +94,6 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
                   ]),
                   _section('Verification', [
                     _row('CNIC Number', profile.hasCnicNumber ? '••••• (saved)' : 'Not provided'),
-                    _row('CNIC Front', profile.hasCnicFrontImage ? 'Uploaded ✓' : 'Missing'),
-                    _row('CNIC Back', profile.hasCnicBackImage ? 'Uploaded ✓' : 'Missing'),
                     _row('Photo', profile.hasPhoto ? 'Uploaded ✓' : 'Not added'),
                     _row('Visibility', profile.visibility),
                   ]),

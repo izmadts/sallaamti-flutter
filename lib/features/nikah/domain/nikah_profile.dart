@@ -28,8 +28,6 @@ class NikahProfile {
   final bool hasPhoto;
   final bool allowPhotoSharing;
   final bool hasCnicNumber;
-  final bool hasCnicFrontImage;
-  final bool hasCnicBackImage;
   final String verificationStatus;
   final String? rejectionReason;
   final String visibility;
@@ -75,8 +73,6 @@ class NikahProfile {
     required this.hasPhoto,
     required this.allowPhotoSharing,
     required this.hasCnicNumber,
-    required this.hasCnicFrontImage,
-    required this.hasCnicBackImage,
     required this.verificationStatus,
     this.rejectionReason,
     required this.visibility,
@@ -123,8 +119,6 @@ class NikahProfile {
         hasPhoto: json['has_photo'] as bool? ?? false,
         allowPhotoSharing: json['allow_photo_sharing'] as bool? ?? true,
         hasCnicNumber: json['has_cnic_number'] as bool? ?? false,
-        hasCnicFrontImage: json['has_cnic_front_image'] as bool? ?? false,
-        hasCnicBackImage: json['has_cnic_back_image'] as bool? ?? false,
         verificationStatus: json['verification_status'] as String,
         rejectionReason: json['rejection_reason'] as String?,
         visibility: json['visibility'] as String,
@@ -144,7 +138,11 @@ class NikahProfile {
         canBrowse: json['can_browse'] as bool? ?? false,
       );
 
-  bool get isComplete => hasCnicNumber && hasCnicFrontImage && hasCnicBackImage;
+  // CNIC front/back photo requirement retired — the wizard's own step-level
+  // validation already enforces CNIC number and photo being filled in
+  // before reaching review, so there's nothing left to gate here beyond
+  // that having actually happened.
+  bool get isComplete => hasCnicNumber && hasPhoto;
 }
 
 // Wherever to actually send the verification fee — configured by admins in

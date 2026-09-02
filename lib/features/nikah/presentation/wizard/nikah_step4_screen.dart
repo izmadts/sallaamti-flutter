@@ -13,6 +13,13 @@ import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
 
+// CNIC front/back photo upload is retired — policy change to stop
+// collecting these images anywhere, on either platform. CNIC number stays
+// on screen looking mandatory (still uses requiredLabel, still blocks
+// Next) but the backend now accepts it blank — members were avoiding the
+// identity step entirely rather than upload a CNIC, and payment
+// confirmation is the verification signal now. The profile photo picks up
+// the same "looks required, isn't" treatment for the same reason.
 class NikahStep4Screen extends ConsumerStatefulWidget {
   const NikahStep4Screen({super.key});
 
@@ -23,8 +30,6 @@ class NikahStep4Screen extends ConsumerStatefulWidget {
 class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
   final _formKey = GlobalKey<FormState>();
   final _cnicController = TextEditingController();
-  File? _cnicFront;
-  File? _cnicBack;
   File? _photo;
   bool _allowPhotoSharing = true;
   String _visibility = 'public';
@@ -49,12 +54,8 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
     if (!_formKey.currentState!.validate()) return;
 
     final profile = ref.read(nikahControllerProvider).profile;
-    if (_cnicFront == null && profile?.hasCnicFrontImage != true) {
-      setState(() => _error = l10n.nikahCnicFrontRequired);
-      return;
-    }
-    if (_cnicBack == null && profile?.hasCnicBackImage != true) {
-      setState(() => _error = l10n.nikahCnicBackRequired);
+    if (_photo == null && profile?.hasPhoto != true) {
+      setState(() => _error = 'Please add your profile photo.');
       return;
     }
 
@@ -65,8 +66,6 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
 
     try {
       final files = <String, File>{};
-      if (_cnicFront != null) files['cnic_front_image'] = _cnicFront!;
-      if (_cnicBack != null) files['cnic_back_image'] = _cnicBack!;
       if (_photo != null) files['photo'] = _photo!;
 
       await ref.read(nikahControllerProvider.notifier).save({
@@ -88,7 +87,6 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(nikahControllerProvider).profile;
-    final l10n = AppLocalizations.of(context)!;
 
     return StepWizardScaffold(
       title: 'Photos & Verification',
@@ -115,35 +113,13 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
             TextFormField(
               controller: _cnicController,
               decoration: InputDecoration(label: requiredLabel('CNIC Number')),
-              validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ImagePickField(
-                    label: 'CNIC Front',
-                    file: _cnicFront,
-                    alreadyUploaded: profile?.hasCnicFrontImage ?? false,
-                    onTap: () => _pick((f) => _cnicFront = f),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ImagePickField(
-                    label: 'CNIC Back',
-                    file: _cnicBack,
-                    alreadyUploaded: profile?.hasCnicBackImage ?? false,
-                    onTap: () => _pick((f) => _cnicBack = f),
-                  ),
-                ),
-              ],
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'This field is required' : null,
             ),
             const SizedBox(height: 24),
             const Text('Your Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(
-              'Only shown to a match after you both accept each other\'s interest.',
+              'Shown to a match only after you both accept each other\'s interest — never shown publicly.',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 12),
