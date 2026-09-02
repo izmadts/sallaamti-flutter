@@ -11,11 +11,19 @@ import 'package:google_sign_in/google_sign_in.dart';
 class SocialAuthService {
   static bool _googleInitialized = false;
 
+  // The Web application OAuth client (sallaamti-ec3f4 project) — google_sign_in
+  // v7's Credential Manager-based flow only returns a usable idToken when a
+  // serverClientId is supplied here; without it, authentication() succeeds
+  // but authentication.idToken comes back null. This is also exactly the ID
+  // that must match Api\V1\AuthController's GOOGLE_MOBILE_CLIENT_IDS on the
+  // backend, since it becomes the token's `aud` claim.
+  static const _googleServerClientId = '237871727716-vts7t28rj7q36l8t5rpedf3uep2v7gi0.apps.googleusercontent.com';
+
   static Future<String?> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn.instance;
 
     if (!_googleInitialized) {
-      await googleSignIn.initialize();
+      await googleSignIn.initialize(serverClientId: _googleServerClientId);
       _googleInitialized = true;
     }
 
