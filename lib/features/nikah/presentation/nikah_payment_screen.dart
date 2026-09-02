@@ -353,9 +353,15 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
           actions: [
             if (canRelease)
               TextButton(
+                // AppBarTheme.foregroundColor (white) doesn't propagate to a
+                // TextButton's own color resolution — without this it
+                // defaults to ColorScheme.primary, which for this module is
+                // the same rose the AppBar background is, making the button
+                // invisible (rose text on a rose bar).
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
                 onPressed: _releasing ? null : _release,
                 child: _releasing
-                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Text('Go Back'),
               ),
           ],
