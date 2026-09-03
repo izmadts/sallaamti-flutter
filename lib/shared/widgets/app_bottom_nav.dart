@@ -32,14 +32,16 @@ class AppBottomNav extends ConsumerWidget {
     // closure — that outer wrapper's shape needs to stay fixed across
     // rebuilds (see main.dart's comment on why), so it always includes
     // this widget and lets it decide for itself whether to render anything.
-    final isAuthenticated = ref.watch(authControllerProvider).status == AuthStatus.authenticated;
+    final isAuthenticated =
+        ref.watch(authControllerProvider).status == AuthStatus.authenticated;
     if (!isAuthenticated) {
       return const SizedBox.shrink();
     }
 
     final l10n = AppLocalizations.of(context)!;
     final currentPath = ref.watch(currentPathProvider);
-    final recentModule = ref.watch(recentModuleProvider) ?? _fallbackRecentModule;
+    final recentModule =
+        ref.watch(recentModuleProvider) ?? _fallbackRecentModule;
     // Pre-warms the fetch as soon as the member is logged in, rather than
     // only starting it the moment they tap More — _MoreSheet watches this
     // same provider itself (see below) instead of receiving a value handed
@@ -51,7 +53,8 @@ class AppBottomNav extends ConsumerWidget {
 
     final isHome = currentPath == '/dashboard';
     final isWall = currentPath == '/wall';
-    final isRecentModule = !isHome && !isWall && moduleForPath(currentPath) == recentModule;
+    final isRecentModule =
+        !isHome && !isWall && moduleForPath(currentPath) == recentModule;
 
     // Index is purely for NavigationBar's own highlight bookkeeping — the
     // real "what's active" answer is currentPath above, so None-of-the-
@@ -85,16 +88,28 @@ class AppBottomNav extends ConsumerWidget {
         }
       },
       destinations: [
-        NavigationDestination(icon: const Text('🏠', style: TextStyle(fontSize: 20)), label: l10n.navHome),
         NavigationDestination(
-          icon: Text(moduleEmoji['wall'] ?? '📣', style: const TextStyle(fontSize: 20)),
+          icon: const Text('🏠', style: TextStyle(fontSize: 20)),
+          label: l10n.navHome,
+        ),
+        NavigationDestination(
+          icon: Text(
+            moduleEmoji['wall'] ?? '📣',
+            style: const TextStyle(fontSize: 20),
+          ),
           label: moduleShortLabel(context, 'wall'),
         ),
         NavigationDestination(
-          icon: Text(moduleEmoji[recentModule] ?? '⭐', style: const TextStyle(fontSize: 20)),
+          icon: Text(
+            moduleEmoji[recentModule] ?? '⭐',
+            style: const TextStyle(fontSize: 20),
+          ),
           label: moduleShortLabel(context, recentModule),
         ),
-        NavigationDestination(icon: const Icon(Icons.grid_view_rounded), label: l10n.navMore),
+        NavigationDestination(
+          icon: const Icon(Icons.grid_view_rounded),
+          label: l10n.navMore,
+        ),
       ],
     );
   }
@@ -108,7 +123,9 @@ class AppBottomNav extends ConsumerWidget {
     showModalBottomSheet(
       context: navigatorContext,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (sheetContext) => const _MoreSheet(),
     );
   }
@@ -117,19 +134,29 @@ class AppBottomNav extends ConsumerWidget {
 class _MoreSheet extends ConsumerWidget {
   const _MoreSheet();
 
-  Future<void> _openWhatsapp(BuildContext context, WidgetRef ref, String message) async {
+  Future<void> _openWhatsapp(
+    BuildContext context,
+    WidgetRef ref,
+    String message,
+  ) async {
     // Watched fresh at tap-time (not passed in from outside) so a slow
     // first fetch doesn't leave this permanently stuck on "not set up yet"
     // — see AppBottomNav's pre-warming comment for the full story.
     final number = ref.read(dashboardMetaProvider).valueOrNull?.whatsappNumber;
     if (number == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Support contact is not set up yet.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Support contact is not set up yet.')),
+      );
       return;
     }
-    final uri = Uri.parse('https://wa.me/$number?text=${Uri.encodeComponent(message)}');
+    final uri = Uri.parse(
+      'https://wa.me/$number?text=${Uri.encodeComponent(message)}',
+    );
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open WhatsApp.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open WhatsApp.')),
+        );
       }
     }
   }
@@ -150,94 +177,127 @@ class _MoreSheet extends ConsumerWidget {
         .toList();
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            if (modules.isNotEmpty) ...[
-              const Text('More Modules', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-              const SizedBox(height: 12),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.95,
+      // The plain Column below overflowed off the bottom of the screen once
+      // the module grid plus every list tile (Notifications through Report
+      // a Problem) added up to more height than the screen had — silently
+      // making WhatsApp Support/Report a Problem unreachable rather than
+      // "not working" in any way visible in a release build. Capping at
+      // 85% of the screen and making it scrollable fixes that regardless of
+      // how many modules a given member has enabled.
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-                itemCount: modules.length,
-                itemBuilder: (context, index) {
-                  final module = modules[index];
-                  return _MoreModuleTile(module: module);
-                },
-              ),
-              const SizedBox(height: 8),
-              const Divider(height: 24),
-            ],
-            _MoreTile(
-              icon: Icons.notifications_outlined,
-              label: 'Notifications',
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/notifications');
-              },
+                if (modules.isNotEmpty) ...[
+                  const Text(
+                    'More Modules',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.95,
+                        ),
+                    itemCount: modules.length,
+                    itemBuilder: (context, index) {
+                      final module = modules[index];
+                      return _MoreModuleTile(module: module);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 24),
+                ],
+                _MoreTile(
+                  icon: Icons.notifications_outlined,
+                  label: 'Notifications',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/notifications');
+                  },
+                ),
+                _MoreTile(
+                  icon: Icons.account_circle_outlined,
+                  label: 'My Account',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (context) => const AccountSheet(),
+                    );
+                  },
+                ),
+                _MoreTile(
+                  icon: Icons.language,
+                  label: isUrdu
+                      ? 'زبان: اردو (Switch to English)'
+                      : 'Language: English (Switch to Urdu)',
+                  onTap: () => ref
+                      .read(localeControllerProvider.notifier)
+                      .choose(isUrdu ? 'en' : 'ur'),
+                ),
+                _MoreTile(
+                  icon: Icons.help_outline,
+                  label: 'FAQ',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/faq/general');
+                  },
+                ),
+                const Divider(height: 24),
+                _MoreTile(
+                  icon: Icons.chat_bubble_outline,
+                  iconColor: const Color(0xFF25D366),
+                  label: 'Instant Support (WhatsApp)',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _openWhatsapp(
+                      context,
+                      ref,
+                      'Assalam-o-Alaikum, I need help with the Sallaamti app.',
+                    );
+                  },
+                ),
+                _MoreTile(
+                  icon: Icons.flag_outlined,
+                  iconColor: Colors.orange.shade700,
+                  label: 'Report a Problem',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _openWhatsapp(
+                      context,
+                      ref,
+                      'Assalam-o-Alaikum, I\'d like to report a problem in the Sallaamti app:',
+                    );
+                  },
+                ),
+              ],
             ),
-            _MoreTile(
-              icon: Icons.account_circle_outlined,
-              label: 'My Account',
-              onTap: () {
-                Navigator.of(context).pop();
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) => const AccountSheet(),
-                );
-              },
-            ),
-            _MoreTile(
-              icon: Icons.language,
-              label: isUrdu ? 'زبان: اردو (Switch to English)' : 'Language: English (Switch to Urdu)',
-              onTap: () => ref.read(localeControllerProvider.notifier).choose(isUrdu ? 'en' : 'ur'),
-            ),
-            _MoreTile(
-              icon: Icons.help_outline,
-              label: 'FAQ',
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/faq/general');
-              },
-            ),
-            const Divider(height: 24),
-            _MoreTile(
-              icon: Icons.chat_bubble_outline,
-              iconColor: const Color(0xFF25D366),
-              label: 'Instant Support (WhatsApp)',
-              onTap: () {
-                Navigator.of(context).pop();
-                _openWhatsapp(context, ref, 'Assalam-o-Alaikum, I need help with the Sallaamti app.');
-              },
-            ),
-            _MoreTile(
-              icon: Icons.flag_outlined,
-              iconColor: Colors.orange.shade700,
-              label: 'Report a Problem',
-              onTap: () {
-                Navigator.of(context).pop();
-                _openWhatsapp(context, ref, 'Assalam-o-Alaikum, I\'d like to report a problem in the Sallaamti app:');
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -263,7 +323,10 @@ class _MoreModuleTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(moduleEmoji[module] ?? '⭐', style: const TextStyle(fontSize: 28)),
+          Text(
+            moduleEmoji[module] ?? '⭐',
+            style: const TextStyle(fontSize: 28),
+          ),
           const SizedBox(height: 6),
           Text(
             moduleLabel(context, module),
@@ -283,7 +346,12 @@ class _MoreTile extends StatelessWidget {
   final Color? iconColor;
   final String label;
   final VoidCallback onTap;
-  const _MoreTile({required this.icon, this.iconColor, required this.label, required this.onTap});
+  const _MoreTile({
+    required this.icon,
+    this.iconColor,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
