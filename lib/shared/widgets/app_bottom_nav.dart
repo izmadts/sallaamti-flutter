@@ -40,7 +40,14 @@ class AppBottomNav extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final currentPath = ref.watch(currentPathProvider);
     final recentModule = ref.watch(recentModuleProvider) ?? _fallbackRecentModule;
-    final metaAsync = ref.watch(dashboardMetaProvider);
+    // Pre-warms the fetch as soon as the member is logged in, rather than
+    // only starting it the moment they tap More — _MoreSheet watches this
+    // same provider itself (see below) instead of receiving a value handed
+    // to it here, since a value captured at tap-time stays frozen at
+    // whatever it was that instant (often still "loading") for the sheet's
+    // entire lifetime, which is exactly what made WhatsApp support/report
+    // look permanently broken if tapped before this fetch had resolved.
+    ref.watch(dashboardMetaProvider);
 
     final isHome = currentPath == '/dashboard';
     final isWall = currentPath == '/wall';
@@ -74,7 +81,7 @@ class AppBottomNav extends ConsumerWidget {
             final route = moduleRoute(recentModule);
             if (route != null) router.push(route);
           case 3:
-            _openMoreSheet(ref, metaAsync.valueOrNull);
+            _openMoreSheet();
         }
       },
       destinations: [
@@ -92,7 +99,7 @@ class AppBottomNav extends ConsumerWidget {
     );
   }
 
-  void _openMoreSheet(WidgetRef ref, DashboardMeta? meta) {
+  void _openMoreSheet() {
     // rootNavigatorKey's context, not AppBottomNav's own — see the comment
     // in build() above.
     final navigatorContext = rootNavigatorKey.currentContext;
@@ -102,17 +109,19 @@ class AppBottomNav extends ConsumerWidget {
       context: navigatorContext,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (sheetContext) => _MoreSheet(meta: meta),
+      builder: (sheetContext) => const _MoreSheet(),
     );
   }
 }
 
 class _MoreSheet extends ConsumerWidget {
-  final DashboardMeta? meta;
-  const _MoreSheet({required this.meta});
+  const _MoreSheet();
 
-  Future<void> _openWhatsapp(BuildContext context, String message) async {
-    final number = meta?.whatsappNumber;
+  Future<void> _openWhatsapp(BuildContext context, WidgetRef ref, String message) async {
+    // Watched fresh at tap-time (not passed in from outside) so a slow
+    // first fetch doesn't leave this permanently stuck on "not set up yet"
+    // — see AppBottomNav's pre-warming comment for the full story.
+    final number = ref.read(dashboardMetaProvider).valueOrNull?.whatsappNumber;
     if (number == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Support contact is not set up yet.')));
       return;
@@ -135,6 +144,7 @@ class _MoreSheet extends ConsumerWidget {
     // grid is everything else, so nothing enabled ends up unreachable once
     // it scrolls off the recent-module slot.
     final recentModule = ref.watch(recentModuleProvider);
+    final meta = ref.watch(dashboardMetaProvider).valueOrNull;
     final modules = (meta?.modules ?? [])
         .where((m) => m != 'wall' && m != recentModule)
         .toList();
@@ -215,7 +225,7 @@ class _MoreSheet extends ConsumerWidget {
               label: 'Instant Support (WhatsApp)',
               onTap: () {
                 Navigator.of(context).pop();
-                _openWhatsapp(context, 'Assalam-o-Alaikum, I need help with the Sallaamti app.');
+                _openWhatsapp(context, ref, 'Assalam-o-Alaikum, I need help with the Sallaamti app.');
               },
             ),
             _MoreTile(
@@ -224,7 +234,7 @@ class _MoreSheet extends ConsumerWidget {
               label: 'Report a Problem',
               onTap: () {
                 Navigator.of(context).pop();
-                _openWhatsapp(context, 'Assalam-o-Alaikum, I\'d like to report a problem in the Sallaamti app:');
+                _openWhatsapp(context, ref, 'Assalam-o-Alaikum, I\'d like to report a problem in the Sallaamti app:');
               },
             ),
           ],

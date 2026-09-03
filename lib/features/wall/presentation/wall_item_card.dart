@@ -100,12 +100,18 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
               child: const Text('📌 Pinned', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
             ),
           if (_item.photoUrl != null)
-            AspectRatio(
-              aspectRatio: 16 / 10,
-              child: Image.network(
-                _item.photoUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade100),
+            // Full photo, not cropped — a fixed AspectRatio + BoxFit.cover
+            // here forced every photo into a 16:10 box, chopping off most of
+            // a portrait phone photo (the common case) to fill it. fitWidth
+            // instead scales to the card's width and lets height follow the
+            // photo's own real proportions.
+            Image.network(
+              _item.photoUrl!,
+              width: double.infinity,
+              fit: BoxFit.fitWidth,
+              errorBuilder: (context, error, stack) => AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Container(color: Colors.grey.shade100),
               ),
             ),
           if (!isDua && _item.videoUrl != null && _item.photoUrl == null)
