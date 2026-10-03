@@ -108,7 +108,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
   }
 
   Future<void> _pickScreenshot() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1280, maxHeight: 1280);
     if (picked != null) setState(() => _screenshot = File(picked.path));
   }
 

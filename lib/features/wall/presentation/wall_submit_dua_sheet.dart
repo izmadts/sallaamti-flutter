@@ -29,7 +29,7 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
   }
 
   Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1280, maxHeight: 1280);
     if (picked != null) setState(() => _image = File(picked.path));
   }
 

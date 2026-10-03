@@ -17,6 +17,12 @@ class ApiClient {
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
+      // Multipart photo uploads (Nikah profile, wall posts, donation
+      // receipts, etc.) need real headroom on a slow mobile connection —
+      // without an explicit sendTimeout this defaulted to unlimited, which
+      // sounds safer but actually meant a stalled upload hung forever
+      // instead of failing with a clear, catchable error.
+      sendTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 15),
       headers: {'Accept': 'application/json'},
     ));
@@ -88,6 +94,7 @@ class ApiClient {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw ApiException.network();
       }

@@ -59,7 +59,7 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
   }
 
   Future<void> _pickCover() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90, maxWidth: 1280, maxHeight: 1280);
     if (picked != null && mounted) {
       setState(() => _coverImage = File(picked.path));
     }

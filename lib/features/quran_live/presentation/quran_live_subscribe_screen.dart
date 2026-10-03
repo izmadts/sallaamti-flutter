@@ -66,7 +66,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
   // Gallery only — this is an existing screenshot, not a live identity
   // capture, so the camera is never offered here.
   Future<void> _pickScreenshot() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1280, maxHeight: 1280);
     if (picked != null) setState(() => _screenshot = File(picked.path));
   }
 

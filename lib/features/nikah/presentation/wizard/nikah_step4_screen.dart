@@ -43,7 +43,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
   }
 
   Future<void> _pick(void Function(File) onPicked) async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1280, maxHeight: 1280);
     if (picked != null) {
       setState(() => onPicked(File(picked.path)));
     }

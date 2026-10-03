@@ -58,7 +58,7 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
   }
 
   Future<void> _pickPhoto() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90, maxWidth: 1280, maxHeight: 1280);
     if (picked != null && mounted) {
       setState(() => _photo = File(picked.path));
     }
