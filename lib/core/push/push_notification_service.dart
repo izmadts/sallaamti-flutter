@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../api/api_client.dart';
 import '../api/api_exception.dart';
+import '../router/app_router.dart';
+import 'notification_route_resolver.dart';
 
 const _androidChannel = AndroidNotificationChannel(
   'default_channel',
@@ -29,6 +32,20 @@ Future<void> initLocalNotifications() async {
   await _localNotifications
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(_androidChannel);
+}
+
+// A push's data payload only ever carries `type` (never `url` — see
+// notification_route_resolver.dart's doc comment), so this is the `type`-
+// only half of that same resolver. Navigates via rootNavigatorKey rather
+// than needing a BuildContext/ref passed in, since this runs from a plain
+// top-level Firebase callback, not a widget.
+void _navigateFromPushData(Map<String, dynamic> data) {
+  final route = resolveNotificationRoute(type: data['type'] as String?);
+  if (route == null) return;
+
+  final context = rootNavigatorKey.currentContext;
+  if (context == null) return;
+  GoRouter.of(context).push(route);
 }
 
 void _showForegroundNotification(RemoteMessage message) {
@@ -89,7 +106,15 @@ class PushNotificationService {
     if (!_foregroundListenerAttached) {
       _foregroundListenerAttached = true;
       FirebaseMessaging.onMessage.listen(_showForegroundNotification);
+      // Tapping a push while the app is backgrounded (not terminated).
+      FirebaseMessaging.onMessageOpenedApp.listen((message) => _navigateFromPushData(message.data));
     }
+
+    // Tapping a push that launched the app from fully terminated — only
+    // present on this specific cold start, so it's checked once here rather
+    // than as a stream listener.
+    final initialMessage = await messaging.getInitialMessage();
+    if (initialMessage != null) _navigateFromPushData(initialMessage.data);
   }
 
   Future<void> unregisterThisDevice() async {

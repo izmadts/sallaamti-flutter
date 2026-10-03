@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/push/notification_route_resolver.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../data/notification_repository.dart';
@@ -15,44 +16,14 @@ import '../data/notification_repository.dart';
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
-  // Quran Live's own notification `data.type`s (see the app's FCM handling —
-  // these arrive from Api\V1's QuranFeeReminder/QuranClassReminder/
-  // QuranClassAssigned/QuranLivePaymentConfirmed/QuranClassLinkPosted
-  // notifications) all land on My Class; everything else here is Nikah, the
-  // only module this inbox originally covered.
-  static const _quranLiveTypes = {
-    'quran_fee_due',
-    'quran_class_today',
-    'quran_class_assigned',
-    'quran_payment_confirmed',
-    'quran_class_link_posted',
-  };
-
-  String? _resolveInAppRoute(String? url, String? type) {
-    if (_quranLiveTypes.contains(type)) return '/quran-live/my-class';
-    // The web route names all start with 'quran-live.', but the URL PATHS
-    // themselves don't consistently — /my-quran-class (my-class) vs
-    // /quran-live/{course}/... (fee reminder) — so 'quran' alone is the
-    // substring that's actually present in every one of them. No other
-    // module's routes contain that word.
-    if (url != null && Uri.tryParse(url)?.path.contains('quran') == true) return '/quran-live/my-class';
-
-    if (url == null) return null;
-    final uri = Uri.tryParse(url);
-    if (uri == null) return null;
-
-    if (uri.path.contains('interests')) return '/nikah/interests';
-    if (uri.path.contains('browse')) return '/nikah/browse';
-    if (uri.path.contains('edit')) return '/nikah/wizard/step1';
-    return '/nikah';
-  }
-
   IconData _iconFor(String? type) {
     return switch (type) {
       'interest_received' => Icons.mail_outline,
       'interest_accepted' => Icons.favorite,
       'interest_declined' => Icons.heart_broken_outlined,
       'payment_confirmed' => Icons.payments_outlined,
+      'payment_rejected' => Icons.error_outline,
+      'nikah_payment_reminder' => Icons.payments_outlined,
       'profile_verified' => Icons.verified_outlined,
       'profile_rejected' => Icons.error_outline,
       'quran_fee_due' => Icons.payments_outlined,
@@ -131,7 +102,7 @@ class NotificationsScreen extends ConsumerWidget {
                         await ref.read(notificationRepositoryProvider).markRead(n.id);
                         ref.invalidate(notificationsListProvider);
                       }
-                      final route = _resolveInAppRoute(n.url, n.type);
+                      final route = resolveNotificationRoute(url: n.url, type: n.type);
                       if (route != null && context.mounted) context.push(route);
                     },
                   ),
