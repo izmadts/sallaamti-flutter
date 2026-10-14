@@ -6,6 +6,7 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
+import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../domain/nikah_interest.dart';
 import '../state/nikah_controller.dart';
 
@@ -74,6 +75,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
         child: Scaffold(
           appBar: AppBar(
             title: const Text('Interests'),
+            actions: const [WhatsappChannelAction()],
             bottom: const TabBar(
               // Explicit colors — the default TabBarTheme resolves both label
               // colors close to the module's own AppBar background, making

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_hire_repository.dart';
 import '../domain/nikah_profile.dart';
 import '../state/nikah_controller.dart';
@@ -35,7 +36,7 @@ class NikahHomeScreen extends ConsumerWidget {
     return Theme(
       data: theme,
       child: Scaffold(
-        appBar: AppBar(title: const Text('💍 Nikah Matchmaking')),
+        appBar: AppBar(title: const Text('💍 Nikah Matchmaking'), actions: const [WhatsappChannelAction()]),
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: () =>

@@ -10,6 +10,7 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
+import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_hire_repository.dart';
 import '../domain/nikah_profile.dart';
 
@@ -139,7 +140,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
       return Theme(
         data: ModuleThemes.forModule('nikah'),
         child: Scaffold(
-          appBar: AppBar(title: const Text('Payment Submitted')),
+          appBar: AppBar(title: const Text('Payment Submitted'), actions: const [WhatsappChannelAction()]),
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -168,7 +169,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Choose a Package')),
+        appBar: AppBar(title: const Text('Choose a Package'), actions: const [WhatsappChannelAction()]),
         body: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())

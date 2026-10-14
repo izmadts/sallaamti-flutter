@@ -7,6 +7,7 @@ import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
+import '../../../../shared/widgets/whatsapp_channel_action.dart';
 import '../../state/nikah_controller.dart';
 import 'nikah_step1_screen.dart' show maritalStatusOptions;
 
@@ -113,6 +114,7 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
       theme: ModuleThemes.forModule('nikah'),
       errorText: _error,
       onBack: () => context.pop(),
+      actions: const [WhatsappChannelAction()],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

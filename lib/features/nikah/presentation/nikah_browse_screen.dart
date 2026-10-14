@@ -9,6 +9,7 @@ import '../../../core/storage/secure_store.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/trust_badges.dart';
+import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../domain/nikah_card.dart';
 import '../state/nikah_controller.dart';
 import 'wizard/nikah_step1_screen.dart' show maritalStatusOptions;
@@ -149,26 +150,26 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
           title: Text(widget.noProfileMode ? 'Nikah Profiles Browse' : 'Browse Matches'),
           // noProfileMode already has its own Filter action in
           // _NoProfileHeader below — showing this one too just duplicates it.
-          actions: widget.noProfileMode
-              ? null
-              : [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
-                      if (_filters.isNotEmpty)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(color: Color(0xFFB8962E), shape: BoxShape.circle),
-                          ),
-                        ),
-                    ],
-                  ),
+          actions: [
+            if (!widget.noProfileMode)
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
+                  if (_filters.isNotEmpty)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(color: Color(0xFFB8962E), shape: BoxShape.circle),
+                      ),
+                    ),
                 ],
+              ),
+            const WhatsappChannelAction(),
+          ],
         ),
         body: Column(
           children: [

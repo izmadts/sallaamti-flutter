@@ -7,6 +7,7 @@ import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
 import '../../../shared/widgets/trust_badges.dart';
+import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_repository.dart';
 import '../state/nikah_controller.dart';
 
@@ -155,7 +156,7 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
 
     if (_error != null || _detail == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: AppBar(actions: const [WhatsappChannelAction()]),
         body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error ?? l10n.nikahNothingHereYet))),
       );
     }
@@ -180,6 +181,7 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
               PopupMenuItem(value: 'block', child: Text('Block profile')),
             ],
           ),
+          const WhatsappChannelAction(),
         ],
       ),
       body: SafeArea(

@@ -21,6 +21,10 @@ class StepWizardScaffold extends StatelessWidget {
   // omit it and the wizard just inherits whatever theme is already
   // ambient, so this stays reusable for a future module's wizard too.
   final ThemeData? theme;
+  // Optional AppBar actions (e.g. Nikah's WhatsApp channel action) — left
+  // null by default so other wizards built on this shell (Quran Live
+  // admission) are unaffected.
+  final List<Widget>? actions;
 
   const StepWizardScaffold({
     super.key,
@@ -34,6 +38,7 @@ class StepWizardScaffold extends StatelessWidget {
     this.errorText,
     this.onBack,
     this.theme,
+    this.actions,
   });
 
   @override
@@ -54,6 +59,7 @@ class StepWizardScaffold extends StatelessWidget {
             ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack)
             : null,
         automaticallyImplyLeading: onBack != null,
+        actions: actions,
       ),
       body: SafeArea(
         child: Column(
