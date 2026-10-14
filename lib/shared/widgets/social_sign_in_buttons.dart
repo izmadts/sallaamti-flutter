@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../features/auth/data/social_auth_service.dart';
@@ -25,6 +26,12 @@ class _SocialSignInButtonsState extends ConsumerState<SocialSignInButtons> {
       await action();
     } on ApiException catch (e) {
       _showError(e.message);
+    } on GoogleSignInException catch (e) {
+      // Surfaces the real native-SDK failure (e.g. clientConfigurationError,
+      // providerConfigurationError) instead of a generic message — this is
+      // the only signal we get for Google sign-in config problems without
+      // pulling device logs.
+      _showError('Google sign-in failed: ${e.code.name}${e.description != null ? ' — ${e.description}' : ''}');
     } catch (_) {
       if (mounted) _showError(AppLocalizations.of(context)!.errorGeneric);
     } finally {
