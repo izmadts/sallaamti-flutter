@@ -38,9 +38,14 @@ class NikahHomeScreen extends ConsumerWidget {
         appBar: AppBar(title: const Text('💍 Nikah Matchmaking')),
         body: SafeArea(
           child: RefreshIndicator(
-            onRefresh: () => ref.read(nikahControllerProvider.notifier).refresh(),
+            onRefresh: () =>
+                ref.read(nikahControllerProvider.notifier).refresh(),
             child: state.error != null
-                ? _ErrorView(message: state.error!, onRetry: () => ref.read(nikahControllerProvider.notifier).refresh())
+                ? _ErrorView(
+                    message: state.error!,
+                    onRetry: () =>
+                        ref.read(nikahControllerProvider.notifier).refresh(),
+                  )
                 : _ProfileStatusView(profile: state.profile!),
           ),
         ),
@@ -67,10 +72,13 @@ class _ProfileStatusView extends StatelessWidget {
       );
     }
 
-    if (profile.paymentStatus == 'unpaid' || profile.paymentStatus == 'rejected') {
+    if (profile.paymentStatus == 'unpaid' ||
+        profile.paymentStatus == 'rejected') {
       return _StatusCard(
         emoji: '💳',
-        title: profile.paymentStatus == 'rejected' ? l10n.nikahPaymentRejectedTitle : l10n.nikahPaymentDueTitle,
+        title: profile.paymentStatus == 'rejected'
+            ? l10n.nikahPaymentRejectedTitle
+            : l10n.nikahPaymentDueTitle,
         message: profile.paymentStatus == 'rejected'
             ? l10n.nikahPaymentRejectedMessage
             : l10n.nikahPaymentDueMessage(profile.paymentAmount ?? ''),
@@ -94,8 +102,12 @@ class _ProfileStatusView extends StatelessWidget {
         message: profile.verificationStatus == 'rejected'
             ? (profile.rejectionReason ?? l10n.nikahProfileNeedsChangesMessage)
             : l10n.nikahProfileReviewingMessage,
-        actionLabel: profile.verificationStatus == 'rejected' ? l10n.nikahUpdateProfile : null,
-        onAction: profile.verificationStatus == 'rejected' ? () => context.push('/nikah/wizard/step1') : null,
+        actionLabel: profile.verificationStatus == 'rejected'
+            ? l10n.nikahUpdateProfile
+            : null,
+        onAction: profile.verificationStatus == 'rejected'
+            ? () => context.push('/nikah/wizard/step1')
+            : null,
       );
     }
 
@@ -113,7 +125,12 @@ class _ProfileStatusView extends StatelessWidget {
             children: [
               const Text('✅', style: TextStyle(fontSize: 24)),
               const SizedBox(width: 12),
-              Expanded(child: Text(l10n.nikahProfileLiveMessage, style: const TextStyle(fontWeight: FontWeight.w700))),
+              Expanded(
+                child: Text(
+                  l10n.nikahProfileLiveMessage,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
             ],
           ),
         ),
@@ -185,7 +202,11 @@ class _ActiveToggleTileState extends ConsumerState<_ActiveToggleTile> {
       await ref.read(nikahControllerProvider.notifier).refresh();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not update visibility — try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not update visibility — try again.'),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -202,11 +223,27 @@ class _ActiveToggleTileState extends ConsumerState<_ActiveToggleTile> {
         leading: CircleAvatar(
           radius: 22,
           backgroundColor: primary.withValues(alpha: 0.12),
-          child: Text(widget.isActive ? '👁️' : '🙈', style: const TextStyle(fontSize: 20)),
+          child: Text(
+            widget.isActive ? '👁️' : '🙈',
+            style: const TextStyle(fontSize: 20),
+          ),
         ),
-        title: Text(widget.isActive ? 'Visible in Search' : 'Hidden from Search', style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text(widget.isActive ? 'Other members can find your profile' : 'Your profile is paused'),
-        trailing: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Switch(value: widget.isActive, onChanged: (_) => _toggle()),
+        title: Text(
+          widget.isActive ? 'Visible in Search' : 'Hidden from Search',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          widget.isActive
+              ? 'Other members can find your profile'
+              : 'Your profile is paused',
+        ),
+        trailing: _busy
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Switch(value: widget.isActive, onChanged: (_) => _toggle()),
       ),
     );
   }
@@ -217,7 +254,12 @@ class _HubTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  const _HubTile({required this.emoji, required this.title, required this.subtitle, required this.onTap});
+  const _HubTile({
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -270,9 +312,17 @@ class _StatusCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        ),
         const SizedBox(height: 8),
-        Text(message, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
         if (actionLabel != null && onAction != null) ...[
           const SizedBox(height: 24),
           ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
@@ -301,9 +351,16 @@ class _ErrorView extends StatelessWidget {
               const SizedBox(height: 40),
               const Text('⚠️', style: TextStyle(fontSize: 48)),
               const SizedBox(height: 16),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15),
+              ),
               const SizedBox(height: 20),
-              ElevatedButton(onPressed: onRetry, child: Text(l10n.nikahTryAgain)),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: Text(l10n.nikahTryAgain),
+              ),
             ],
           ),
         ),
@@ -357,10 +414,22 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
       return Card(
         color: primary.withValues(alpha: 0.06),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: CircleAvatar(radius: 22, backgroundColor: primary.withValues(alpha: 0.15), child: const Text('🤝', style: TextStyle(fontSize: 20))),
-          title: const Text('Want hands-on help?', style: TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: const Text('Bring in a Nikah Counselor to search and guide you personally'),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          leading: CircleAvatar(
+            radius: 22,
+            backgroundColor: primary.withValues(alpha: 0.15),
+            child: const Text('🤝', style: TextStyle(fontSize: 20)),
+          ),
+          title: const Text(
+            'Want hands-on help?',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: const Text(
+            'Bring in a Nikah Counselor to search and guide you personally',
+          ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/nikah/counselor/pick'),
         ),
@@ -371,7 +440,8 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
     final status = switch (lead.packagePaymentStatus) {
       null => 'Choose a package to get started',
       'submitted' => 'Payment under review',
-      'rejected' => lead.packagePaymentRejectionReason ?? 'Payment needs attention',
+      'rejected' =>
+        lead.packagePaymentRejectionReason ?? 'Payment needs attention',
       _ => 'Active',
     };
 
@@ -381,17 +451,26 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
         leading: CircleAvatar(
           radius: 22,
           backgroundColor: primary.withValues(alpha: 0.12),
-          backgroundImage: (counselor?.avatar ?? '').isNotEmpty ? NetworkImage(counselor!.avatar!) : null,
-          child: (counselor?.avatar ?? '').isEmpty ? const Icon(Icons.person) : null,
+          backgroundImage: (counselor?.avatar ?? '').isNotEmpty
+              ? NetworkImage(counselor!.avatar!)
+              : null,
+          child: (counselor?.avatar ?? '').isEmpty
+              ? const Icon(Icons.person)
+              : null,
         ),
-        title: Text(counselor?.name ?? 'Your Nikah Counselor', style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(
+          counselor?.name ?? 'Your Nikah Counselor',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
         subtitle: Text(status),
         trailing: IconButton(
           icon: const Icon(Icons.chat_bubble_outline),
           tooltip: 'Message',
           onPressed: () => context.push('/nikah/counselor/chat/${lead.id}'),
         ),
-        onTap: lead.packagePaymentStatus == null ? () => context.push('/nikah/counselor/package') : null,
+        onTap: lead.packagePaymentStatus == null
+            ? () => context.push('/nikah/counselor/package')
+            : null,
       ),
     );
   }

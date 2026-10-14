@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'dart:async';
+
 import '../../../../core/api/api_exception.dart';
+import '../../../../core/data/city_search_repository.dart';
 import '../../../../core/data/country_states_repository.dart';
 import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
@@ -34,7 +37,18 @@ const maritalStatusOptions = {
 
 // Matches web's nikah/edit.blade.php $guardianRelOptions exactly, plus
 // "Other" as an app-only escape hatch for anything not in that list.
-const _guardianRelationOptions = ['Self', 'Father', 'Mother', 'Brother', 'Sister', 'Uncle', 'Aunt', 'Grandfather', 'Grandmother', 'Other'];
+const _guardianRelationOptions = [
+  'Self',
+  'Father',
+  'Mother',
+  'Brother',
+  'Sister',
+  'Uncle',
+  'Aunt',
+  'Grandfather',
+  'Grandmother',
+  'Other',
+];
 
 class NikahStep1Screen extends ConsumerStatefulWidget {
   const NikahStep1Screen({super.key});
@@ -46,7 +60,7 @@ class NikahStep1Screen extends ConsumerStatefulWidget {
 class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   final _formKey = GlobalKey<FormState>();
   final _heightOtherController = TextEditingController();
-  final _cityController = TextEditingController();
+  final _addressController = TextEditingController();
   final _guardianNameController = TextEditingController();
   final _guardianContactController = TextEditingController();
   final _guardianRelationOtherController = TextEditingController();
@@ -57,6 +71,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   String _maritalStatus = 'never_married';
   String _country = 'Pakistan';
   String? _state;
+  String? _city;
   String? _guardianRelation;
   bool _busy = false;
   String? _error;
@@ -64,7 +79,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   @override
   void dispose() {
     _heightOtherController.dispose();
-    _cityController.dispose();
+    _addressController.dispose();
     _guardianNameController.dispose();
     _guardianContactController.dispose();
     _guardianRelationOtherController.dispose();
@@ -94,6 +109,10 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       setState(() => _error = 'Please select your date of birth');
       return;
     }
+    if (_city == null || _city!.trim().isEmpty) {
+      setState(() => _error = 'Please select your city');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -104,16 +123,22 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     try {
       await ref.read(nikahControllerProvider.notifier).save({
         'gender': _gender,
-        'date_of_birth': '${_dateOfBirth!.year.toString().padLeft(4, '0')}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}',
+        'date_of_birth':
+            '${_dateOfBirth!.year.toString().padLeft(4, '0')}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}',
         'height': _height,
-        'height_other': _height == 'Other' ? _heightOtherController.text.trim() : null,
+        'height_other': _height == 'Other'
+            ? _heightOtherController.text.trim()
+            : null,
         'marital_status': _maritalStatus,
-        'city': _cityController.text.trim(),
+        'city': _city,
+        'address': _addressController.text.trim(),
         'state': _state,
         'country': _country,
         'guardian_name': _guardianNameController.text.trim(),
         'guardian_contact': _guardianContactController.text.trim(),
-        'guardian_relation': _guardianRelation == 'Other' ? _guardianRelationOtherController.text.trim() : _guardianRelation,
+        'guardian_relation': _guardianRelation == 'Other'
+            ? _guardianRelationOtherController.text.trim()
+            : _guardianRelation,
       });
       if (mounted) context.push('/nikah/wizard/step2');
     } on ApiException catch (e) {
@@ -129,14 +154,36 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _SearchablePicker(title: 'Select Country', options: allCountries, initialValue: _country),
+      builder: (context) => _SearchablePicker(
+        title: 'Select Country',
+        options: allCountries,
+        initialValue: _country,
+      ),
     );
     if (selected != null) {
       setState(() {
         _country = selected;
         _state = null;
+        _city = null;
       });
     }
+  }
+
+  // Unlike Country (preloaded, ~250 entries), City is a live-search combo
+  // backed by the ~150k-row cities table — see CitySearchRepository and
+  // _AsyncSearchablePicker below.
+  Future<void> _pickCity() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _AsyncSearchablePicker(
+        title: 'Select City',
+        search: (query) => ref
+            .read(citySearchRepositoryProvider)
+            .search(query: query, country: _country, state: _state),
+      ),
+    );
+    if (selected != null) setState(() => _city = selected);
   }
 
   @override
@@ -158,115 +205,166 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-        const Text('Tell us about yourself', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 16),
-        _GenderPicker(value: _gender, onChanged: (v) => setState(() => _gender = v)),
-        const SizedBox(height: 16),
-        InkWell(
-          onTap: _pickDateOfBirth,
-          child: InputDecorator(
-            decoration: InputDecoration(label: requiredLabel('Date of Birth')),
-            child: Text(
-              _dateOfBirth == null
-                  ? 'Select date'
-                  : '${_dateOfBirth!.year.toString().padLeft(4, '0')}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}',
+            const Text(
+              'Tell us about yourself',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          initialValue: _height,
-          decoration: const InputDecoration(labelText: 'Height'),
-          items: _heightOptions().map((h) => DropdownMenuItem(value: h, child: Text(h))).toList(),
-          onChanged: (v) => setState(() => _height = v),
-        ),
-        if (_height == 'Other') ...[
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _heightOtherController,
-            decoration: const InputDecoration(labelText: 'Enter height'),
-          ),
-        ],
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          initialValue: _maritalStatus,
-          decoration: InputDecoration(label: requiredLabel('Marital Status')),
-          items: maritalStatusOptions.entries
-              .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
-              .toList(),
-          onChanged: (v) => setState(() => _maritalStatus = v!),
-        ),
-        const SizedBox(height: 24),
-        const Text('Location', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _cityController,
-          decoration: InputDecoration(label: requiredLabel('City')),
-          validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
-        ),
-        const SizedBox(height: 16),
-        countryStatesAsync.when(
-          data: (cs) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              InkWell(
-                onTap: () => _pickCountry(cs.countries),
-                child: InputDecorator(
-                  decoration: InputDecoration(label: requiredLabel('Country')),
-                  child: Text(_country),
+            const SizedBox(height: 16),
+            _GenderPicker(
+              value: _gender,
+              onChanged: (v) => setState(() => _gender = v),
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: _pickDateOfBirth,
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  label: requiredLabel('Date of Birth'),
+                ),
+                child: Text(
+                  _dateOfBirth == null
+                      ? 'Select date'
+                      : '${_dateOfBirth!.year.toString().padLeft(4, '0')}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}',
                 ),
               ),
-              const SizedBox(height: 16),
-              if (cs.statesFor(_country).isNotEmpty)
-                DropdownButtonFormField<String>(
-                  initialValue: _state,
-                  decoration: const InputDecoration(labelText: 'State / Province'),
-                  items: cs.statesFor(_country).map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                  onChanged: (v) => setState(() => _state = v),
-                ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _height,
+              decoration: const InputDecoration(labelText: 'Height'),
+              items: _heightOptions()
+                  .map((h) => DropdownMenuItem(value: h, child: Text(h)))
+                  .toList(),
+              onChanged: (v) => setState(() => _height = v),
+            ),
+            if (_height == 'Other') ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _heightOtherController,
+                decoration: const InputDecoration(labelText: 'Enter height'),
+              ),
             ],
-          ),
-          loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: LinearProgressIndicator()),
-          error: (error, stack) => TextFormField(
-            initialValue: _country,
-            decoration: InputDecoration(label: requiredLabel('Country')),
-            onChanged: (v) => _country = v,
-          ),
-        ),
-        const SizedBox(height: 24),
-        const Text('Guardian (Wali)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
-        Text(
-          'Required for Nikah profiles — your guardian is your point of contact for serious matches.',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _guardianNameController,
-          decoration: InputDecoration(label: requiredLabel('Guardian Name')),
-          validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _guardianContactController,
-          decoration: InputDecoration(label: requiredLabel('Guardian Phone Number')),
-          keyboardType: TextInputType.phone,
-          validator: (v) => (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          initialValue: _guardianRelation,
-          decoration: const InputDecoration(labelText: 'Relation'),
-          items: _guardianRelationOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-          onChanged: (v) => setState(() => _guardianRelation = v),
-        ),
-        if (_guardianRelation == 'Other') ...[
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _guardianRelationOtherController,
-            decoration: const InputDecoration(labelText: 'Enter relation'),
-          ),
-        ],
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _maritalStatus,
+              decoration: InputDecoration(
+                label: requiredLabel('Marital Status'),
+              ),
+              items: maritalStatusOptions.entries
+                  .map(
+                    (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                  )
+                  .toList(),
+              onChanged: (v) => setState(() => _maritalStatus = v!),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Location',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            countryStatesAsync.when(
+              data: (cs) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkWell(
+                    onTap: () => _pickCountry(cs.countries),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        label: requiredLabel('Country'),
+                      ),
+                      child: Text(_country),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (cs.statesFor(_country).isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      initialValue: _state,
+                      decoration: const InputDecoration(
+                        labelText: 'State / Province',
+                      ),
+                      items: cs
+                          .statesFor(_country)
+                          .map(
+                            (s) => DropdownMenuItem(value: s, child: Text(s)),
+                          )
+                          .toList(),
+                      onChanged: (v) => setState(() => _state = v),
+                    ),
+                ],
+              ),
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: LinearProgressIndicator(),
+              ),
+              error: (error, stack) => TextFormField(
+                initialValue: _country,
+                decoration: InputDecoration(label: requiredLabel('Country')),
+                onChanged: (v) => _country = v,
+              ),
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: _pickCity,
+              child: InputDecorator(
+                decoration: InputDecoration(label: requiredLabel('City')),
+                child: Text(_city ?? 'Select city'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _addressController,
+              decoration: const InputDecoration(
+                labelText: 'Address (optional)',
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Guardian (Wali)',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Required for Nikah profiles — your guardian is your point of contact for serious matches.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _guardianNameController,
+              decoration: InputDecoration(
+                label: requiredLabel('Guardian Name (Sarparast Family)'),
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _guardianContactController,
+              decoration: InputDecoration(
+                label: requiredLabel(
+                  'Guardian Phone Number (Sarparast Family)',
+                ),
+              ),
+              keyboardType: TextInputType.phone,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _guardianRelation,
+              decoration: const InputDecoration(labelText: 'Relation'),
+              items: _guardianRelationOptions
+                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                  .toList(),
+              onChanged: (v) => setState(() => _guardianRelation = v),
+            ),
+            if (_guardianRelation == 'Other') ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _guardianRelationOtherController,
+                decoration: const InputDecoration(labelText: 'Enter relation'),
+              ),
+            ],
           ],
         ),
       ),
@@ -283,9 +381,23 @@ class _GenderPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _GenderTile(label: 'Male', emoji: '👨', selected: value == 'male', onTap: () => onChanged('male'))),
+        Expanded(
+          child: _GenderTile(
+            label: 'Male',
+            emoji: '👨',
+            selected: value == 'male',
+            onTap: () => onChanged('male'),
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _GenderTile(label: 'Female', emoji: '👩', selected: value == 'female', onTap: () => onChanged('female'))),
+        Expanded(
+          child: _GenderTile(
+            label: 'Female',
+            emoji: '👩',
+            selected: value == 'female',
+            onTap: () => onChanged('female'),
+          ),
+        ),
       ],
     );
   }
@@ -296,7 +408,12 @@ class _GenderTile extends StatelessWidget {
   final String emoji;
   final bool selected;
   final VoidCallback onTap;
-  const _GenderTile({required this.label, required this.emoji, required this.selected, required this.onTap});
+  const _GenderTile({
+    required this.label,
+    required this.emoji,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -308,14 +425,142 @@ class _GenderTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.12) : Colors.white,
-          border: Border.all(color: selected ? color : Colors.grey.shade300, width: selected ? 2 : 1),
+          border: Border.all(
+            color: selected ? color : Colors.grey.shade300,
+            width: selected ? 2 : 1,
+          ),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           children: [
             Text(emoji, style: const TextStyle(fontSize: 28)),
             const SizedBox(height: 6),
-            Text(label, style: TextStyle(fontWeight: FontWeight.w700, color: selected ? color : Colors.grey.shade700)),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: selected ? color : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// City's picker — same sheet feel as _SearchablePicker below, but the
+// options list comes from a debounced API call (CitySearchRepository)
+// instead of filtering an in-memory list, since cities can't be preloaded.
+// Includes a "Use <typed text>" row so a real city missing from our ~150k
+// rows can still be entered, same pick-or-type leniency the backend
+// validation (and the web's equivalent combo) already allows.
+class _AsyncSearchablePicker extends StatefulWidget {
+  final String title;
+  final Future<List<String>> Function(String query) search;
+  const _AsyncSearchablePicker({required this.title, required this.search});
+
+  @override
+  State<_AsyncSearchablePicker> createState() => _AsyncSearchablePickerState();
+}
+
+class _AsyncSearchablePickerState extends State<_AsyncSearchablePicker> {
+  final _searchController = TextEditingController();
+  List<String> _results = [];
+  bool _loading = false;
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      setState(() => _loading = true);
+      try {
+        final results = await widget.search(query);
+        if (mounted) setState(() => _results = results);
+      } catch (_) {
+        if (mounted) setState(() => _results = []);
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _searchController.text.trim();
+    final exactMatch = _results.any(
+      (r) => r.toLowerCase() == query.toLowerCase(),
+    );
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                widget.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (v) {
+                  setState(() {});
+                  _onSearchChanged(v);
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search…',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _loading
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : null,
+                ),
+                autofocus: true,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  if (query.isNotEmpty && !exactMatch)
+                    ListTile(
+                      leading: const Icon(Icons.add),
+                      title: Text('Use "$query"'),
+                      onTap: () => Navigator.of(context).pop(query),
+                    ),
+                  ..._results.map(
+                    (option) => ListTile(
+                      title: Text(option),
+                      onTap: () => Navigator.of(context).pop(option),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -327,7 +572,11 @@ class _SearchablePicker extends StatefulWidget {
   final String title;
   final List<String> options;
   final String? initialValue;
-  const _SearchablePicker({required this.title, required this.options, this.initialValue});
+  const _SearchablePicker({
+    required this.title,
+    required this.options,
+    this.initialValue,
+  });
 
   @override
   State<_SearchablePicker> createState() => _SearchablePickerState();
@@ -347,7 +596,9 @@ class _SearchablePickerState extends State<_SearchablePicker> {
     setState(() {
       _filtered = query.isEmpty
           ? widget.options
-          : widget.options.where((o) => o.toLowerCase().contains(query.toLowerCase())).toList();
+          : widget.options
+                .where((o) => o.toLowerCase().contains(query.toLowerCase()))
+                .toList();
     });
   }
 
@@ -359,19 +610,30 @@ class _SearchablePickerState extends State<_SearchablePicker> {
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              child: Text(
+                widget.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
-                decoration: const InputDecoration(hintText: 'Search…', prefixIcon: Icon(Icons.search)),
+                decoration: const InputDecoration(
+                  hintText: 'Search…',
+                  prefixIcon: Icon(Icons.search),
+                ),
                 autofocus: true,
               ),
             ),

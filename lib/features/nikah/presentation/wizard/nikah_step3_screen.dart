@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/api/api_exception.dart';
 import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
 import 'nikah_step1_screen.dart' show maritalStatusOptions;
@@ -24,6 +25,8 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
   final _prefCityController = TextEditingController();
   final _prefSectController = TextEditingController();
   final _prefEducationController = TextEditingController();
+  final _prefIncomeController = TextEditingController();
+  final _prefOtherController = TextEditingController();
   String? _prefMaritalStatus;
   bool _busy = false;
   String? _error;
@@ -40,6 +43,8 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
       _prefCityController.text = profile.prefCity ?? '';
       _prefSectController.text = profile.prefSect ?? '';
       _prefEducationController.text = profile.prefEducation ?? '';
+      _prefIncomeController.text = profile.prefIncome ?? '';
+      _prefOtherController.text = profile.prefOther ?? '';
       _prefMaritalStatus = profile.prefMaritalStatus;
     }
   }
@@ -53,11 +58,21 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
     _prefCityController.dispose();
     _prefSectController.dispose();
     _prefEducationController.dispose();
+    _prefIncomeController.dispose();
+    _prefOtherController.dispose();
     super.dispose();
   }
 
   Future<void> _next() async {
     final l10n = AppLocalizations.of(context)!;
+
+    if (_expectationsController.text.trim().isEmpty) {
+      setState(
+        () => _error = 'Please tell us what you\'re looking for in a partner',
+      );
+      return;
+    }
+
     setState(() {
       _busy = true;
       _error = null;
@@ -73,6 +88,8 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
         'pref_sect': _prefSectController.text.trim(),
         'pref_education': _prefEducationController.text.trim(),
         'pref_marital_status': _prefMaritalStatus,
+        'pref_income': _prefIncomeController.text.trim(),
+        'pref_other': _prefOtherController.text.trim(),
       });
       if (mounted) context.push('/nikah/wizard/step4');
     } on ApiException catch (e) {
@@ -99,7 +116,10 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('In your own words', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const Text(
+            'In your own words',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _aboutController,
@@ -109,13 +129,21 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _expectationsController,
-            decoration: const InputDecoration(labelText: 'What are you looking for?'),
+            decoration: InputDecoration(
+              label: requiredLabel('What are you looking for?'),
+            ),
             maxLines: 4,
           ),
           const SizedBox(height: 24),
-          const Text('Partner Preferences', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const Text(
+            'Partner Preferences',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 4),
-          Text('Used to show your match % with other profiles.', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          Text(
+            'Used to show your match % with other profiles.',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -137,17 +165,45 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
             ],
           ),
           const SizedBox(height: 16),
-          TextFormField(controller: _prefCityController, decoration: const InputDecoration(labelText: 'Preferred city')),
+          TextFormField(
+            controller: _prefCityController,
+            decoration: const InputDecoration(labelText: 'Preferred city'),
+          ),
           const SizedBox(height: 16),
-          TextFormField(controller: _prefSectController, decoration: const InputDecoration(labelText: 'Preferred sect')),
+          TextFormField(
+            controller: _prefSectController,
+            decoration: const InputDecoration(labelText: 'Preferred sect'),
+          ),
           const SizedBox(height: 16),
-          TextFormField(controller: _prefEducationController, decoration: const InputDecoration(labelText: 'Preferred education')),
+          TextFormField(
+            controller: _prefEducationController,
+            decoration: const InputDecoration(labelText: 'Preferred education'),
+          ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _prefMaritalStatus,
-            decoration: const InputDecoration(labelText: 'Preferred marital status'),
-            items: maritalStatusOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+            decoration: const InputDecoration(
+              labelText: 'Preferred marital status',
+            ),
+            items: maritalStatusOptions.entries
+                .map(
+                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                )
+                .toList(),
             onChanged: (v) => setState(() => _prefMaritalStatus = v),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _prefIncomeController,
+            decoration: const InputDecoration(
+              labelText: 'Preferred income / business worth',
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _prefOtherController,
+            decoration: const InputDecoration(labelText: 'Other preferences'),
+            maxLines: 3,
           ),
         ],
       ),

@@ -5,10 +5,21 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/api/api_exception.dart';
 import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../state/nikah_controller.dart';
 
 const _sectOptions = ['Sunni', 'Shia', 'Ahle Hadith', 'Deobandi', 'Other'];
+// Matches web's step-basic.blade.php $educationLevels exactly.
+const _educationLevels = [
+  'Matric / O-Levels',
+  'Intermediate / A-Levels',
+  "Bachelor's",
+  "Master's",
+  'MPhil / MS',
+  'PhD',
+  'Madrassah / Islamic Education',
+];
 const _prayerOptions = {
   'always': 'Always (5x daily)',
   'usually': 'Usually',
@@ -16,14 +27,26 @@ const _prayerOptions = {
   'rarely': 'Rarely',
 };
 const _hijabBeardOptions = {'yes': 'Yes', 'no': 'No', 'sometimes': 'Sometimes'};
-const _smokesOptions = {'no': 'No', 'occasionally': 'Occasionally', 'yes': 'Yes'};
+const _smokesOptions = {
+  'no': 'No',
+  'occasionally': 'Occasionally',
+  'yes': 'Yes',
+};
 const _dietOptions = {
   'halal_only': 'Halal only',
   'halal_mostly': 'Mostly halal',
   'no_restriction': 'No restriction',
 };
 const _familyTypeOptions = ['Joint Family', 'Nuclear Family', 'Other'];
-const _commonLanguages = ['Urdu', 'English', 'Punjabi', 'Sindhi', 'Pashto', 'Saraiki', 'Balochi'];
+const _commonLanguages = [
+  'Urdu',
+  'English',
+  'Punjabi',
+  'Sindhi',
+  'Pashto',
+  'Saraiki',
+  'Balochi',
+];
 
 class NikahStep2Screen extends ConsumerStatefulWidget {
   const NikahStep2Screen({super.key});
@@ -37,11 +60,11 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
   final _casteController = TextEditingController();
   final _familyTypeOtherController = TextEditingController();
   final _ethnicityController = TextEditingController();
-  final _educationController = TextEditingController();
   final _professionController = TextEditingController();
   final _languageOtherController = TextEditingController();
 
   String? _sect;
+  String? _education;
   String? _prayerFrequency;
   String? _hijabOrBeard;
   String? _smokes;
@@ -59,10 +82,13 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
     if (profile != null) {
       _casteController.text = profile.caste ?? '';
       _ethnicityController.text = profile.ethnicity ?? '';
-      _educationController.text = profile.education ?? '';
+      _education = (profile.education?.isNotEmpty ?? false)
+          ? profile.education
+          : null;
       _professionController.text = profile.profession ?? '';
       _openToPolygamy = profile.openToPolygamy ?? false;
       _familyType = profile.familyType;
+      _sect = profile.sect;
     }
   }
 
@@ -72,7 +98,6 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
     _casteController.dispose();
     _familyTypeOtherController.dispose();
     _ethnicityController.dispose();
-    _educationController.dispose();
     _professionController.dispose();
     _languageOtherController.dispose();
     super.dispose();
@@ -80,6 +105,16 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
 
   Future<void> _next() async {
     final l10n = AppLocalizations.of(context)!;
+
+    if (_sect == null || _sect!.isEmpty) {
+      setState(() => _error = 'Please select your sect');
+      return;
+    }
+    if (_education == null || _education!.isEmpty) {
+      setState(() => _error = 'Please select your education');
+      return;
+    }
+
     setState(() {
       _busy = true;
       _error = null;
@@ -88,16 +123,20 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
     try {
       await ref.read(nikahControllerProvider.notifier).save({
         'sect': _sect,
-        'sect_other': _sect == 'Other' ? _sectOtherController.text.trim() : null,
+        'sect_other': _sect == 'Other'
+            ? _sectOtherController.text.trim()
+            : null,
         'caste': _casteController.text.trim(),
         'prayer_frequency': _prayerFrequency,
         'hijab_or_beard': _hijabOrBeard,
         'smokes': _smokes,
         'diet': _diet,
         'open_to_polygamy': _openToPolygamy,
-        'family_type': _familyType == 'Other' ? _familyTypeOtherController.text.trim() : _familyType,
+        'family_type': _familyType == 'Other'
+            ? _familyTypeOtherController.text.trim()
+            : _familyType,
         'ethnicity': _ethnicityController.text.trim(),
-        'education': _educationController.text.trim(),
+        'education': _education,
         'profession': _professionController.text.trim(),
         'languages': _languages.toList(),
         'language_other': _languageOtherController.text.trim(),
@@ -127,44 +166,70 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Everything here is optional — share what you\'re comfortable with', style: TextStyle(fontSize: 14)),
+          const Text(
+            'Sect and Education are required — the rest is optional, share what you\'re comfortable with',
+            style: TextStyle(fontSize: 14),
+          ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _sect,
-            decoration: const InputDecoration(labelText: 'Sect'),
-            items: _sectOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+            decoration: InputDecoration(label: requiredLabel('Sect')),
+            items: _sectOptions
+                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .toList(),
             onChanged: (v) => setState(() => _sect = v),
           ),
           if (_sect == 'Other') ...[
             const SizedBox(height: 12),
-            TextFormField(controller: _sectOtherController, decoration: const InputDecoration(labelText: 'Enter sect')),
+            TextFormField(
+              controller: _sectOtherController,
+              decoration: const InputDecoration(labelText: 'Enter sect'),
+            ),
           ],
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _prayerFrequency,
-            decoration: const InputDecoration(labelText: 'How often do you pray?'),
-            items: _prayerOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+            decoration: const InputDecoration(
+              labelText: 'How often do you pray?',
+            ),
+            items: _prayerOptions.entries
+                .map(
+                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                )
+                .toList(),
             onChanged: (v) => setState(() => _prayerFrequency = v),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _hijabOrBeard,
             decoration: const InputDecoration(labelText: 'Hijab / Beard'),
-            items: _hijabBeardOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+            items: _hijabBeardOptions.entries
+                .map(
+                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                )
+                .toList(),
             onChanged: (v) => setState(() => _hijabOrBeard = v),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _smokes,
             decoration: const InputDecoration(labelText: 'Smoking'),
-            items: _smokesOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+            items: _smokesOptions.entries
+                .map(
+                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                )
+                .toList(),
             onChanged: (v) => setState(() => _smokes = v),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _diet,
             decoration: const InputDecoration(labelText: 'Diet'),
-            items: _dietOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+            items: _dietOptions.entries
+                .map(
+                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                )
+                .toList(),
             onChanged: (v) => setState(() => _diet = v),
           ),
           const SizedBox(height: 8),
@@ -175,28 +240,55 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
             onChanged: (v) => setState(() => _openToPolygamy = v),
           ),
           const SizedBox(height: 16),
-          const Text('Background', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const Text(
+            'Background',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 12),
-          TextFormField(controller: _casteController, decoration: const InputDecoration(labelText: 'Caste')),
+          TextFormField(
+            controller: _casteController,
+            decoration: const InputDecoration(labelText: 'Caste'),
+          ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _familyType,
             decoration: const InputDecoration(labelText: 'Family Type'),
-            items: _familyTypeOptions.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
+            items: _familyTypeOptions
+                .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                .toList(),
             onChanged: (v) => setState(() => _familyType = v),
           ),
           if (_familyType == 'Other') ...[
             const SizedBox(height: 12),
-            TextFormField(controller: _familyTypeOtherController, decoration: const InputDecoration(labelText: 'Enter family type')),
+            TextFormField(
+              controller: _familyTypeOtherController,
+              decoration: const InputDecoration(labelText: 'Enter family type'),
+            ),
           ],
           const SizedBox(height: 16),
-          TextFormField(controller: _ethnicityController, decoration: const InputDecoration(labelText: 'Ethnicity')),
+          TextFormField(
+            controller: _ethnicityController,
+            decoration: const InputDecoration(labelText: 'Ethnicity'),
+          ),
           const SizedBox(height: 16),
-          TextFormField(controller: _educationController, decoration: const InputDecoration(labelText: 'Education')),
+          DropdownButtonFormField<String>(
+            initialValue: _education,
+            decoration: InputDecoration(label: requiredLabel('Education')),
+            items: _educationLevels
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: (v) => setState(() => _education = v),
+          ),
           const SizedBox(height: 16),
-          TextFormField(controller: _professionController, decoration: const InputDecoration(labelText: 'Profession')),
+          TextFormField(
+            controller: _professionController,
+            decoration: const InputDecoration(labelText: 'Profession'),
+          ),
           const SizedBox(height: 16),
-          const Text('Languages Spoken', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text(
+            'Languages Spoken',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
           Wrap(
             spacing: 8,
             children: _commonLanguages.map((lang) {
@@ -204,7 +296,9 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
               return FilterChip(
                 label: Text(lang),
                 selected: selected,
-                onSelected: (v) => setState(() => v ? _languages.add(lang) : _languages.remove(lang)),
+                onSelected: (v) => setState(
+                  () => v ? _languages.add(lang) : _languages.remove(lang),
+                ),
               );
             }).toList(),
           ),

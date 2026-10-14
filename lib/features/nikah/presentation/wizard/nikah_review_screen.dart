@@ -55,76 +55,127 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-      appBar: AppBar(title: const Text('Review Your Profile')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(24),
-                children: [
-                  if (_error != null) ...[
-                    ErrorBanner(message: _error!),
-                    const SizedBox(height: 16),
-                  ],
-                  LinearProgressIndicator(value: profile.completenessPercentage / 100),
-                  const SizedBox(height: 8),
-                  Text('${profile.completenessPercentage}% complete', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                  const SizedBox(height: 20),
-                  _section('Basic Info', [
-                    _row('Age', '${profile.age}'),
-                    _row('Height', profile.height),
-                    _row('Marital Status', profile.maritalStatus.replaceAll('_', ' ')),
-                    _row('City', '${profile.city}${profile.state != null ? ', ${profile.state}' : ''}'),
-                  ]),
-                  _section('Guardian', [
-                    _row('Name', profile.guardianName),
-                    _row('Contact', profile.guardianContact),
-                    _row('Relation', profile.guardianRelation),
-                  ]),
-                  _section('Deen & Lifestyle', [
-                    _row('Sect', profile.sect),
-                    _row('Prayer', profile.prayerFrequency),
-                    _row('Education', profile.education),
-                    _row('Profession', profile.profession),
-                  ]),
-                  _section('About', [
-                    _row('About', profile.about),
-                    _row('Looking for', profile.expectations),
-                  ]),
-                  _section('Verification', [
-                    _row('CNIC Number', profile.hasCnicNumber ? '••••• (saved)' : 'Not provided'),
-                    _row('Photo', profile.hasPhoto ? 'Uploaded ✓' : 'Not added'),
-                    _row('Visibility', profile.visibility),
-                  ]),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-              child: Column(
-                children: [
-                  if (!profile.isComplete)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        l10n.nikahFinishVerificationFirst,
-                        style: TextStyle(color: Colors.red.shade700, fontSize: 13),
-                        textAlign: TextAlign.center,
+        appBar: AppBar(title: const Text('Review Your Profile')),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    if (_error != null) ...[
+                      ErrorBanner(message: _error!),
+                      const SizedBox(height: 16),
+                    ],
+                    LinearProgressIndicator(
+                      value: profile.completenessPercentage / 100,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${profile.completenessPercentage}% complete',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
                       ),
                     ),
-                  ElevatedButton(
-                    onPressed: (_busy || !profile.isComplete) ? null : _submit,
-                    child: _busy
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(l10n.nikahSubmitForVerification),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    _section('Basic Info', [
+                      _row('Age', '${profile.age}'),
+                      _row('Height', profile.height),
+                      _row(
+                        'Marital Status',
+                        profile.maritalStatus.replaceAll('_', ' '),
+                      ),
+                      _row(
+                        'City',
+                        '${profile.city}${profile.state != null ? ', ${profile.state}' : ''}',
+                      ),
+                      _row('Address', profile.address),
+                    ]),
+                    _section('Guardian (Sarparast Family)', [
+                      _row('Name', profile.guardianName),
+                      _row('Contact', profile.guardianContact),
+                      _row('Relation', profile.guardianRelation),
+                    ]),
+                    _section('Deen & Lifestyle', [
+                      _row('Sect', profile.sect),
+                      _row('Prayer', profile.prayerFrequency),
+                      _row('Education', profile.education),
+                      _row('Profession', profile.profession),
+                    ]),
+                    _section('About', [
+                      _row('About', profile.about),
+                      _row('Looking for', profile.expectations),
+                      _row(
+                        'Preferred age',
+                        (profile.prefMinAge != null ||
+                                profile.prefMaxAge != null)
+                            ? '${profile.prefMinAge ?? '—'} – ${profile.prefMaxAge ?? '—'}'
+                            : null,
+                      ),
+                      _row('Preferred city', profile.prefCity),
+                      _row('Preferred sect', profile.prefSect),
+                      _row('Preferred education', profile.prefEducation),
+                      _row(
+                        'Preferred marital status',
+                        profile.prefMaritalStatus,
+                      ),
+                      _row('Preferred income', profile.prefIncome),
+                      _row('Other preferences', profile.prefOther),
+                    ]),
+                    _section('Verification', [
+                      _row(
+                        'CNIC Number',
+                        profile.hasCnicNumber
+                            ? '••••• (saved)'
+                            : 'Not provided',
+                      ),
+                      _row(
+                        'Photo',
+                        profile.hasPhoto ? 'Uploaded ✓' : 'Not added',
+                      ),
+                      _row('Visibility', profile.visibility),
+                    ]),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                child: Column(
+                  children: [
+                    if (!profile.isComplete)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          l10n.nikahFinishVerificationFirst,
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 13,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ElevatedButton(
+                      onPressed: (_busy || !profile.isComplete)
+                          ? null
+                          : _submit,
+                      child: _busy
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(l10n.nikahSubmitForVerification),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -137,7 +188,10 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
             const SizedBox(height: 10),
             ...rows,
           ],
@@ -153,7 +207,13 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 110, child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13))),
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
+          ),
           Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
         ],
       ),

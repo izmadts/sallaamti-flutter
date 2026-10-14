@@ -15,6 +15,7 @@ class NikahProfile {
   final String? education;
   final String? profession;
   final String city;
+  final String? address;
   final String? state;
   final String? country;
   final String? ethnicity;
@@ -41,6 +42,8 @@ class NikahProfile {
   final String? prefSect;
   final String? prefEducation;
   final String? prefMaritalStatus;
+  final String? prefIncome;
+  final String? prefOther;
   final int completenessPercentage;
   final bool canBrowse;
 
@@ -60,6 +63,7 @@ class NikahProfile {
     this.education,
     this.profession,
     required this.city,
+    this.address,
     this.state,
     this.country,
     this.ethnicity,
@@ -86,57 +90,62 @@ class NikahProfile {
     this.prefSect,
     this.prefEducation,
     this.prefMaritalStatus,
+    this.prefIncome,
+    this.prefOther,
     required this.completenessPercentage,
     required this.canBrowse,
   });
 
   factory NikahProfile.fromJson(Map<String, dynamic> json) => NikahProfile(
-        id: json['id'] as int,
-        publicToken: json['public_token'] as String,
-        age: json['age'] as int,
-        height: json['height'] as String?,
-        maritalStatus: json['marital_status'] as String,
-        openToPolygamy: json['open_to_polygamy'] as bool?,
-        sect: json['sect'] as String?,
-        caste: json['caste'] as String?,
-        prayerFrequency: json['prayer_frequency'] as String?,
-        hijabOrBeard: json['hijab_or_beard'] as String?,
-        smokes: json['smokes'] as String?,
-        diet: json['diet'] as String?,
-        education: json['education'] as String?,
-        profession: json['profession'] as String?,
-        city: json['city'] as String,
-        state: json['state'] as String?,
-        country: json['country'] as String?,
-        ethnicity: json['ethnicity'] as String?,
-        language: json['language'] as String?,
-        familyType: json['family_type'] as String?,
-        guardianName: json['guardian_name'] as String,
-        guardianContact: json['guardian_contact'] as String,
-        guardianRelation: json['guardian_relation'] as String?,
-        about: json['about'] as String?,
-        expectations: json['expectations'] as String?,
-        hasPhoto: json['has_photo'] as bool? ?? false,
-        allowPhotoSharing: json['allow_photo_sharing'] as bool? ?? true,
-        hasCnicNumber: json['has_cnic_number'] as bool? ?? false,
-        verificationStatus: json['verification_status'] as String,
-        rejectionReason: json['rejection_reason'] as String?,
-        visibility: json['visibility'] as String,
-        isActive: json['is_active'] as bool? ?? true,
-        paymentStatus: json['payment_status'] as String,
-        paymentAmount: json['payment_amount']?.toString(),
-        paymentInstructions: NikahPaymentInstructions.fromJson(
-          json['payment_instructions'] as Map<String, dynamic>? ?? const {},
-        ),
-        prefMinAge: json['pref_min_age'] as int?,
-        prefMaxAge: json['pref_max_age'] as int?,
-        prefCity: json['pref_city'] as String?,
-        prefSect: json['pref_sect'] as String?,
-        prefEducation: json['pref_education'] as String?,
-        prefMaritalStatus: json['pref_marital_status'] as String?,
-        completenessPercentage: json['completeness_percentage'] as int? ?? 0,
-        canBrowse: json['can_browse'] as bool? ?? false,
-      );
+    id: json['id'] as int,
+    publicToken: json['public_token'] as String,
+    age: json['age'] as int,
+    height: json['height'] as String?,
+    maritalStatus: json['marital_status'] as String,
+    openToPolygamy: json['open_to_polygamy'] as bool?,
+    sect: json['sect'] as String?,
+    caste: json['caste'] as String?,
+    prayerFrequency: json['prayer_frequency'] as String?,
+    hijabOrBeard: json['hijab_or_beard'] as String?,
+    smokes: json['smokes'] as String?,
+    diet: json['diet'] as String?,
+    education: json['education'] as String?,
+    profession: json['profession'] as String?,
+    city: json['city'] as String,
+    address: json['address'] as String?,
+    state: json['state'] as String?,
+    country: json['country'] as String?,
+    ethnicity: json['ethnicity'] as String?,
+    language: json['language'] as String?,
+    familyType: json['family_type'] as String?,
+    guardianName: json['guardian_name'] as String,
+    guardianContact: json['guardian_contact'] as String,
+    guardianRelation: json['guardian_relation'] as String?,
+    about: json['about'] as String?,
+    expectations: json['expectations'] as String?,
+    hasPhoto: json['has_photo'] as bool? ?? false,
+    allowPhotoSharing: json['allow_photo_sharing'] as bool? ?? true,
+    hasCnicNumber: json['has_cnic_number'] as bool? ?? false,
+    verificationStatus: json['verification_status'] as String,
+    rejectionReason: json['rejection_reason'] as String?,
+    visibility: json['visibility'] as String,
+    isActive: json['is_active'] as bool? ?? true,
+    paymentStatus: json['payment_status'] as String,
+    paymentAmount: json['payment_amount']?.toString(),
+    paymentInstructions: NikahPaymentInstructions.fromJson(
+      json['payment_instructions'] as Map<String, dynamic>? ?? const {},
+    ),
+    prefMinAge: json['pref_min_age'] as int?,
+    prefMaxAge: json['pref_max_age'] as int?,
+    prefCity: json['pref_city'] as String?,
+    prefSect: json['pref_sect'] as String?,
+    prefEducation: json['pref_education'] as String?,
+    prefMaritalStatus: json['pref_marital_status'] as String?,
+    prefIncome: json['pref_income'] as String?,
+    prefOther: json['pref_other'] as String?,
+    completenessPercentage: json['completeness_percentage'] as int? ?? 0,
+    canBrowse: json['can_browse'] as bool? ?? false,
+  );
 
   // CNIC front/back photo requirement retired — the wizard's own step-level
   // validation already enforces CNIC number and photo being filled in
@@ -167,7 +176,8 @@ class NikahPaymentInstructions {
     this.bankAccountIban,
   });
 
-  factory NikahPaymentInstructions.fromJson(Map<String, dynamic> json) => NikahPaymentInstructions(
+  factory NikahPaymentInstructions.fromJson(Map<String, dynamic> json) =>
+      NikahPaymentInstructions(
         jazzcashNumber: json['jazzcash_number'] as String?,
         jazzcashAccountTitle: json['jazzcash_account_title'] as String?,
         easypaisaNumber: json['easypaisa_number'] as String?,
@@ -178,7 +188,8 @@ class NikahPaymentInstructions {
       );
 
   bool get hasJazzcash => jazzcashNumber != null && jazzcashNumber!.isNotEmpty;
-  bool get hasEasypaisa => easypaisaNumber != null && easypaisaNumber!.isNotEmpty;
+  bool get hasEasypaisa =>
+      easypaisaNumber != null && easypaisaNumber!.isNotEmpty;
   bool get hasBankTransfer => bankName != null && bankName!.isNotEmpty;
   bool get hasAnyMethod => hasJazzcash || hasEasypaisa || hasBankTransfer;
 }
