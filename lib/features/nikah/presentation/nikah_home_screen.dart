@@ -7,6 +7,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../data/nikah_hire_repository.dart';
 import '../domain/nikah_profile.dart';
 import '../state/nikah_controller.dart';
+import 'nikah_browse_screen.dart';
 
 class NikahHomeScreen extends ConsumerWidget {
   const NikahHomeScreen({super.key});
@@ -14,63 +15,36 @@ class NikahHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(nikahControllerProvider);
-    final theme = ModuleThemes.forModule('nikah');
 
+    if (state.status == NikahLoadStatus.loading) {
+      return Theme(
+        data: ModuleThemes.forModule('nikah'),
+        child: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+
+    // No profile yet — a teaser browse screen (own Scaffold/AppBar) rather
+    // than this screen's own "create a profile" prompt, so a first-time
+    // visitor sees real profiles (and the reason to sign up) immediately
+    // instead of a bare button. See NikahBrowseScreen's noProfileMode doc.
+    if (state.error == null && state.profile == null) {
+      return const NikahBrowseScreen(noProfileMode: true);
+    }
+
+    final theme = ModuleThemes.forModule('nikah');
     return Theme(
       data: theme,
       child: Scaffold(
         appBar: AppBar(title: const Text('💍 Nikah Matchmaking')),
         body: SafeArea(
-          child: state.status == NikahLoadStatus.loading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: () => ref.read(nikahControllerProvider.notifier).refresh(),
-                  child: state.error != null
-                      ? _ErrorView(message: state.error!, onRetry: () => ref.read(nikahControllerProvider.notifier).refresh())
-                      : state.profile == null
-                          ? const _NoProfileView()
-                          : _ProfileStatusView(profile: state.profile!),
-                ),
+          child: RefreshIndicator(
+            onRefresh: () => ref.read(nikahControllerProvider.notifier).refresh(),
+            child: state.error != null
+                ? _ErrorView(message: state.error!, onRetry: () => ref.read(nikahControllerProvider.notifier).refresh())
+                : _ProfileStatusView(profile: state.profile!),
+          ),
         ),
       ),
-    );
-  }
-}
-
-class _NoProfileView extends StatelessWidget {
-  const _NoProfileView();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        const SizedBox(height: 40),
-        const Center(child: Text('💍', style: TextStyle(fontSize: 64))),
-        const SizedBox(height: 20),
-        Text(
-          l10n.nikahFindMatchTitle,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.nikahFindMatchSubtitle,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 28),
-        ElevatedButton(
-          onPressed: () => context.push('/nikah/wizard/step1'),
-          child: Text(l10n.nikahCreateProfile),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: () => context.push('/faq/nikah'),
-          child: Text(l10n.faqTitle),
-        ),
-      ],
     );
   }
 }

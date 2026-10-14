@@ -13,8 +13,40 @@ import '../domain/nikah_card.dart';
 import '../state/nikah_controller.dart';
 import 'wizard/nikah_step1_screen.dart' show maritalStatusOptions;
 
+// A prompt to create a Nikah profile first — shown instead of a protected
+// screen/action when noProfileMode's visitor taps something that actually
+// needs one (viewing a profile's full details, hiring a Nikah Counselor).
+// Browsing the card list itself doesn't need this; everything past it does.
+void _promptCreateProfile(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Create Your Nikah Profile'),
+      content: const Text('Create your free Nikah profile first to view full details, send interest, or hire a Nikah Counselor.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Not now')),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(ctx).pop();
+            context.push('/nikah/wizard/step1');
+          },
+          child: const Text('Create Profile'),
+        ),
+      ],
+    ),
+  );
+}
+
 class NikahBrowseScreen extends ConsumerStatefulWidget {
-  const NikahBrowseScreen({super.key});
+  // Set by NikahHomeScreen when the member has no Nikah profile yet — the
+  // backend still returns the card list in this case (teaser browsing, no
+  // match percentages since there's no profile to compare against) but
+  // gates everything past it, so this mirrors that on the UI: an extra
+  // "Create Your Nikah Profile" banner up top, a Hire Counselor button that
+  // prompts for a profile instead of opening the (also-gated) picker
+  // screen, and tapping any card prompts instead of opening its detail page.
+  final bool noProfileMode;
+  const NikahBrowseScreen({super.key, this.noProfileMode = false});
 
   @override
   ConsumerState<NikahBrowseScreen> createState() => _NikahBrowseScreenState();
@@ -114,7 +146,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Browse Matches'),
+          title: Text(widget.noProfileMode ? 'Nikah Profiles Browse' : 'Browse Matches'),
           actions: [
             Stack(
               alignment: Alignment.center,
@@ -134,9 +166,16 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
             ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: () => _load(reset: true),
-          child: _buildBody(context),
+        body: Column(
+          children: [
+            if (widget.noProfileMode) _NoProfileHeader(onOpenFilters: _openFilters),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => _load(reset: true),
+                child: _buildBody(context),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -184,15 +223,69 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
         return _NikahCardTile(
           key: ValueKey(_profiles[index].id),
           card: _profiles[index],
+          noProfileMode: widget.noProfileMode,
         );
       },
     );
   }
 }
 
+// The "create a profile" push shown above the grid in noProfileMode — a
+// banner button plus a Hire Counselor shortcut next to the filter, matching
+// the always-visible filter icon already in the AppBar so there's no need
+// to duplicate that action here, just make it more visible for a first-time
+// visitor who hasn't learned where it lives yet.
+class _NoProfileHeader extends StatelessWidget {
+  final VoidCallback onOpenFilters;
+  const _NoProfileHeader({required this.onOpenFilters});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      color: primary,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.push('/nikah/wizard/step1'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: primary,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text('Create Your Nikah Profile', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton.icon(
+                onPressed: onOpenFilters,
+                icon: const Icon(Icons.tune, color: Colors.white),
+                label: const Text('Filter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+              OutlinedButton(
+                onPressed: () => _promptCreateProfile(context),
+                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white), foregroundColor: Colors.white),
+                child: const Text('Hire Nikah Counselor'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _NikahCardTile extends StatefulWidget {
   final NikahCard card;
-  const _NikahCardTile({super.key, required this.card});
+  final bool noProfileMode;
+  const _NikahCardTile({super.key, required this.card, this.noProfileMode = false});
 
   @override
   State<_NikahCardTile> createState() => _NikahCardTileState();
@@ -265,7 +358,7 @@ class _NikahCardTileState extends State<_NikahCardTile> {
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
-        onTap: () => context.push('/nikah/profile/${card.id}'),
+        onTap: widget.noProfileMode ? () => _promptCreateProfile(context) : () => context.push('/nikah/profile/${card.id}'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
