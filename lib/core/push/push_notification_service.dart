@@ -40,7 +40,7 @@ Future<void> initLocalNotifications() async {
 // than needing a BuildContext/ref passed in, since this runs from a plain
 // top-level Firebase callback, not a widget.
 void _navigateFromPushData(Map<String, dynamic> data) {
-  final route = resolveNotificationRoute(type: data['type'] as String?);
+  final route = resolveNotificationRoute(type: data['type'] as String?, data: data);
   if (route == null) return;
 
   final context = rootNavigatorKey.currentContext;

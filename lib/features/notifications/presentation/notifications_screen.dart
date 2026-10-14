@@ -21,6 +21,7 @@ class NotificationsScreen extends ConsumerWidget {
       'interest_received' => Icons.mail_outline,
       'interest_accepted' => Icons.favorite,
       'interest_declined' => Icons.heart_broken_outlined,
+      'guardian_message' => Icons.chat_bubble_outline,
       'payment_confirmed' => Icons.payments_outlined,
       'payment_rejected' => Icons.error_outline,
       'nikah_payment_reminder' => Icons.payments_outlined,

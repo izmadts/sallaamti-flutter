@@ -1,7 +1,7 @@
-// Maps a notification's `type` (from an FCM push's data payload — no `url`
-// available there) or `url` (from the in-app notification list, which reads
-// Laravel's `database` channel rows) to the in-app route to open on tap.
-// Shared by notifications_screen.dart (tapping a list item) and
+// Maps a notification's `type`+`data` (from an FCM push's data payload — no
+// `url` available there) or `url` (from the in-app notification list, which
+// reads Laravel's `database` channel rows) to the in-app route to open on
+// tap. Shared by notifications_screen.dart (tapping a list item) and
 // push_notification_service.dart (tapping a system-tray push) so the two
 // paths can never resolve the same notification two different ways.
 library;
@@ -25,9 +25,19 @@ const _nikahPaymentTypes = {
   'nikah_payment_reminder',
 };
 
-String? resolveNotificationRoute({String? url, String? type}) {
+// [data] is the FCM push's full data payload (may be empty/absent for an
+// in-app-list tap, which only ever has [url]/[type]).
+String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic> data = const {}}) {
   if (_quranLiveTypes.contains(type)) return '/quran-live/my-class';
   if (_nikahPaymentTypes.contains(type)) return '/nikah/payment';
+
+  // A push's data payload never carries url — NikahGuardianMessageReceived
+  // sends interest_id alongside type for exactly this reason (see
+  // app/Notifications/NikahGuardianMessageReceived.php toFcm()).
+  if (type == 'guardian_message') {
+    final interestId = data['interest_id'];
+    if (interestId != null) return '/nikah/interests/$interestId/messages';
+  }
 
   // The web route names all start with 'quran-live.', but the URL PATHS
   // themselves don't consistently — /my-quran-class (my-class) vs
@@ -41,6 +51,14 @@ String? resolveNotificationRoute({String? url, String? type}) {
   if (uri == null) return null;
 
   if (uri.path.contains('payment')) return '/nikah/payment';
+
+  // /nikah/interests/{id}/messages (NikahGuardianMessageReceived's toArray()
+  // url) used to match the generic 'interests' check below and lose the id
+  // entirely, landing on the Interests list instead of the actual
+  // conversation. Checked first so the more specific match wins.
+  final messagesMatch = RegExp(r'/nikah/interests/(\d+)/messages').firstMatch(uri.path);
+  if (messagesMatch != null) return '/nikah/interests/${messagesMatch.group(1)}/messages';
+
   if (uri.path.contains('interests')) return '/nikah/interests';
   if (uri.path.contains('browse')) return '/nikah/browse';
   if (uri.path.contains('edit')) return '/nikah/wizard/step1';
