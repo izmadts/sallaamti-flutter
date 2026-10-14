@@ -110,6 +110,18 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       setState(() => _error = 'Please select your date of birth');
       return;
     }
+    if (_height == null || _height!.trim().isEmpty) {
+      setState(() => _error = 'Please select your height');
+      return;
+    }
+    // State is only genuinely optional when the picked country has no
+    // states/provinces in our data at all — matches the web forms' same
+    // "required unless the field can't apply" treatment.
+    final hasStates = (ref.read(countryStatesProvider).valueOrNull?.statesFor(_country) ?? []).isNotEmpty;
+    if (hasStates && (_state == null || _state!.trim().isEmpty)) {
+      setState(() => _error = 'Please select your state / province');
+      return;
+    }
     if (_city == null || _city!.trim().isEmpty) {
       setState(() => _error = 'Please select your city');
       return;
@@ -233,7 +245,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _height,
-              decoration: const InputDecoration(labelText: 'Height'),
+              decoration: InputDecoration(label: requiredLabel('Height')),
               items: _heightOptions()
                   .map((h) => DropdownMenuItem(value: h, child: Text(h)))
                   .toList(),
@@ -282,8 +294,8 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
                   if (cs.statesFor(_country).isNotEmpty)
                     DropdownButtonFormField<String>(
                       initialValue: _state,
-                      decoration: const InputDecoration(
-                        labelText: 'State / Province',
+                      decoration: InputDecoration(
+                        label: requiredLabel('State / Province'),
                       ),
                       items: cs
                           .statesFor(_country)

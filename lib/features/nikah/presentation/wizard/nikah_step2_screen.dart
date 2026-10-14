@@ -115,6 +115,10 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
       setState(() => _error = 'Please select your education');
       return;
     }
+    if (_professionController.text.trim().isEmpty) {
+      setState(() => _error = 'Please enter your profession');
+      return;
+    }
 
     setState(() {
       _busy = true;
@@ -169,7 +173,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Sect and Education are required — the rest is optional, share what you\'re comfortable with',
+            'Sect, Education, and Profession are required — the rest is optional, share what you\'re comfortable with',
             style: TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),
@@ -284,7 +288,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _professionController,
-            decoration: const InputDecoration(labelText: 'Profession'),
+            decoration: InputDecoration(label: requiredLabel('Profession')),
           ),
           const SizedBox(height: 16),
           const Text(
