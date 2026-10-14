@@ -147,24 +147,28 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.noProfileMode ? 'Nikah Profiles Browse' : 'Browse Matches'),
-          actions: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
-                if (_filters.isNotEmpty)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(color: Color(0xFFB8962E), shape: BoxShape.circle),
-                    ),
+          // noProfileMode already has its own Filter action in
+          // _NoProfileHeader below — showing this one too just duplicates it.
+          actions: widget.noProfileMode
+              ? null
+              : [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
+                      if (_filters.isNotEmpty)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(color: Color(0xFFB8962E), shape: BoxShape.circle),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
-          ],
+                ],
         ),
         body: Column(
           children: [
@@ -262,17 +266,22 @@ class _NoProfileHeader extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton.icon(
                 onPressed: onOpenFilters,
                 icon: const Icon(Icons.tune, color: Colors.white),
                 label: const Text('Filter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
-              OutlinedButton(
-                onPressed: () => _promptCreateProfile(context),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white), foregroundColor: Colors.white),
-                child: const Text('Hire Nikah Counselor'),
+              const SizedBox(width: 8),
+              // Expanded (not a bare OutlinedButton) so long text or a wider
+              // system font scale shrinks/wraps instead of silently
+              // overflowing off-screen with no release-mode warning.
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _promptCreateProfile(context),
+                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white), foregroundColor: Colors.white),
+                  child: const Text('Hire Nikah Counselor', textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
               ),
             ],
           ),
