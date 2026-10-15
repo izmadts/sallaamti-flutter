@@ -14,40 +14,114 @@ import '../domain/nikah_card.dart';
 import '../state/nikah_controller.dart';
 import 'wizard/nikah_step1_screen.dart' show maritalStatusOptions;
 
-// A prompt to create a Nikah profile first — shown instead of a protected
-// screen/action when noProfileMode's visitor taps something that actually
-// needs one (viewing a profile's full details, hiring a Nikah Counselor).
-// Browsing the card list itself doesn't need this; everything past it does.
-void _promptCreateProfile(BuildContext context) {
+// Describes why a member can only teaser-browse right now — no profile at
+// all, or a profile that exists but is still unpaid/unverified. Built by
+// the caller (NikahHomeScreen, which already has a BuildContext/l10n) from
+// one of the factories below so this file never has to know which case
+// it's in beyond "is there one at all" (widget.restriction != null).
+class NikahBrowseRestriction {
+  final String bannerTitle;
+  final String dialogTitle;
+  final String dialogMessage;
+  // Null actionLabel/actionRoute means there's nothing to do but wait (e.g.
+  // payment/verification already submitted and under review) — the banner
+  // then shows no button, and the dialog shows only a dismiss action.
+  final String? actionLabel;
+  final String? actionRoute;
+
+  const NikahBrowseRestriction({
+    required this.bannerTitle,
+    required this.dialogTitle,
+    required this.dialogMessage,
+    this.actionLabel,
+    this.actionRoute,
+  });
+
+  factory NikahBrowseRestriction.noProfile(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return NikahBrowseRestriction(
+      bannerTitle: l10n.nikahBrowseTeaserTitle,
+      dialogTitle: l10n.nikahCreateProfile,
+      dialogMessage: l10n.nikahCreateProfileDialogMessage,
+      actionLabel: l10n.nikahCreateProfile,
+      actionRoute: '/nikah/wizard/step1',
+    );
+  }
+
+  factory NikahBrowseRestriction.paymentPending(BuildContext context, {required bool rejected, String? amount}) {
+    final l10n = AppLocalizations.of(context)!;
+    final reason = rejected ? l10n.nikahPaymentRejectedMessage : l10n.nikahPaymentDueMessage(amount ?? '');
+    return NikahBrowseRestriction(
+      bannerTitle: l10n.nikahBrowseTeaserTitle,
+      dialogTitle: rejected ? l10n.nikahPaymentRejectedTitle : l10n.nikahPaymentDueTitle,
+      dialogMessage: '$reason\n\n${l10n.nikahCompleteStepBeforeBrowsing}',
+      actionLabel: l10n.nikahPayVerificationFee,
+      actionRoute: '/nikah/payment',
+    );
+  }
+
+  factory NikahBrowseRestriction.paymentUnderReview(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return NikahBrowseRestriction(
+      bannerTitle: l10n.nikahBrowseTeaserTitle,
+      dialogTitle: l10n.nikahPaymentUnderReviewTitle,
+      dialogMessage: l10n.nikahPaymentUnderReviewMessage,
+    );
+  }
+
+  factory NikahBrowseRestriction.verificationPending(BuildContext context, {required bool rejected, String? rejectionReason}) {
+    final l10n = AppLocalizations.of(context)!;
+    return NikahBrowseRestriction(
+      bannerTitle: l10n.nikahBrowseTeaserTitle,
+      dialogTitle: l10n.nikahProfileUnderVerificationTitle,
+      dialogMessage: rejected ? (rejectionReason ?? l10n.nikahProfileNeedsChangesMessage) : l10n.nikahProfileReviewingMessage,
+      actionLabel: rejected ? l10n.nikahUpdateProfile : null,
+      actionRoute: rejected ? '/nikah/wizard/step1' : null,
+    );
+  }
+}
+
+// Shown instead of a protected screen/action when a restricted visitor
+// taps something that actually needs full eligibility (viewing a profile's
+// full details, hiring a Nikah Counselor, sending interest). Browsing the
+// card list itself doesn't need this; everything past it does.
+void _promptRestriction(BuildContext context, NikahBrowseRestriction restriction) {
+  final l10n = AppLocalizations.of(context)!;
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Create Your Nikah Profile'),
-      content: const Text('Create your free Nikah profile first to view full details, send interest, or hire a Nikah Counselor.'),
+      title: Text(restriction.dialogTitle),
+      content: Text(restriction.dialogMessage),
       actions: [
-        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Not now')),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.of(ctx).pop();
-            context.push('/nikah/wizard/step1');
-          },
-          child: const Text('Create Profile'),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(restriction.actionRoute != null ? l10n.nikahNotNow : l10n.nikahGotIt),
         ),
+        if (restriction.actionRoute != null)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              context.push(restriction.actionRoute!);
+            },
+            child: Text(restriction.actionLabel!),
+          ),
       ],
     ),
   );
 }
 
 class NikahBrowseScreen extends ConsumerStatefulWidget {
-  // Set by NikahHomeScreen when the member has no Nikah profile yet — the
-  // backend still returns the card list in this case (teaser browsing, no
-  // match percentages since there's no profile to compare against) but
-  // gates everything past it, so this mirrors that on the UI: an extra
-  // "Create Your Nikah Profile" banner up top, a Hire Counselor button that
-  // prompts for a profile instead of opening the (also-gated) picker
-  // screen, and tapping any card prompts instead of opening its detail page.
-  final bool noProfileMode;
-  const NikahBrowseScreen({super.key, this.noProfileMode = false});
+  // Set by NikahHomeScreen whenever the member can only teaser-browse right
+  // now — no profile at all, or a profile that's unpaid/unverified. The
+  // backend still returns the card list in every one of these cases
+  // (teaser browsing, no match percentages since there's no eligible
+  // profile to compare against) but gates everything past it, so this
+  // mirrors that on the UI: an extra banner up top describing what's
+  // pending, a Hire Counselor button that prompts for it instead of
+  // opening the (also-gated) picker screen, and tapping any card prompts
+  // instead of opening its detail page.
+  final NikahBrowseRestriction? restriction;
+  const NikahBrowseScreen({super.key, this.restriction});
 
   @override
   ConsumerState<NikahBrowseScreen> createState() => _NikahBrowseScreenState();
@@ -147,11 +221,11 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.noProfileMode ? 'Nikah Profiles Browse' : 'Browse Matches'),
-          // noProfileMode already has its own Filter action in
-          // _NoProfileHeader below — showing this one too just duplicates it.
+          title: Text(widget.restriction?.bannerTitle ?? AppLocalizations.of(context)!.nikahBrowseMatchesTitle),
+          // A restriction already has its own Filter action in
+          // _RestrictedBrowseHeader below — showing this one too just duplicates it.
           actions: [
-            if (!widget.noProfileMode)
+            if (widget.restriction == null)
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -173,7 +247,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
         ),
         body: Column(
           children: [
-            if (widget.noProfileMode) _NoProfileHeader(onOpenFilters: _openFilters),
+            if (widget.restriction != null) _RestrictedBrowseHeader(restriction: widget.restriction!, onOpenFilters: _openFilters),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => _load(reset: true),
@@ -228,24 +302,27 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
         return _NikahCardTile(
           key: ValueKey(_profiles[index].id),
           card: _profiles[index],
-          noProfileMode: widget.noProfileMode,
+          restriction: widget.restriction,
         );
       },
     );
   }
 }
 
-// The "create a profile" push shown above the grid in noProfileMode — a
-// banner button plus a Hire Counselor shortcut next to the filter, matching
-// the always-visible filter icon already in the AppBar so there's no need
-// to duplicate that action here, just make it more visible for a first-time
-// visitor who hasn't learned where it lives yet.
-class _NoProfileHeader extends StatelessWidget {
+// The "complete this first" push shown above the grid for any restricted
+// visitor — a banner button (or, when there's nothing to do but wait, just
+// the title as plain text) plus a Hire Counselor shortcut next to the
+// filter, matching the always-visible filter icon already in the AppBar so
+// there's no need to duplicate that action here, just make it more visible
+// for a visitor who hasn't learned where it lives yet.
+class _RestrictedBrowseHeader extends StatelessWidget {
+  final NikahBrowseRestriction restriction;
   final VoidCallback onOpenFilters;
-  const _NoProfileHeader({required this.onOpenFilters});
+  const _RestrictedBrowseHeader({required this.restriction, required this.onOpenFilters});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final primary = Theme.of(context).colorScheme.primary;
     return Container(
       color: primary,
@@ -253,25 +330,32 @@ class _NoProfileHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context.push('/nikah/wizard/step1'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: primary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+          if (restriction.actionRoute != null)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.push(restriction.actionRoute!),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text(restriction.actionLabel!, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
               ),
-              child: const Text('Create Your Nikah Profile', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            )
+          else
+            Text(
+              restriction.dialogTitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
             ),
-          ),
           const SizedBox(height: 10),
           Row(
             children: [
               TextButton.icon(
                 onPressed: onOpenFilters,
                 icon: const Icon(Icons.tune, color: Colors.white),
-                label: const Text('Filter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                label: Text(l10n.nikahFilter, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
               const SizedBox(width: 8),
               // Expanded (not a bare OutlinedButton) so long text or a wider
@@ -279,9 +363,9 @@ class _NoProfileHeader extends StatelessWidget {
               // overflowing off-screen with no release-mode warning.
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => _promptCreateProfile(context),
+                  onPressed: () => _promptRestriction(context, restriction),
                   style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white), foregroundColor: Colors.white),
-                  child: const Text('Hire Nikah Counselor', textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(l10n.nikahHireCounselorAction, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ),
             ],
@@ -294,8 +378,8 @@ class _NoProfileHeader extends StatelessWidget {
 
 class _NikahCardTile extends StatefulWidget {
   final NikahCard card;
-  final bool noProfileMode;
-  const _NikahCardTile({super.key, required this.card, this.noProfileMode = false});
+  final NikahBrowseRestriction? restriction;
+  const _NikahCardTile({super.key, required this.card, this.restriction});
 
   @override
   State<_NikahCardTile> createState() => _NikahCardTileState();
@@ -308,6 +392,10 @@ class _NikahCardTileState extends State<_NikahCardTile> {
   bool _sendingBusy = false;
 
   Future<void> _toggleSave() async {
+    if (widget.restriction != null) {
+      _promptRestriction(context, widget.restriction!);
+      return;
+    }
     setState(() => _savingBusy = true);
     try {
       final repo = ProviderScope.containerOf(context).read(nikahRepositoryProvider);
@@ -323,6 +411,10 @@ class _NikahCardTileState extends State<_NikahCardTile> {
   }
 
   Future<void> _sendInterest() async {
+    if (widget.restriction != null) {
+      _promptRestriction(context, widget.restriction!);
+      return;
+    }
     setState(() => _sendingBusy = true);
     try {
       final repo = ProviderScope.containerOf(context).read(nikahRepositoryProvider);
@@ -368,7 +460,7 @@ class _NikahCardTileState extends State<_NikahCardTile> {
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: InkWell(
-        onTap: widget.noProfileMode ? () => _promptCreateProfile(context) : () => context.push('/nikah/profile/${card.id}'),
+        onTap: widget.restriction != null ? () => _promptRestriction(context, widget.restriction!) : () => context.push('/nikah/profile/${card.id}'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

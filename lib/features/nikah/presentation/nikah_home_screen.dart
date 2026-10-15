@@ -27,9 +27,21 @@ class NikahHomeScreen extends ConsumerWidget {
     // No profile yet — a teaser browse screen (own Scaffold/AppBar) rather
     // than this screen's own "create a profile" prompt, so a first-time
     // visitor sees real profiles (and the reason to sign up) immediately
-    // instead of a bare button. See NikahBrowseScreen's noProfileMode doc.
+    // instead of a bare button. See NikahBrowseRestriction's doc.
     if (state.error == null && state.profile == null) {
-      return const NikahBrowseScreen(noProfileMode: true);
+      return NikahBrowseScreen(restriction: NikahBrowseRestriction.noProfile(context));
+    }
+
+    // A profile that exists but isn't payment/verification-complete yet
+    // gets the same teaser treatment — browse freely, just gated on any
+    // real action. An incomplete WIZARD (profile.isComplete == false) is
+    // different: there's nothing meaningful to browse against yet, so that
+    // one case alone still gets _ProfileStatusView's blocking status card.
+    if (state.error == null && state.profile != null && state.profile!.isComplete) {
+      final restriction = _restrictionFor(context, state.profile!);
+      if (restriction != null) {
+        return NikahBrowseScreen(restriction: restriction);
+      }
     }
 
     final theme = ModuleThemes.forModule('nikah');
@@ -53,6 +65,27 @@ class NikahHomeScreen extends ConsumerWidget {
       ),
     );
   }
+
+  NikahBrowseRestriction? _restrictionFor(BuildContext context, NikahProfile profile) {
+    if (profile.paymentStatus == 'unpaid' || profile.paymentStatus == 'rejected') {
+      return NikahBrowseRestriction.paymentPending(
+        context,
+        rejected: profile.paymentStatus == 'rejected',
+        amount: profile.paymentAmount,
+      );
+    }
+    if (profile.paymentStatus == 'submitted') {
+      return NikahBrowseRestriction.paymentUnderReview(context);
+    }
+    if (profile.verificationStatus != 'verified') {
+      return NikahBrowseRestriction.verificationPending(
+        context,
+        rejected: profile.verificationStatus == 'rejected',
+        rejectionReason: profile.rejectionReason,
+      );
+    }
+    return null;
+  }
 }
 
 class _ProfileStatusView extends StatelessWidget {
@@ -73,44 +106,10 @@ class _ProfileStatusView extends StatelessWidget {
       );
     }
 
-    if (profile.paymentStatus == 'unpaid' ||
-        profile.paymentStatus == 'rejected') {
-      return _StatusCard(
-        emoji: '💳',
-        title: profile.paymentStatus == 'rejected'
-            ? l10n.nikahPaymentRejectedTitle
-            : l10n.nikahPaymentDueTitle,
-        message: profile.paymentStatus == 'rejected'
-            ? l10n.nikahPaymentRejectedMessage
-            : l10n.nikahPaymentDueMessage(profile.paymentAmount ?? ''),
-        actionLabel: l10n.nikahPayVerificationFee,
-        onAction: () => context.push('/nikah/payment'),
-      );
-    }
-
-    if (profile.paymentStatus == 'submitted') {
-      return _StatusCard(
-        emoji: '⏳',
-        title: l10n.nikahPaymentUnderReviewTitle,
-        message: l10n.nikahPaymentUnderReviewMessage,
-      );
-    }
-
-    if (profile.verificationStatus != 'verified') {
-      return _StatusCard(
-        emoji: '🔍',
-        title: l10n.nikahProfileUnderVerificationTitle,
-        message: profile.verificationStatus == 'rejected'
-            ? (profile.rejectionReason ?? l10n.nikahProfileNeedsChangesMessage)
-            : l10n.nikahProfileReviewingMessage,
-        actionLabel: profile.verificationStatus == 'rejected'
-            ? l10n.nikahUpdateProfile
-            : null,
-        onAction: profile.verificationStatus == 'rejected'
-            ? () => context.push('/nikah/wizard/step1')
-            : null,
-      );
-    }
+    // Payment/verification-pending states are handled by NikahHomeScreen
+    // itself (restricted teaser browse) before this view is ever built —
+    // reaching here with a complete profile means it's either still
+    // mid-wizard (above) or fully verified and paid (below).
 
     // Fully verified and paid — the real hub.
     return ListView(
