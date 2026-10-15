@@ -496,7 +496,7 @@ class _NikahCardTileState extends State<_NikahCardTile> {
                               ),
                               child: _sendingBusy
                                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : Text(_sent ? 'Sent ✓' : '💌 Express Interest', style: const TextStyle(fontSize: 12)),
+                                  : Text(_sent ? 'Sent ✓' : '💌 Send Interest', style: const TextStyle(fontSize: 12)),
                             ),
                           ),
                         ),

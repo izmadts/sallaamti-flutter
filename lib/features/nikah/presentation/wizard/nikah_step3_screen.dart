@@ -187,11 +187,12 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
             decoration: const InputDecoration(
               labelText: 'Preferred marital status',
             ),
-            items: maritalStatusOptions.entries
-                .map(
-                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
-                )
-                .toList(),
+            items: [
+              const DropdownMenuItem(value: null, child: Text('Any')),
+              ...maritalStatusOptions.entries.map(
+                (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+              ),
+            ],
             onChanged: (v) => setState(() => _prefMaritalStatus = v),
           ),
           const SizedBox(height: 16),

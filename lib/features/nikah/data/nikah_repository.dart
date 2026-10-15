@@ -154,6 +154,7 @@ class NikahRepository {
 
   Future<void> acceptInterest(int interestId) => _client.post('/nikah/interests/$interestId/accept');
   Future<void> declineInterest(int interestId) => _client.post('/nikah/interests/$interestId/decline');
+  Future<void> cancelInterest(int interestId) => _client.delete('/nikah/interests/$interestId/cancel');
 
   Future<List<NikahCard>> savedProfiles() async {
     final data = await _client.get('/nikah/saved');

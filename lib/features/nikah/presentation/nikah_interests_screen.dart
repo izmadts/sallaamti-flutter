@@ -66,6 +66,29 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
     }
   }
 
+  Future<void> _cancel(int interestId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel this interest request?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Yes, Cancel')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(nikahRepositoryProvider).cancelInterest(interestId);
+      _load();
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorGeneric)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -94,7 +117,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
                   : TabBarView(
                       children: [
                         _list(_received, showActions: true),
-                        _list(_sent, showActions: false),
+                        _list(_sent, showActions: false, allowCancel: true),
                       ],
                     ),
         ),
@@ -102,7 +125,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
     );
   }
 
-  Widget _list(List<NikahInterest> items, {required bool showActions}) {
+  Widget _list(List<NikahInterest> items, {required bool showActions, bool allowCancel = false}) {
     if (items.isEmpty) {
       return Center(child: Text(AppLocalizations.of(context)!.nikahNothingHereYet));
     }
@@ -169,6 +192,21 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ],
+                    if (allowCancel && interest.status == 'pending') ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _cancel(interest.interestId),
+                          icon: const Icon(Icons.close, size: 18),
+                          label: const Text('Cancel Request'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red.shade700,
+                            side: BorderSide(color: Colors.red.shade200),
+                          ),
+                        ),
                       ),
                     ],
                   ],

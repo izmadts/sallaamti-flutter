@@ -11,6 +11,7 @@ import '../../features/dashboard/data/dashboard_repository.dart';
 import '../../features/profile/presentation/account_sheet.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../modules.dart';
+import 'whatsapp_channel_action.dart';
 
 // The app's global bottom nav — added once, at the MaterialApp.router level
 // (see main.dart), so it's present on every authenticated screen rather
@@ -270,8 +271,7 @@ class _MoreSheet extends ConsumerWidget {
                 ),
                 const Divider(height: 24),
                 _MoreTile(
-                  icon: Icons.chat_bubble_outline,
-                  iconColor: const Color(0xFF25D366),
+                  leadingWidget: const WhatsappBadge(),
                   label: 'Instant Support (WhatsApp)',
                   onTap: () {
                     Navigator.of(context).pop();
@@ -342,22 +342,26 @@ class _MoreModuleTile extends StatelessWidget {
 }
 
 class _MoreTile extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final Color? iconColor;
+  // Overrides `icon`/`iconColor` for a leading glyph that isn't a plain
+  // IconData — e.g. WhatsappBadge's colored circle.
+  final Widget? leadingWidget;
   final String label;
   final VoidCallback onTap;
   const _MoreTile({
-    required this.icon,
+    this.icon,
     this.iconColor,
+    this.leadingWidget,
     required this.label,
     required this.onTap,
-  });
+  }) : assert(icon != null || leadingWidget != null);
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: iconColor),
+      leading: leadingWidget ?? Icon(icon, color: iconColor),
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
       onTap: onTap,
     );
