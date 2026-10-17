@@ -2,6 +2,8 @@
 class NikahProfile {
   final int id;
   final String publicToken;
+  final String? gender;
+  final DateTime? dateOfBirth;
   final int age;
   final String? height;
   final String maritalStatus;
@@ -50,6 +52,8 @@ class NikahProfile {
   NikahProfile({
     required this.id,
     required this.publicToken,
+    this.gender,
+    this.dateOfBirth,
     required this.age,
     this.height,
     required this.maritalStatus,
@@ -99,6 +103,8 @@ class NikahProfile {
   factory NikahProfile.fromJson(Map<String, dynamic> json) => NikahProfile(
     id: json['id'] as int,
     publicToken: json['public_token'] as String,
+    gender: json['gender'] as String?,
+    dateOfBirth: json['date_of_birth'] != null ? DateTime.tryParse(json['date_of_birth'] as String) : null,
     age: json['age'] as int,
     height: json['height'] as String?,
     maritalStatus: json['marital_status'] as String,

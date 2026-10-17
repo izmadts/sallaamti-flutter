@@ -78,6 +78,41 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    final profile = ref.read(nikahControllerProvider).profile;
+    if (profile == null) return;
+
+    _gender = profile.gender;
+    _dateOfBirth = profile.dateOfBirth;
+    _maritalStatus = profile.maritalStatus;
+    _country = profile.country?.isNotEmpty == true ? profile.country! : 'Pakistan';
+    _state = profile.state;
+    _city = profile.city;
+    _addressController.text = profile.address ?? '';
+    _guardianNameController.text = profile.guardianName;
+    _guardianContactController.text = profile.guardianContact;
+
+    if (profile.height != null && profile.height!.isNotEmpty) {
+      if (_heightOptions().contains(profile.height)) {
+        _height = profile.height;
+      } else {
+        _height = 'Other';
+        _heightOtherController.text = profile.height!;
+      }
+    }
+
+    if (profile.guardianRelation != null && profile.guardianRelation!.isNotEmpty) {
+      if (_guardianRelationOptions.contains(profile.guardianRelation)) {
+        _guardianRelation = profile.guardianRelation;
+      } else {
+        _guardianRelation = 'Other';
+        _guardianRelationOtherController.text = profile.guardianRelation!;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _heightOtherController.dispose();
     _addressController.dispose();
