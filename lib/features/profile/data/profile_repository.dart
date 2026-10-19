@@ -31,11 +31,11 @@ class ProfileRepository {
   }
 
   Future<AppUser> updatePassword({
-    required String currentPassword,
+    String? currentPassword,
     required String password,
   }) async {
     final data = await _client.post('/profile/password', data: {
-      'current_password': currentPassword,
+      if (currentPassword != null) 'current_password': currentPassword,
       'password': password,
       'password_confirmation': password,
     });

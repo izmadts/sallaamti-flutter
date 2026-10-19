@@ -35,8 +35,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Set Your Own Password'),
-        content: const Text(
-          'Your Nikah Counselor set up a temporary password for you. For your account\'s security, please choose your own password.',
+        content: Text(
+          user.hasRealPassword
+              ? 'Your Nikah Counselor set up a temporary password for you. For your account\'s security, please choose your own password.'
+              : 'For your account\'s security, please set a password — you can then log in with it any time, using either your phone number or email.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Ignore')),

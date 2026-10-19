@@ -35,6 +35,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     super.dispose();
   }
 
+  bool get _hasRealPassword => ref.read(authControllerProvider).user?.hasRealPassword ?? true;
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_newController.text != _confirmController.text) {
@@ -49,7 +51,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
     try {
       final updated = await ref.read(profileRepositoryProvider).updatePassword(
-            currentPassword: _currentController.text,
+            currentPassword: _hasRealPassword ? _currentController.text : null,
             password: _newController.text,
           );
       ref.read(authControllerProvider.notifier).setUser(updated);
@@ -83,9 +85,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
-                  child: const Text(
-                    'Your Nikah Counselor set up a temporary password for you. Choose your own password to keep your account secure.',
-                    style: TextStyle(color: Colors.blueGrey),
+                  child: Text(
+                    _hasRealPassword
+                        ? 'Your Nikah Counselor set up a temporary password for you. Choose your own password to keep your account secure.'
+                        : 'For your account\'s security, please set a password — you can then log in with it any time, using either your phone number or email.',
+                    style: const TextStyle(color: Colors.blueGrey),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -103,12 +107,20 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    PasswordField(
-                      controller: _currentController,
-                      labelText: 'Current Password',
-                      validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password.' : null,
-                    ),
-                    const SizedBox(height: 12),
+                    if (_hasRealPassword) ...[
+                      PasswordField(
+                        controller: _currentController,
+                        labelText: 'Current Password',
+                        validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password.' : null,
+                      ),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      const Text(
+                        "You don't have a password yet — just choose one below.",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     PasswordField(
                       controller: _newController,
                       labelText: 'New Password',

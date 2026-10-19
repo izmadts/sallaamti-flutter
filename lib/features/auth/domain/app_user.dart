@@ -14,6 +14,9 @@ class AppUser {
   final Map<String, bool> modules;
   final bool hasNikahProfile;
   final bool mustChangePassword;
+  // False means there's no real password to check yet (e.g. a phone+OTP
+  // self-signup) — see the backend UserResource's own comment.
+  final bool hasRealPassword;
   // Same test the web's Post::isAutoPublishedFor() uses — gates the
   // Community Posts feature in the app; common members are pointed at Wall
   // for their own posting instead.
@@ -32,6 +35,7 @@ class AppUser {
     required this.modules,
     required this.hasNikahProfile,
     this.mustChangePassword = false,
+    this.hasRealPassword = true,
     this.canWritePosts = false,
   });
 
@@ -48,10 +52,11 @@ class AppUser {
         modules: Map<String, bool>.from(json['modules'] as Map? ?? {}),
         hasNikahProfile: json['has_nikah_profile'] as bool? ?? false,
         mustChangePassword: json['must_change_password'] as bool? ?? false,
+        hasRealPassword: json['has_real_password'] as bool? ?? true,
         canWritePosts: json['can_write_posts'] as bool? ?? false,
       );
 
-  AppUser copyWith({bool? mustChangePassword}) => AppUser(
+  AppUser copyWith({bool? mustChangePassword, bool? hasRealPassword}) => AppUser(
         id: id,
         name: name,
         username: username,
@@ -64,6 +69,7 @@ class AppUser {
         modules: modules,
         hasNikahProfile: hasNikahProfile,
         mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+        hasRealPassword: hasRealPassword ?? this.hasRealPassword,
         canWritePosts: canWritePosts,
       );
 }
