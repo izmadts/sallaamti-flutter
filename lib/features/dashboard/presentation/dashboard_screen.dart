@@ -11,6 +11,7 @@ import '../../../shared/widgets/language_switch_button.dart';
 import '../../../shared/widgets/notification_bell.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../profile/presentation/account_sheet.dart';
+import '../../profile/presentation/edit_profile_screen.dart';
 import '../data/dashboard_repository.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,8 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _bindNudgeDismissed = false;
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +99,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               const SizedBox(height: 4),
               Text(l10n.modulesTitle, style: TextStyle(color: Colors.grey.shade600)),
+              if (!_bindNudgeDismissed && user != null && (user.phone == null || user.email == null)) ...[
+                const SizedBox(height: 16),
+                _BindIdentifierBanner(
+                  missingPhone: user.phone == null,
+                  onDismiss: () => setState(() => _bindNudgeDismissed = true),
+                ),
+              ],
               const SizedBox(height: 20),
               Expanded(
                 child: metaAsync.when(
@@ -118,6 +128,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// A phone-only or email-only account is how two separate accounts for the
+// same person end up getting created later — e.g. registering with
+// email+password once, then with phone+OTP another time, with no way for
+// either to know about the other. Closing the gap right after signup is
+// the real fix; dismissible per visit (resets next time the screen loads,
+// same as the password-nudge dialog reappearing).
+class _BindIdentifierBanner extends StatelessWidget {
+  final bool missingPhone;
+  final VoidCallback onDismiss;
+  const _BindIdentifierBanner({required this.missingPhone, required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.blue.shade50,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            const Text('🔗', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    missingPhone ? 'Add your mobile number' : 'Add your email address',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.blueGrey),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'So you can always log in with either one, and so you never end up with two separate accounts.',
+                    style: TextStyle(fontSize: 12, color: Colors.blueGrey),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
+                      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                      child: const Text('Add Now'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, size: 18),
+              color: Colors.blueGrey,
+              onPressed: onDismiss,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
         ),
       ),
     );
