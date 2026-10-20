@@ -7,7 +7,7 @@ import 'error_banner.dart';
 // as the body, a single primary action button with its own loading state,
 // and a general-error banner. Each step screen owns its Form/fields and
 // just hands this its content + an onNext callback.
-class StepWizardScaffold extends StatelessWidget {
+class StepWizardScaffold extends StatefulWidget {
   final String title;
   final int stepIndex;
   final int totalSteps;
@@ -42,24 +42,54 @@ class StepWizardScaffold extends StatelessWidget {
   });
 
   @override
+  State<StepWizardScaffold> createState() => _StepWizardScaffoldState();
+}
+
+class _StepWizardScaffoldState extends State<StepWizardScaffold> {
+  final _scrollController = ScrollController();
+
+  @override
+  void didUpdateWidget(StepWizardScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // A long step (e.g. Nikah step 2, with Languages tucked at the very
+    // bottom) can leave the user scrolled well past where this banner
+    // renders — without this, a validation/API error after tapping Next
+    // just looks like the button silently did nothing, "stuck" on
+    // whatever field happened to be on screen.
+    if (widget.errorText != null && widget.errorText != oldWidget.errorText) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_scrollController.hasClients) return;
+        _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scaffold = _buildScaffold(context);
-    return theme != null ? Theme(data: theme!, child: scaffold) : scaffold;
+    return widget.theme != null ? Theme(data: widget.theme!, child: scaffold) : scaffold;
   }
 
   Widget _buildScaffold(BuildContext context) {
     // A plain color lookup, not Theme.of(context) — this method's context
     // sits above the Theme this widget wraps itself in, so Theme.of here
     // would still resolve to whatever was ambient before it.
-    final primaryColor = (theme ?? Theme.of(context)).colorScheme.primary;
+    final primaryColor = (widget.theme ?? Theme.of(context)).colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
-        leading: onBack != null
-            ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack)
+        title: Text(widget.title),
+        leading: widget.onBack != null
+            ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: widget.onBack)
             : null,
-        automaticallyImplyLeading: onBack != null,
-        actions: actions,
+        automaticallyImplyLeading: widget.onBack != null,
+        actions: widget.actions,
       ),
       body: SafeArea(
         child: Column(
@@ -67,12 +97,12 @@ class StepWizardScaffold extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Row(
-                children: List.generate(totalSteps, (i) {
-                  final active = i <= stepIndex;
+                children: List.generate(widget.totalSteps, (i) {
+                  final active = i <= widget.stepIndex;
                   return Expanded(
                     child: Container(
                       height: 5,
-                      margin: EdgeInsets.only(right: i == totalSteps - 1 ? 0 : 6),
+                      margin: EdgeInsets.only(right: i == widget.totalSteps - 1 ? 0 : 6),
                       decoration: BoxDecoration(
                         color: active ? primaryColor : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(3),
@@ -83,21 +113,22 @@ class StepWizardScaffold extends StatelessWidget {
               ),
             ),
             Text(
-              'Step ${stepIndex + 1} of $totalSteps',
+              'Step ${widget.stepIndex + 1} of ${widget.totalSteps}',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (errorText != null) ...[
-                      ErrorBanner(message: errorText!),
+                    if (widget.errorText != null) ...[
+                      ErrorBanner(message: widget.errorText!),
                       const SizedBox(height: 16),
                     ],
-                    child,
+                    widget.child,
                   ],
                 ),
               ),
@@ -105,10 +136,10 @@ class StepWizardScaffold extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
               child: ElevatedButton(
-                onPressed: busy ? null : () => onNext(),
-                child: busy
+                onPressed: widget.busy ? null : () => widget.onNext(),
+                child: widget.busy
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(nextLabel),
+                    : Text(widget.nextLabel),
               ),
             ),
           ],
