@@ -145,9 +145,12 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
             DropdownButtonFormField<String>(
               initialValue: _visibility,
               decoration: InputDecoration(label: requiredLabel('Profile Visibility')),
+              isExpanded: true,
               items: const [
-                DropdownMenuItem(value: 'public', child: Text('Public — visible in Browse')),
-                DropdownMenuItem(value: 'private', child: Text('Private — hidden from Browse')),
+                DropdownMenuItem(value: 'public', child: Text('Public — anyone can find me in search')),
+                DropdownMenuItem(value: 'members_only', child: Text('Members Only — members can find me, not Google')),
+                DropdownMenuItem(value: 'matchmaker_assisted', child: Text('Nikah Counselor Only — hidden from browsing, a counselor can still suggest me')),
+                DropdownMenuItem(value: 'confidential', child: Text('Confidential — fully hidden, link-only access')),
               ],
               onChanged: (v) => setState(() => _visibility = v!),
             ),

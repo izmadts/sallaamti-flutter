@@ -36,6 +36,22 @@ const maritalStatusOptions = {
   'separated': 'Separated',
 };
 
+// Matches ValidatesNikahProfile's required_if list on the backend — these
+// three fields were missing from the mobile wizard entirely (never shown,
+// never sent), so a divorced/widowed/separated/married member could finish
+// on mobile with none of this recorded, unlike web.
+const _needsFamilyDetailsStatuses = ['divorced', 'widowed', 'separated', 'married'];
+
+const _livingSituationOptions = {
+  'alone': 'Alone',
+  'with_mother': 'With Mother',
+  'with_father': 'With Father',
+  'with_maternal_grandparents': 'With Maternal Grandparents',
+  'with_paternal_grandparents': 'With Paternal Grandparents',
+  'with_children': 'With My Children',
+  'other': 'Other',
+};
+
 // Matches web's nikah/edit.blade.php $guardianRelOptions exactly, plus
 // "Other" as an app-only escape hatch for anything not in that list.
 const _guardianRelationOptions = [
@@ -65,11 +81,14 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   final _guardianNameController = TextEditingController();
   final _guardianContactController = TextEditingController();
   final _guardianRelationOtherController = TextEditingController();
+  final _childrenCountController = TextEditingController();
 
   String? _gender;
   DateTime? _dateOfBirth;
   String? _height;
   String _maritalStatus = 'never_married';
+  bool? _hasChildren;
+  String? _livingSituation;
   String _country = 'Pakistan';
   String? _state;
   String? _city;
@@ -86,6 +105,11 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     _gender = profile.gender;
     _dateOfBirth = profile.dateOfBirth;
     _maritalStatus = profile.maritalStatus;
+    _hasChildren = profile.hasChildren;
+    _livingSituation = profile.livingSituation;
+    if (profile.childrenCount != null) {
+      _childrenCountController.text = profile.childrenCount.toString();
+    }
     _country = profile.country?.isNotEmpty == true ? profile.country! : 'Pakistan';
     _state = profile.state;
     _city = profile.city;
@@ -119,6 +143,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     _guardianNameController.dispose();
     _guardianContactController.dispose();
     _guardianRelationOtherController.dispose();
+    _childrenCountController.dispose();
     super.dispose();
   }
 
@@ -161,6 +186,15 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       setState(() => _error = 'Please select your city');
       return;
     }
+    final needsFamilyDetails = _needsFamilyDetailsStatuses.contains(_maritalStatus);
+    if (needsFamilyDetails && _hasChildren == null) {
+      setState(() => _error = 'Please let us know if you have children');
+      return;
+    }
+    if (needsFamilyDetails && (_livingSituation == null || _livingSituation!.isEmpty)) {
+      setState(() => _error = 'Please let us know who you currently live with');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -178,6 +212,10 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
             ? _heightOtherController.text.trim()
             : null,
         'marital_status': _maritalStatus,
+        if (needsFamilyDetails) 'has_children': _hasChildren,
+        if (needsFamilyDetails && _hasChildren == true)
+          'children_count': int.tryParse(_childrenCountController.text.trim()),
+        if (needsFamilyDetails) 'living_situation': _livingSituation,
         'city': _city,
         'address': _addressController.text.trim(),
         'state': _state,
@@ -304,8 +342,45 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
                     (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
                   )
                   .toList(),
-              onChanged: (v) => setState(() => _maritalStatus = v!),
+              onChanged: (v) => setState(() {
+                _maritalStatus = v!;
+                if (!_needsFamilyDetailsStatuses.contains(v)) {
+                  _hasChildren = null;
+                  _livingSituation = null;
+                  _childrenCountController.clear();
+                }
+              }),
             ),
+            if (_needsFamilyDetailsStatuses.contains(_maritalStatus)) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<bool>(
+                initialValue: _hasChildren,
+                decoration: InputDecoration(label: requiredLabel('Do You Have Children?')),
+                items: const [
+                  DropdownMenuItem(value: true, child: Text('Yes')),
+                  DropdownMenuItem(value: false, child: Text('No')),
+                ],
+                onChanged: (v) => setState(() => _hasChildren = v),
+              ),
+              if (_hasChildren == true) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _childrenCountController,
+                  decoration: const InputDecoration(labelText: 'Number of Children'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _livingSituation,
+                decoration: InputDecoration(label: requiredLabel('Who Do You Currently Live With?')),
+                isExpanded: true,
+                items: _livingSituationOptions.entries
+                    .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .toList(),
+                onChanged: (v) => setState(() => _livingSituation = v),
+              ),
+            ],
             const SizedBox(height: 24),
             const Text(
               'Location',

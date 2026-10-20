@@ -7,6 +7,9 @@ class NikahProfile {
   final int age;
   final String? height;
   final String maritalStatus;
+  final bool? hasChildren;
+  final int? childrenCount;
+  final String? livingSituation;
   final bool? openToPolygamy;
   final String? sect;
   final String? caste;
@@ -57,6 +60,9 @@ class NikahProfile {
     required this.age,
     this.height,
     required this.maritalStatus,
+    this.hasChildren,
+    this.childrenCount,
+    this.livingSituation,
     this.openToPolygamy,
     this.sect,
     this.caste,
@@ -108,6 +114,9 @@ class NikahProfile {
     age: json['age'] as int,
     height: json['height'] as String?,
     maritalStatus: json['marital_status'] as String,
+    hasChildren: json['has_children'] as bool?,
+    childrenCount: json['children_count'] as int?,
+    livingSituation: json['living_situation'] as String?,
     openToPolygamy: json['open_to_polygamy'] as bool?,
     sect: json['sect'] as String?,
     caste: json['caste'] as String?,
