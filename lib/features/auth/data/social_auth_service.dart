@@ -32,7 +32,16 @@ class SocialAuthService {
   }
 
   static Future<String?> signInWithFacebook() async {
-    final result = await FacebookAuth.instance.login(permissions: ['email', 'public_profile']);
+    // webOnly (not the default nativeWithFallback) — when the Facebook app
+    // is also installed, Android can route the OAuth callback into IT
+    // instead of back to this app, since both register a handler for the
+    // same fb<APP_ID>:// scheme; the login then dead-ends in the Facebook
+    // app instead of returning a token here. Forcing the Custom Tab/web
+    // flow the whole way through avoids the native handoff entirely.
+    final result = await FacebookAuth.instance.login(
+      permissions: ['email', 'public_profile'],
+      loginBehavior: LoginBehavior.webOnly,
+    );
 
     if (result.status == LoginStatus.success) {
       return result.accessToken?.tokenString;
