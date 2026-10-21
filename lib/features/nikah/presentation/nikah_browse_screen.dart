@@ -282,12 +282,15 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
 
     return GridView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
+      // 200 keeps two cards per row on a typical phone width while still
+      // growing to 3+ columns automatically on a tablet, rather than being
+      // pinned to a fixed crossAxisCount.
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 420,
-        mainAxisExtent: 340,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        maxCrossAxisExtent: 200,
+        mainAxisExtent: 352,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
       ),
       itemCount: _profiles.length + 1,
       itemBuilder: (context, index) {
@@ -454,11 +457,19 @@ class _NikahCardTileState extends State<_NikahCardTile> {
     ];
     final isRecentlyActive = card.lastActiveAt != null && DateTime.now().difference(card.lastActiveAt!).inDays < 7;
     final isNew = card.createdAt != null && DateTime.now().difference(card.createdAt!).inDays < 14;
+    // CNIC is the one badge that reflects an actual document check by our
+    // team, not just a payment or a self-reported contact — so it's the
+    // signal that earns a card a visibly more prominent, trusted look.
+    final isCnicVerified = card.trustBadges['cnic'] == true;
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      elevation: isCnicVerified ? 3 : 1,
+      shadowColor: isCnicVerified ? const Color(0xFF10B981).withValues(alpha: 0.4) : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: isCnicVerified ? const BorderSide(color: Color(0xFF10B981), width: 2) : BorderSide.none,
+      ),
       child: InkWell(
         onTap: widget.restriction != null ? () => _promptRestriction(context, widget.restriction!) : () => context.push('/nikah/profile/${card.id}'),
         child: Column(
@@ -588,7 +599,12 @@ class _NikahCardTileState extends State<_NikahCardTile> {
                               ),
                               child: _sendingBusy
                                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : Text(_sent ? 'Sent ✓' : '💌 Send Interest', style: const TextStyle(fontSize: 12)),
+                                  : Text(
+                                      _sent ? 'Sent ✓' : '💌 Send Interest',
+                                      style: const TextStyle(fontSize: 12),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                             ),
                           ),
                         ),

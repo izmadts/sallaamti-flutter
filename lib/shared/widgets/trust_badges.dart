@@ -18,7 +18,7 @@ class TrustBadges extends StatelessWidget {
 
   static final _labelsAndColors = {
     'cnic': ('🪪 CNIC Verified', const Color(0xFF10B981)),
-    'payment': ('💳 Payment Verified', Colors.blue.shade600),
+    'payment': ('🛡️ Trusted Verified', Colors.blue.shade600),
     'guardian': ('👨‍👩‍👦 Guardian Verified', Colors.purple.shade500),
   };
 
