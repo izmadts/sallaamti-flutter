@@ -10,9 +10,12 @@ import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../../../shared/widgets/whatsapp_channel_action.dart';
 import '../../state/nikah_controller.dart';
 
-const _sectOptions = ['Sunni', 'Shia', 'Ahle Hadith', 'Deobandi', 'Other'];
+// Public (no leading underscore) — reused by nikah_step3_screen.dart so
+// "Preferred Sect"/"Preferred Education" offer the exact same options as
+// these, instead of asking for the same fixed value as free text.
+const sectOptions = ['Sunni', 'Shia', 'Ahle Hadith', 'Deobandi', 'Other'];
 // Matches web's step-basic.blade.php $educationLevels exactly.
-const _educationLevels = [
+const educationLevels = [
   'Matric / O-Levels',
   'Intermediate / A-Levels',
   "Bachelor's",
@@ -180,7 +183,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           DropdownButtonFormField<String>(
             initialValue: _sect,
             decoration: InputDecoration(label: requiredLabel('Sect')),
-            items: _sectOptions
+            items: sectOptions
                 .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                 .toList(),
             onChanged: (v) => setState(() => _sect = v),
@@ -280,7 +283,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           DropdownButtonFormField<String>(
             initialValue: _education,
             decoration: InputDecoration(label: requiredLabel('Education')),
-            items: _educationLevels
+            items: educationLevels
                 .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                 .toList(),
             onChanged: (v) => setState(() => _education = v),

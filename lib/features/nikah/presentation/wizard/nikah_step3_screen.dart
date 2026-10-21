@@ -10,6 +10,7 @@ import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../../../shared/widgets/whatsapp_channel_action.dart';
 import '../../state/nikah_controller.dart';
 import 'nikah_step1_screen.dart' show maritalStatusOptions;
+import 'nikah_step2_screen.dart' show sectOptions, educationLevels;
 
 class NikahStep3Screen extends ConsumerStatefulWidget {
   const NikahStep3Screen({super.key});
@@ -24,10 +25,13 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
   final _prefMinAgeController = TextEditingController();
   final _prefMaxAgeController = TextEditingController();
   final _prefCityController = TextEditingController();
-  final _prefSectController = TextEditingController();
-  final _prefEducationController = TextEditingController();
   final _prefIncomeController = TextEditingController();
   final _prefOtherController = TextEditingController();
+  // Dropdowns (not free text) — "Preferred Sect"/"Preferred Education"
+  // offer the exact same fixed options as the profile's own Sect/Education
+  // fields above, instead of asking for the same value typed out again.
+  String? _prefSect;
+  String? _prefEducation;
   String? _prefMaritalStatus;
   bool _busy = false;
   String? _error;
@@ -42,8 +46,12 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
       _prefMinAgeController.text = profile.prefMinAge?.toString() ?? '';
       _prefMaxAgeController.text = profile.prefMaxAge?.toString() ?? '';
       _prefCityController.text = profile.prefCity ?? '';
-      _prefSectController.text = profile.prefSect ?? '';
-      _prefEducationController.text = profile.prefEducation ?? '';
+      // Falls back to "Any" (null) if a previously-saved free-text value
+      // (from before this was a dropdown) doesn't match one of the fixed
+      // options — avoids a Flutter error from an initialValue that isn't
+      // actually one of the dropdown's items.
+      _prefSect = sectOptions.contains(profile.prefSect) ? profile.prefSect : null;
+      _prefEducation = educationLevels.contains(profile.prefEducation) ? profile.prefEducation : null;
       _prefIncomeController.text = profile.prefIncome ?? '';
       _prefOtherController.text = profile.prefOther ?? '';
       _prefMaritalStatus = profile.prefMaritalStatus;
@@ -57,8 +65,6 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
     _prefMinAgeController.dispose();
     _prefMaxAgeController.dispose();
     _prefCityController.dispose();
-    _prefSectController.dispose();
-    _prefEducationController.dispose();
     _prefIncomeController.dispose();
     _prefOtherController.dispose();
     super.dispose();
@@ -86,8 +92,8 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
         'pref_min_age': _prefMinAgeController.text.trim(),
         'pref_max_age': _prefMaxAgeController.text.trim(),
         'pref_city': _prefCityController.text.trim(),
-        'pref_sect': _prefSectController.text.trim(),
-        'pref_education': _prefEducationController.text.trim(),
+        'pref_sect': _prefSect,
+        'pref_education': _prefEducation,
         'pref_marital_status': _prefMaritalStatus,
         'pref_income': _prefIncomeController.text.trim(),
         'pref_other': _prefOtherController.text.trim(),
@@ -172,14 +178,25 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
             decoration: const InputDecoration(labelText: 'Preferred city'),
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _prefSectController,
+          DropdownButtonFormField<String>(
+            initialValue: _prefSect,
             decoration: const InputDecoration(labelText: 'Preferred sect'),
+            items: [
+              const DropdownMenuItem(value: null, child: Text('Any')),
+              ...sectOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+            ],
+            onChanged: (v) => setState(() => _prefSect = v),
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _prefEducationController,
+          DropdownButtonFormField<String>(
+            initialValue: _prefEducation,
             decoration: const InputDecoration(labelText: 'Preferred education'),
+            isExpanded: true,
+            items: [
+              const DropdownMenuItem(value: null, child: Text('Any')),
+              ...educationLevels.map((e) => DropdownMenuItem(value: e, child: Text(e))),
+            ],
+            onChanged: (v) => setState(() => _prefEducation = v),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(

@@ -26,8 +26,13 @@ class NikahProfile {
   final String? ethnicity;
   final String? language;
   final String? familyType;
-  final String guardianName;
-  final String guardianContact;
+  // Nullable — a counselor can create a profile without these two filled
+  // in yet (web admin wizard relaxed this requirement for a rushed
+  // walk-in intake; see Admin\NikahProfileWizardController::saveStep()'s
+  // own comment). A non-nullable String here used to crash this whole
+  // screen outright the moment such a profile was opened on mobile.
+  final String? guardianName;
+  final String? guardianContact;
   final String? guardianRelation;
   final String? about;
   final String? expectations;
@@ -79,8 +84,8 @@ class NikahProfile {
     this.ethnicity,
     this.language,
     this.familyType,
-    required this.guardianName,
-    required this.guardianContact,
+    this.guardianName,
+    this.guardianContact,
     this.guardianRelation,
     this.about,
     this.expectations,
@@ -133,8 +138,8 @@ class NikahProfile {
     ethnicity: json['ethnicity'] as String?,
     language: json['language'] as String?,
     familyType: json['family_type'] as String?,
-    guardianName: json['guardian_name'] as String,
-    guardianContact: json['guardian_contact'] as String,
+    guardianName: json['guardian_name'] as String?,
+    guardianContact: json['guardian_contact'] as String?,
     guardianRelation: json['guardian_relation'] as String?,
     about: json['about'] as String?,
     expectations: json['expectations'] as String?,

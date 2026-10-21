@@ -39,8 +39,10 @@ const maritalStatusOptions = {
 // Matches ValidatesNikahProfile's required_if list on the backend — these
 // three fields were missing from the mobile wizard entirely (never shown,
 // never sent), so a divorced/widowed/separated/married member could finish
-// on mobile with none of this recorded, unlike web.
-const _needsFamilyDetailsStatuses = ['divorced', 'widowed', 'separated', 'married'];
+// on mobile with none of this recorded, unlike web. Public (no leading
+// underscore) — nikah_home_screen.dart reuses it to decide whether these
+// fields count toward "is this profile actually finished".
+const needsFamilyDetailsStatuses = ['divorced', 'widowed', 'separated', 'married'];
 
 const _livingSituationOptions = {
   'alone': 'Alone',
@@ -114,8 +116,8 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     _state = profile.state;
     _city = profile.city;
     _addressController.text = profile.address ?? '';
-    _guardianNameController.text = profile.guardianName;
-    _guardianContactController.text = profile.guardianContact;
+    _guardianNameController.text = profile.guardianName ?? '';
+    _guardianContactController.text = profile.guardianContact ?? '';
 
     if (profile.height != null && profile.height!.isNotEmpty) {
       if (_heightOptions().contains(profile.height)) {
@@ -186,7 +188,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       setState(() => _error = 'Please select your city');
       return;
     }
-    final needsFamilyDetails = _needsFamilyDetailsStatuses.contains(_maritalStatus);
+    final needsFamilyDetails = needsFamilyDetailsStatuses.contains(_maritalStatus);
     if (needsFamilyDetails && _hasChildren == null) {
       setState(() => _error = 'Please let us know if you have children');
       return;
@@ -344,14 +346,14 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
                   .toList(),
               onChanged: (v) => setState(() {
                 _maritalStatus = v!;
-                if (!_needsFamilyDetailsStatuses.contains(v)) {
+                if (!needsFamilyDetailsStatuses.contains(v)) {
                   _hasChildren = null;
                   _livingSituation = null;
                   _childrenCountController.clear();
                 }
               }),
             ),
-            if (_needsFamilyDetailsStatuses.contains(_maritalStatus)) ...[
+            if (needsFamilyDetailsStatuses.contains(_maritalStatus)) ...[
               const SizedBox(height: 16),
               DropdownButtonFormField<bool>(
                 initialValue: _hasChildren,

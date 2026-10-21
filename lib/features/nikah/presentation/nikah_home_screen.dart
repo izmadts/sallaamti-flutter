@@ -9,6 +9,34 @@ import '../data/nikah_hire_repository.dart';
 import '../domain/nikah_profile.dart';
 import '../state/nikah_controller.dart';
 import 'nikah_browse_screen.dart';
+import 'wizard/nikah_step1_screen.dart' show needsFamilyDetailsStatuses;
+
+// "Continue Setup" used to always jump to step2 — fine for a profile with
+// nothing filled in yet, but a counselor-created profile reaching mobile
+// for the first time usually already has steps 1-3 done (the counselor's
+// web wizard requires most of it) and is missing only CNIC/photo (step4,
+// the one thing isComplete actually checks). Landing on step2 showed
+// already-filled fields and left the real gap three screens away with no
+// indication it was even there — exactly the kind of dead-end a less
+// tech-savvy member has no way to work out on their own. Checks each
+// step's own required fields in order instead of assuming step2.
+String _nextIncompleteStepRoute(NikahProfile profile) {
+  final needsFamilyDetails = needsFamilyDetailsStatuses.contains(profile.maritalStatus);
+  if ((profile.height ?? '').isEmpty ||
+      (profile.guardianName ?? '').isEmpty ||
+      (profile.guardianContact ?? '').isEmpty ||
+      (needsFamilyDetails && profile.hasChildren == null) ||
+      (needsFamilyDetails && (profile.livingSituation ?? '').isEmpty)) {
+    return '/nikah/wizard/step1';
+  }
+  if ((profile.sect ?? '').isEmpty || (profile.education ?? '').isEmpty || (profile.profession ?? '').isEmpty) {
+    return '/nikah/wizard/step2';
+  }
+  if ((profile.expectations ?? '').isEmpty) {
+    return '/nikah/wizard/step3';
+  }
+  return '/nikah/wizard/step4';
+}
 
 class NikahHomeScreen extends ConsumerWidget {
   const NikahHomeScreen({super.key});
@@ -102,7 +130,7 @@ class _ProfileStatusView extends StatelessWidget {
         title: l10n.nikahFinishProfileTitle,
         message: l10n.nikahFinishProfileMessage(profile.completenessPercentage),
         actionLabel: l10n.nikahContinueSetup,
-        onAction: () => context.push('/nikah/wizard/step2'),
+        onAction: () => context.push(_nextIncompleteStepRoute(profile)),
       );
     }
 
