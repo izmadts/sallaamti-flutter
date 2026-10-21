@@ -13,7 +13,9 @@ import '../state/nikah_controller.dart';
 
 const _reportReasons = {
   'fake_profile': 'Fake profile',
+  'fake_matchmaker': 'Suspected fake matchmaker / mass outreach',
   'inappropriate_content': 'Inappropriate content',
+  'money_request': 'Asking for money or financial details',
   'harassment': 'Harassment',
   'already_married': 'Already married',
   'other': 'Other',
