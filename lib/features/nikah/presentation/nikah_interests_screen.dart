@@ -51,6 +51,28 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
   }
 
   Future<void> _respond(int interestId, bool accept) async {
+    // Accepting reveals the guardian's real name/contact number to the
+    // other side immediately, with no further review step — worth a pause,
+    // since this is exactly the moment a fake-matchmaker/scam profile would
+    // be counting on a quick tap. Declining shares nothing, so it skips
+    // straight through.
+    if (accept) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Accept this interest?'),
+          content: const Text(
+            'Accepting will share your guardian\'s contact details with this person. Please check their verification badges on their full profile first.',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Accept')),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
     final repo = ref.read(nikahRepositoryProvider);
     try {
       if (accept) {
