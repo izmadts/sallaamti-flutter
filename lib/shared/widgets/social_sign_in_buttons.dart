@@ -32,6 +32,10 @@ class _SocialSignInButtonsState extends ConsumerState<SocialSignInButtons> {
       // the only signal we get for Google sign-in config problems without
       // pulling device logs.
       _showError('Google sign-in failed: ${e.code.name}${e.description != null ? ' — ${e.description}' : ''}');
+    } on FacebookAuthException catch (e) {
+      // Same reasoning as GoogleSignInException above — a real Facebook SDK
+      // failure used to be indistinguishable from the user just cancelling.
+      _showError('Facebook sign-in failed: ${e.message}');
     } catch (_) {
       if (mounted) _showError(AppLocalizations.of(context)!.errorGeneric);
     } finally {

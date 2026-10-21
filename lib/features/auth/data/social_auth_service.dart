@@ -1,6 +1,17 @@
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+// A genuine Facebook SDK failure (bad config, key hash mismatch, network
+// error, app not set up right — anything other than the user tapping
+// Cancel) — carries the SDK's own LoginResult.message, which was
+// previously discarded entirely (both 'cancelled' and 'failed' silently
+// returned null), leaving a real error indistinguishable from the user
+// just backing out, and no way to see what Facebook actually said.
+class FacebookAuthException implements Exception {
+  final String message;
+  FacebookAuthException(this.message);
+}
+
 // Thin wrapper around the two native SDKs — each method returns the raw
 // token the backend verifies (Google ID token / Facebook access token), or
 // null if the user cancelled. Real sign-in only works once the app is
@@ -43,10 +54,17 @@ class SocialAuthService {
       loginBehavior: LoginBehavior.webOnly,
     );
 
-    if (result.status == LoginStatus.success) {
-      return result.accessToken?.tokenString;
+    switch (result.status) {
+      case LoginStatus.success:
+        return result.accessToken?.tokenString;
+      case LoginStatus.cancelled:
+        // The user genuinely backed out — nothing to explain.
+        return null;
+      case LoginStatus.failed:
+      case LoginStatus.operationInProgress:
+        // A real failure — surface the SDK's own message instead of
+        // silently landing back on the login screen with no explanation.
+        throw FacebookAuthException(result.message ?? 'Facebook sign-in failed (${result.status.name}).');
     }
-
-    return null;
   }
 }
