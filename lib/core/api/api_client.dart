@@ -88,9 +88,9 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> _request(Future<Response> Function() call) async {
+    Response response;
     try {
-      final response = await call();
-      return Map<String, dynamic>.from(response.data as Map);
+      response = await call();
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
@@ -100,5 +100,20 @@ class ApiClient {
       }
       throw ApiException.fromResponseData(e.response?.data, e.response?.statusCode);
     }
+
+    // A 2xx response isn't guaranteed to be the JSON object we expect — a
+    // proxy/server error page (HTML), an empty body, or a JSON array/string
+    // would all fail a bare `as Map`, and that TypeError isn't a
+    // DioException, so it used to skip the catch above entirely and reach
+    // a screen as a completely opaque, unlabeled crash. Normalizing it into
+    // an ApiException here keeps the "every failure carries a real,
+    // specific message" guarantee for this one remaining gap too.
+    if (response.data is! Map) {
+      throw ApiException(
+        message: 'Unexpected response from the server (status ${response.statusCode ?? '?'}). Please try again.',
+        statusCode: response.statusCode,
+      );
+    }
+    return Map<String, dynamic>.from(response.data as Map);
   }
 }
