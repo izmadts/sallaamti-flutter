@@ -101,6 +101,11 @@ class NikahRepository {
 
   Future<void> submitProfile() => _client.post('/nikah/profile/submit');
 
+  Future<NikahProfile> extendPaymentDeadline() async {
+    final data = await _client.post('/nikah/profile/extend-payment-deadline');
+    return NikahProfile.fromJson(Map<String, dynamic>.from(data['profile'] as Map));
+  }
+
   Future<void> submitPayment({
     required String paymentMethod,
     String? paymentReference,

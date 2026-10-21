@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/whatsapp_channel_action.dart';
@@ -62,10 +64,14 @@ class NikahHomeScreen extends ConsumerWidget {
 
     // A profile that exists but isn't payment/verification-complete yet
     // gets the same teaser treatment — browse freely, just gated on any
-    // real action. An incomplete WIZARD (profile.isComplete == false) is
-    // different: there's nothing meaningful to browse against yet, so that
-    // one case alone still gets _ProfileStatusView's blocking status card.
-    if (state.error == null && state.profile != null && state.profile!.isComplete) {
+    // real action. An incomplete WIZARD (profile.isComplete == false), or
+    // one paused for not paying within its 7-day window, is different:
+    // both need the member's full attention on a dedicated status card
+    // (_ProfileStatusView below), not a background banner over browsing.
+    if (state.error == null &&
+        state.profile != null &&
+        state.profile!.isComplete &&
+        !state.profile!.isPausedForNonPayment) {
       final restriction = _restrictionFor(context, state.profile!);
       if (restriction != null) {
         return NikahBrowseScreen(restriction: restriction);
@@ -123,6 +129,14 @@ class _ProfileStatusView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    // Checked ahead of !isComplete below — a paused member needs the
+    // specific "extend or contact support" action, not the generic
+    // "continue setup" card (this profile was already complete, or it
+    // wouldn't have had a payment deadline running in the first place).
+    if (profile.isPausedForNonPayment) {
+      return _PausedForNonPaymentCard(profile: profile);
+    }
 
     if (!profile.isComplete) {
       return _StatusCard(
@@ -211,6 +225,117 @@ class _ProfileStatusView extends StatelessWidget {
 // admin suspension, see NikahSafetyController::toggleActive()'s own
 // comment on that distinction; this just lets a member pause being
 // discoverable without deleting anything.
+// The 7-day-payment-window pause state — self-service "Extend 7 Days" (no
+// admin approval, capped — see NikahProfile::MAX_PAYMENT_DEADLINE_EXTENSIONS
+// on the backend) while extensions remain, then a WhatsApp support link
+// once they're used up. Mirrors nikah/payment.blade.php's web version.
+class _PausedForNonPaymentCard extends ConsumerStatefulWidget {
+  final NikahProfile profile;
+  const _PausedForNonPaymentCard({required this.profile});
+
+  @override
+  ConsumerState<_PausedForNonPaymentCard> createState() => _PausedForNonPaymentCardState();
+}
+
+class _PausedForNonPaymentCardState extends ConsumerState<_PausedForNonPaymentCard> {
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _extend() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(nikahControllerProvider.notifier).extendPaymentDeadline();
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.displayMessage);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _contactSupport() async {
+    final link = widget.profile.supportWhatsappLink;
+    if (link == null) return;
+    final uri = Uri.parse(link);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open WhatsApp.')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = widget.profile.maxPaymentDeadlineExtensions - widget.profile.paymentDeadlineExtensionsUsed;
+
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 40),
+        Center(
+          child: CircleAvatar(
+            radius: 44,
+            backgroundColor: Colors.amber.withValues(alpha: 0.15),
+            child: const Text('⏸️', style: TextStyle(fontSize: 40)),
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'Your profile is paused',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'The 7-day window to complete your verification fee payment ran out, so your profile is hidden from search. Nothing is lost — it\'s all still saved.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 24),
+        if (_error != null) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
+            child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (widget.profile.canExtendPaymentDeadline) ...[
+          ElevatedButton(
+            onPressed: _busy ? null : _extend,
+            child: _busy
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text('Extend 7 Days'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$remaining self-service extension(s) left after this.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ] else ...[
+          ElevatedButton.icon(
+            onPressed: _contactSupport,
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+            icon: const Icon(Icons.chat_bubble, color: Colors.white),
+            label: const Text('Contact Support on WhatsApp'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You\'ve used all your self-service extensions — our team can reactivate it for you.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _ActiveToggleTile extends ConsumerStatefulWidget {
   final bool isActive;
   const _ActiveToggleTile({required this.isActive});

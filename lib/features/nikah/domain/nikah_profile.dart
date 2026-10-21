@@ -46,6 +46,15 @@ class NikahProfile {
   final String paymentStatus;
   final String? paymentAmount;
   final NikahPaymentInstructions paymentInstructions;
+  // "Paused for non-payment" vs the member's own separate voluntary
+  // isActive toggle — both end up isActive=false, but only this one
+  // should show the "Extend 7 Days" prompt. See NikahProfile::
+  // isPausedForNonPayment() on the backend.
+  final bool isPausedForNonPayment;
+  final bool canExtendPaymentDeadline;
+  final int paymentDeadlineExtensionsUsed;
+  final int maxPaymentDeadlineExtensions;
+  final String? supportWhatsappLink;
   final int? prefMinAge;
   final int? prefMaxAge;
   final String? prefCity;
@@ -99,6 +108,11 @@ class NikahProfile {
     required this.paymentStatus,
     this.paymentAmount,
     required this.paymentInstructions,
+    this.isPausedForNonPayment = false,
+    this.canExtendPaymentDeadline = true,
+    this.paymentDeadlineExtensionsUsed = 0,
+    this.maxPaymentDeadlineExtensions = 3,
+    this.supportWhatsappLink,
     this.prefMinAge,
     this.prefMaxAge,
     this.prefCity,
@@ -155,6 +169,11 @@ class NikahProfile {
     paymentInstructions: NikahPaymentInstructions.fromJson(
       json['payment_instructions'] as Map<String, dynamic>? ?? const {},
     ),
+    isPausedForNonPayment: json['is_paused_for_non_payment'] as bool? ?? false,
+    canExtendPaymentDeadline: json['can_extend_payment_deadline'] as bool? ?? true,
+    paymentDeadlineExtensionsUsed: json['payment_deadline_extensions_used'] as int? ?? 0,
+    maxPaymentDeadlineExtensions: json['max_payment_deadline_extensions'] as int? ?? 3,
+    supportWhatsappLink: json['support_whatsapp_link'] as String?,
     prefMinAge: json['pref_min_age'] as int?,
     prefMaxAge: json['pref_max_age'] as int?,
     prefCity: json['pref_city'] as String?,

@@ -61,4 +61,9 @@ class NikahController extends StateNotifier<NikahState> {
   }
 
   Future<void> submit() => _repository.submitProfile();
+
+  Future<void> extendPaymentDeadline() async {
+    final profile = await _repository.extendPaymentDeadline();
+    state = NikahState(status: NikahLoadStatus.loaded, profile: profile);
+  }
 }
