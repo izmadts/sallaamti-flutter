@@ -282,15 +282,12 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
 
     return GridView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.all(10),
-      // 200 keeps two cards per row on a typical phone width while still
-      // growing to 3+ columns automatically on a tablet, rather than being
-      // pinned to a fixed crossAxisCount.
+      padding: const EdgeInsets.all(14),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 200,
-        mainAxisExtent: 352,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        maxCrossAxisExtent: 420,
+        mainAxisExtent: 340,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
       ),
       itemCount: _profiles.length + 1,
       itemBuilder: (context, index) {

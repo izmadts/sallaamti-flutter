@@ -16,9 +16,11 @@ class TrustBadges extends StatelessWidget {
     this.direction = Axis.horizontal,
   });
 
+  // 'payment' deliberately isn't a badge of its own — CNIC is the one
+  // signal backed by an actual document check, so it carries the single
+  // "Trusted" label rather than stacking a second pill next to it.
   static final _labelsAndColors = {
-    'cnic': ('🪪 CNIC Verified', const Color(0xFF10B981)),
-    'payment': ('🛡️ Trusted Verified', Colors.blue.shade600),
+    'cnic': ('🪪 Trusted', const Color(0xFF10B981)),
     'guardian': ('👨‍👩‍👦 Guardian Verified', Colors.purple.shade500),
   };
 
