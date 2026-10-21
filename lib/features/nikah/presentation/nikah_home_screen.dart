@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/first_visit_tour.dart';
 import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_hire_repository.dart';
 import '../domain/nikah_profile.dart';
@@ -39,6 +40,41 @@ String _nextIncompleteStepRoute(NikahProfile profile) {
   }
   return '/nikah/wizard/step4';
 }
+
+// Shown once (per device, see FirstVisitTour) the first time a member
+// reaches the fully-set-up Nikah hub — a common user's first real exposure
+// to how the module actually works, which earlier audits this session
+// found is exactly where less tech-savvy members get lost. Content mirrors
+// the hub tiles' own order below.
+const _nikahTourSteps = [
+  TourStep(
+    emoji: '💍',
+    title: 'Your profile is live!',
+    description:
+        'Verified members can now find and send interest in your profile. Sallaamti is for serious proposals — your guardian stays involved at every step, as it should be.',
+  ),
+  TourStep(
+    emoji: '🔎',
+    title: 'Browse Matches',
+    description: 'Search verified profiles filtered by what actually matters to you — sect, education, city, and more.',
+  ),
+  TourStep(
+    emoji: '💌',
+    title: 'Interests & Messages',
+    description:
+        'When someone shows interest in you, or you in them, it shows up here. Accept it and guardian contact details are shared so families can connect.',
+  ),
+  TourStep(
+    emoji: '⭐',
+    title: 'Saved Profiles',
+    description: 'Found someone promising while browsing? Star their profile to come back to it later.',
+  ),
+  TourStep(
+    emoji: '⚙️',
+    title: 'Edit Profile',
+    description: 'Update your details any time — a complete, honest profile gets better, more serious matches.',
+  ),
+];
 
 class NikahHomeScreen extends ConsumerWidget {
   const NikahHomeScreen({super.key});
@@ -154,70 +190,7 @@ class _ProfileStatusView extends StatelessWidget {
     // mid-wizard (above) or fully verified and paid (below).
 
     // Fully verified and paid — the real hub.
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              const Text('✅', style: TextStyle(fontSize: 24)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  l10n.nikahProfileLiveMessage,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        const _CounselorSection(),
-        const SizedBox(height: 20),
-        _HubTile(
-          emoji: '🔎',
-          title: l10n.nikahBrowseMatchesTitle,
-          subtitle: l10n.nikahBrowseMatchesSubtitle,
-          onTap: () => context.push('/nikah/browse'),
-        ),
-        _HubTile(
-          emoji: '💌',
-          title: l10n.nikahMyInterestsTitle,
-          subtitle: l10n.nikahMyInterestsSubtitle,
-          onTap: () => context.push('/nikah/interests'),
-        ),
-        _HubTile(
-          emoji: '⭐',
-          title: 'Saved Profiles',
-          subtitle: 'Candidates you starred while browsing',
-          onTap: () => context.push('/nikah/saved'),
-        ),
-        _HubTile(
-          emoji: '⚙️',
-          title: l10n.nikahEditProfileTitle,
-          subtitle: l10n.nikahEditProfileSubtitle,
-          onTap: () => context.push('/nikah/wizard/step1'),
-        ),
-        _HubTile(
-          emoji: '🚫',
-          title: 'Blocked Profiles',
-          subtitle: 'Manage who you\'ve blocked',
-          onTap: () => context.push('/nikah/blocked'),
-        ),
-        _ActiveToggleTile(isActive: profile.isActive),
-        _HubTile(
-          emoji: '❓',
-          title: l10n.faqTitle,
-          subtitle: l10n.nikahFaqsSubtitle,
-          onTap: () => context.push('/faq/nikah'),
-        ),
-      ],
-    );
+    return _NikahHub(profile: profile);
   }
 }
 
@@ -331,6 +304,104 @@ class _PausedForNonPaymentCardState extends ConsumerState<_PausedForNonPaymentCa
             style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _NikahHub extends ConsumerStatefulWidget {
+  final NikahProfile profile;
+  const _NikahHub({required this.profile});
+
+  @override
+  ConsumerState<_NikahHub> createState() => _NikahHubState();
+}
+
+class _NikahHubState extends ConsumerState<_NikahHub> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) FirstVisitTour.showIfNeeded(context, storageKey: 'nikah_hub_tour_seen', steps: _nikahTourSteps);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final profile = widget.profile;
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const Text('✅', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.nikahProfileLiveMessage,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => FirstVisitTour.show(context, steps: _nikahTourSteps),
+            icon: const Text('❓'),
+            label: const Text('How does this work?'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const _CounselorSection(),
+        const SizedBox(height: 20),
+        _HubTile(
+          emoji: '🔎',
+          title: l10n.nikahBrowseMatchesTitle,
+          subtitle: l10n.nikahBrowseMatchesSubtitle,
+          onTap: () => context.push('/nikah/browse'),
+        ),
+        _HubTile(
+          emoji: '💌',
+          title: l10n.nikahMyInterestsTitle,
+          subtitle: l10n.nikahMyInterestsSubtitle,
+          onTap: () => context.push('/nikah/interests'),
+        ),
+        _HubTile(
+          emoji: '⭐',
+          title: 'Saved Profiles',
+          subtitle: 'Candidates you starred while browsing',
+          onTap: () => context.push('/nikah/saved'),
+        ),
+        _HubTile(
+          emoji: '⚙️',
+          title: l10n.nikahEditProfileTitle,
+          subtitle: l10n.nikahEditProfileSubtitle,
+          onTap: () => context.push('/nikah/wizard/step1'),
+        ),
+        _HubTile(
+          emoji: '🚫',
+          title: 'Blocked Profiles',
+          subtitle: 'Manage who you\'ve blocked',
+          onTap: () => context.push('/nikah/blocked'),
+        ),
+        _ActiveToggleTile(isActive: profile.isActive),
+        _HubTile(
+          emoji: '❓',
+          title: l10n.faqTitle,
+          subtitle: l10n.nikahFaqsSubtitle,
+          onTap: () => context.push('/faq/nikah'),
+        ),
       ],
     );
   }
