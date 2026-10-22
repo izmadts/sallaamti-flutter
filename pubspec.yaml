@@ -43,7 +43,6 @@ dependencies:
   # Revisit once the toolchain catches up.
   flutter_secure_storage: ^10.3.1
   google_sign_in: ^7.2.0
-  flutter_facebook_auth: ^7.1.6
   intl: ^0.20.2
   flutter_localizations:
     sdk: flutter

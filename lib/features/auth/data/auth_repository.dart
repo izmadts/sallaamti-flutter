@@ -90,11 +90,6 @@ class AuthRepository {
     return AuthResult.fromJson(data);
   }
 
-  Future<AuthResult> socialFacebook(String accessToken) async {
-    final data = await _client.post('/auth/social/facebook', data: {'access_token': accessToken});
-    return AuthResult.fromJson(data);
-  }
-
   Future<void> logout() => _client.post('/auth/logout');
 
   Future<AppUser> me() async {

@@ -109,13 +109,6 @@ class AuthController extends StateNotifier<AuthState> {
     _registerPushSafely();
   }
 
-  Future<void> socialFacebook(String accessToken) async {
-    final result = await _repository.socialFacebook(accessToken);
-    await SecureStore.saveToken(result.token);
-    state = AuthState.authenticated(result.user);
-    _registerPushSafely();
-  }
-
   // Pushes a freshly-fetched user (after a profile/module update) back into
   // the shared auth state, so the dashboard and every other screen reading
   // authControllerProvider reflect the change immediately — no re-login
