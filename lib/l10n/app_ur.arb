@@ -114,6 +114,8 @@
   "nikahGotIt": "سمجھ آ گیا",
   "nikahCreateProfileDialogMessage": "مکمل تفصیلات دیکھنے، دلچسپی بھیجنے، یا نکاح کاؤنسلر کی خدمات لینے کے لیے پہلے اپنی مفت نکاح پروفائل بنائیں۔",
   "nikahCompleteStepBeforeBrowsing": "مکمل پروفائلز دیکھنے، دلچسپی بھیجنے، یا نکاح کاؤنسلر کی خدمات لینے سے پہلے یہ مکمل کریں۔",
+  "nikahDaysLeftLabel": "دن باقی ہیں",
+  "nikahPaymentCountdownMessage": "وقت ختم ہونے سے پہلے اپنی ادائیگی مکمل کریں، ورنہ آپ کی پروفائل خود بخود معطل ہو جائے گی۔",
   "nikahFilter": "فلٹر",
   "nikahHireCounselorAction": "نکاح کاؤنسلر کی خدمات لیں",
   "nikahPayVerificationFee": "تصدیقی فیس ادا کریں",

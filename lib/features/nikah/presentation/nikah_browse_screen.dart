@@ -28,6 +28,12 @@ class NikahBrowseRestriction {
   // then shows no button, and the dialog shows only a dismiss action.
   final String? actionLabel;
   final String? actionRoute;
+  // Only set for paymentPending — the 7-day countdown deliberately doesn't
+  // exist on any other restriction, since this is the one state a member
+  // reaches only AFTER finishing their profile (not during the wizard),
+  // where a "pause" warning is actually true and actionable rather than
+  // scaring someone away before they've even signed up.
+  final int? daysRemaining;
 
   const NikahBrowseRestriction({
     required this.bannerTitle,
@@ -35,6 +41,7 @@ class NikahBrowseRestriction {
     required this.dialogMessage,
     this.actionLabel,
     this.actionRoute,
+    this.daysRemaining,
   });
 
   factory NikahBrowseRestriction.noProfile(BuildContext context) {
@@ -48,7 +55,7 @@ class NikahBrowseRestriction {
     );
   }
 
-  factory NikahBrowseRestriction.paymentPending(BuildContext context, {required bool rejected, String? amount}) {
+  factory NikahBrowseRestriction.paymentPending(BuildContext context, {required bool rejected, String? amount, int? daysRemaining}) {
     final l10n = AppLocalizations.of(context)!;
     final reason = rejected ? l10n.nikahPaymentRejectedMessage : l10n.nikahPaymentDueMessage(amount ?? '');
     return NikahBrowseRestriction(
@@ -57,6 +64,7 @@ class NikahBrowseRestriction {
       dialogMessage: '$reason\n\n${l10n.nikahCompleteStepBeforeBrowsing}',
       actionLabel: l10n.nikahPayVerificationFee,
       actionRoute: '/nikah/payment',
+      daysRemaining: rejected ? null : daysRemaining,
     );
   }
 
@@ -330,6 +338,38 @@ class _RestrictedBrowseHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // A countdown chip, not just a sentence buried in the dialog —
+          // this is the one thing a pending member should notice at a
+          // glance, every time they open Browse.
+          if (restriction.daysRemaining != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+                    decoration: BoxDecoration(color: Colors.amber.shade600, borderRadius: BorderRadius.circular(10)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${restriction.daysRemaining}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20, height: 1)),
+                        Text(l10n.nikahDaysLeftLabel, style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '⏳ ${l10n.nikahPaymentCountdownMessage}',
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (restriction.actionRoute != null)
             SizedBox(
               width: double.infinity,

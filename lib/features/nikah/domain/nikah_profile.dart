@@ -51,6 +51,7 @@ class NikahProfile {
   // should show the "Extend 7 Days" prompt. See NikahProfile::
   // isPausedForNonPayment() on the backend.
   final bool isPausedForNonPayment;
+  final int? paymentDeadlineDaysRemaining;
   final bool canExtendPaymentDeadline;
   final int paymentDeadlineExtensionsUsed;
   final int maxPaymentDeadlineExtensions;
@@ -109,6 +110,7 @@ class NikahProfile {
     this.paymentAmount,
     required this.paymentInstructions,
     this.isPausedForNonPayment = false,
+    this.paymentDeadlineDaysRemaining,
     this.canExtendPaymentDeadline = true,
     this.paymentDeadlineExtensionsUsed = 0,
     this.maxPaymentDeadlineExtensions = 3,

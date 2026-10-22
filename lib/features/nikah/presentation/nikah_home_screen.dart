@@ -142,6 +142,7 @@ class NikahHomeScreen extends ConsumerWidget {
         context,
         rejected: profile.paymentStatus == 'rejected',
         amount: profile.paymentAmount,
+        daysRemaining: profile.paymentDeadlineDaysRemaining,
       );
     }
     if (profile.paymentStatus == 'submitted') {

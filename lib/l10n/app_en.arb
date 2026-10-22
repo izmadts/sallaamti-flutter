@@ -114,6 +114,8 @@
   "nikahGotIt": "Got it",
   "nikahCreateProfileDialogMessage": "Create your free Nikah profile first to view full details, send interest, or hire a Nikah Counselor.",
   "nikahCompleteStepBeforeBrowsing": "Complete this before you can view full profiles, send interest, or hire a Nikah Counselor.",
+  "nikahDaysLeftLabel": "DAY(S) LEFT",
+  "nikahPaymentCountdownMessage": "Complete your payment before the timer runs out, or your profile pauses automatically.",
   "nikahFilter": "Filter",
   "nikahHireCounselorAction": "Hire Nikah Counselor",
   "nikahPayVerificationFee": "Pay Verification Fee",
