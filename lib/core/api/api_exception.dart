@@ -7,8 +7,14 @@ class ApiException implements Exception {
   final String message;
   final Map<String, List<String>> fieldErrors;
   final int? statusCode;
+  // Some endpoints (e.g. NikahBrowseController's gate responses) carry a
+  // stable machine-readable `code` alongside the human message, so a screen
+  // can branch on the exact reason — e.g. silently redirecting to fix a
+  // missing gender instead of showing a generic locked-screen error for
+  // something that isn't really a failure, just a missing setup step.
+  final String? code;
 
-  ApiException({required this.message, this.fieldErrors = const {}, this.statusCode});
+  ApiException({required this.message, this.fieldErrors = const {}, this.statusCode, this.code});
 
   String? firstErrorFor(String field) => fieldErrors[field]?.first;
 
@@ -42,7 +48,7 @@ class ApiException implements Exception {
         });
       }
 
-      return ApiException(message: message, fieldErrors: fieldErrors, statusCode: statusCode);
+      return ApiException(message: message, fieldErrors: fieldErrors, statusCode: statusCode, code: data['code']?.toString());
     }
 
     return ApiException(message: 'Something went wrong. Please try again.', statusCode: statusCode);

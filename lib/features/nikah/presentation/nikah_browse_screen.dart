@@ -10,6 +10,7 @@ import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/trust_badges.dart';
 import '../../../shared/widgets/whatsapp_channel_action.dart';
+import '../../profile/presentation/edit_profile_screen.dart';
 import '../domain/nikah_card.dart';
 import '../state/nikah_controller.dart';
 import 'wizard/nikah_step1_screen.dart' show maritalStatusOptions;
@@ -183,12 +184,32 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
         _hasMore = result.hasMore;
       });
     } on ApiException catch (e) {
+      // Missing gender isn't a real failure — it's one missing field on the
+      // account — so this redirects straight to where it's fixed instead of
+      // showing a locked-screen error a less tech-savvy member has no way
+      // to work out on their own (the exact kind of dead-end found during
+      // the earlier deep-inspect pass on this module).
+      if (e.code == 'gender_required') {
+        _redirectToSetGender();
+        return;
+      }
       setState(() => _error = e.displayMessage);
     } catch (_) {
       if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _redirectToSetGender() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your gender to continue — update it here.')),
+      );
+      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+      if (mounted) _load(reset: true);
+    });
   }
 
   Future<void> _loadMore() async {
