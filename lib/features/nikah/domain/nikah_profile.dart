@@ -172,6 +172,7 @@ class NikahProfile {
       json['payment_instructions'] as Map<String, dynamic>? ?? const {},
     ),
     isPausedForNonPayment: json['is_paused_for_non_payment'] as bool? ?? false,
+    paymentDeadlineDaysRemaining: json['payment_deadline_days_remaining'] as int?,
     canExtendPaymentDeadline: json['can_extend_payment_deadline'] as bool? ?? true,
     paymentDeadlineExtensionsUsed: json['payment_deadline_extensions_used'] as int? ?? 0,
     maxPaymentDeadlineExtensions: json['max_payment_deadline_extensions'] as int? ?? 3,
