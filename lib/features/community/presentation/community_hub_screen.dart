@@ -47,7 +47,7 @@ class CommunityHubScreen extends ConsumerWidget {
               _HubCard(
                 emoji: '💬',
                 color: const Color(0xFFB8962E),
-                title: 'Testimonials',
+                title: 'Success Stories',
                 subtitle: 'Stories from the community. Share yours if Sallaamti has helped you.',
                 onTap: () => context.push('/community/testimonials'),
               ),

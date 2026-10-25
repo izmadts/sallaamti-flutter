@@ -99,7 +99,7 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
-        appBar: AppBar(title: Text(_isEditing ? 'Edit Testimonial' : 'Share Your Story')),
+        appBar: AppBar(title: Text(_isEditing ? 'Edit Success Story' : 'Share Your Story')),
         body: SafeArea(
           child: Form(
             key: _formKey,
@@ -202,7 +202,7 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Testimonials appear on the website once our team has reviewed them.',
+                  'Success stories appear on the website once our team has reviewed them.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),

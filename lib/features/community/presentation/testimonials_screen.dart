@@ -73,7 +73,7 @@ class _TestimonialsScreenState extends ConsumerState<TestimonialsScreen>
     try {
       await ref.read(communityRepositoryProvider).deleteTestimonial(testimonial.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Testimonial deleted.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Success story deleted.')));
       _reload();
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
@@ -90,7 +90,7 @@ class _TestimonialsScreenState extends ConsumerState<TestimonialsScreen>
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Testimonials'),
+          title: const Text('Success Stories'),
           bottom: TabBar(
             controller: _tabs,
             indicatorColor: Colors.white,
@@ -111,7 +111,7 @@ class _TestimonialsScreenState extends ConsumerState<TestimonialsScreen>
               _TestimonialList(
                 future: _allFuture,
                 onRetry: _reload,
-                emptyTitle: 'No testimonials yet',
+                emptyTitle: 'No success stories yet',
                 emptySubtitle: 'Be the first to share how Sallaamti has helped you.',
                 showStatus: false,
               ),
