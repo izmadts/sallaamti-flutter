@@ -74,6 +74,7 @@ class MemberPost {
   final DateTime? publishedAt;
   final DateTime? createdAt;
   final CommunityAuthor? author;
+  final String language;
 
   MemberPost({
     required this.id,
@@ -89,6 +90,7 @@ class MemberPost {
     this.publishedAt,
     this.createdAt,
     this.author,
+    this.language = 'en',
   });
 
   bool get isPublished => status == 'published';
@@ -109,6 +111,7 @@ class MemberPost {
         publishedAt: json['published_at'] != null ? DateTime.tryParse(json['published_at'] as String) : null,
         createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
         author: json['author'] != null ? CommunityAuthor.fromJson(Map<String, dynamic>.from(json['author'] as Map)) : null,
+        language: json['language'] as String? ?? 'en',
       );
 }
 
@@ -156,8 +159,11 @@ class CommunityRepository {
   final ApiClient _client;
   CommunityRepository(this._client);
 
-  Future<Paged<MemberPost>> posts({int page = 1}) async {
-    final data = await _client.get('/posts', query: {'page': page});
+  Future<Paged<MemberPost>> posts({int page = 1, String? search}) async {
+    final data = await _client.get('/posts', query: {
+      'page': page,
+      if (search != null && search.isNotEmpty) 'search': search,
+    });
     return Paged.fromJson(data, 'posts', MemberPost.fromJson);
   }
 
@@ -177,12 +183,13 @@ class CommunityRepository {
     int? id,
     required String title,
     required String body,
+    required String language,
     String? excerpt,
     File? coverImage,
   }) async {
     final data = await _client.postMultipart(
       id == null ? '/posts' : '/posts/$id',
-      fields: {'title': title, 'body': body, 'excerpt': excerpt},
+      fields: {'title': title, 'body': body, 'language': language, 'excerpt': excerpt},
       files: {if (coverImage != null) 'cover_image': coverImage},
     );
 

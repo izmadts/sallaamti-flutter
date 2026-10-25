@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/state/locale_controller.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/html_text.dart';
@@ -74,10 +75,15 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
     });
 
     try {
+      // Written in whatever language the member is currently using the app
+      // in — no separate picker, so there's nothing for them to get wrong.
+      final language = ref.read(localeControllerProvider)?.languageCode ?? 'en';
+
       final (_, message) = await ref.read(communityRepositoryProvider).savePost(
             id: widget.existing?.id,
             title: _title.text.trim(),
             body: _body.text.trim(),
+            language: language,
             excerpt: _excerpt.text.trim().isEmpty ? null : _excerpt.text.trim(),
             coverImage: _coverImage,
           );

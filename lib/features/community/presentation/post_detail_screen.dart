@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -97,7 +97,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Post'),
+              title: const Text('Blog Post'),
               actions: [
                 if (post?.shareUrl != null)
                   IconButton(
@@ -175,7 +175,13 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
               PostStatusChip(status: post.status),
               const SizedBox(height: 12),
             ],
-            Text(post.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3)),
+            PostLanguageBadge(language: post.language),
+            const SizedBox(height: 8),
+            Text(
+              post.title,
+              textDirection: post.language == 'ur' ? TextDirection.rtl : TextDirection.ltr,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -204,7 +210,11 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
               ),
             ],
             const SizedBox(height: 18),
-            if ((post.body ?? '').isNotEmpty) HtmlText(html: post.body!, onLinkTap: _openUrl),
+            if ((post.body ?? '').isNotEmpty)
+              Directionality(
+                textDirection: post.language == 'ur' ? TextDirection.rtl : TextDirection.ltr,
+                child: HtmlText(html: post.body!, onLinkTap: _openUrl),
+              ),
           ],
         ),
         if (_deleting)

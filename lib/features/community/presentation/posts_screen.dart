@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
@@ -24,6 +26,8 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
   late TabController _tabs;
   late Future<Paged<MemberPost>> _allFuture;
   late Future<Paged<MemberPost>> _mineFuture;
+  final _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -35,16 +39,23 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
   @override
   void dispose() {
     _tabs.dispose();
+    _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
   void _load() {
     final repository = ref.read(communityRepositoryProvider);
-    _allFuture = repository.posts();
+    _allFuture = repository.posts(search: _searchController.text.trim());
     _mineFuture = repository.myPosts();
   }
 
   void _reload() => setState(_load);
+
+  void _onSearchChanged(String _) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), _reload);
+  }
 
   Future<void> _compose({MemberPost? post}) async {
     final saved = await context.push<bool>('/community/posts/compose', extra: post);
@@ -60,7 +71,7 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Member Posts'),
+          title: const Text('Sallaamti Blog'),
           bottom: TabBar(
             controller: _tabs,
             indicatorColor: Colors.white,
@@ -75,27 +86,52 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
           label: const Text('Write a Post'),
         ),
         body: SafeArea(
-          child: TabBarView(
-            controller: _tabs,
+          child: Column(
             children: [
-              _PostList(
-                future: _allFuture,
-                onRetry: _reload,
-                emptyEmoji: '✍️',
-                emptyTitle: 'No posts yet',
-                emptySubtitle: 'Be the first to share something with the community.',
-                showStatus: false,
-                onTap: (post) => context.push('/community/posts/${post.id}'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search articles by keyword…',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
               ),
-              _PostList(
-                future: _mineFuture,
-                onRetry: _reload,
-                emptyEmoji: '📝',
-                emptyTitle: 'You haven\'t written anything yet',
-                emptySubtitle: 'Write a post and it\'ll appear publicly once our team reviews it.',
-                showStatus: true,
-                onTap: (post) => context.push('/community/posts/${post.id}'),
-                onEdit: (post) => _compose(post: post),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabs,
+                  children: [
+                    _PostList(
+                      future: _allFuture,
+                      onRetry: _reload,
+                      emptyEmoji: '✍️',
+                      emptyTitle: 'No posts found',
+                      emptySubtitle: 'Try a different keyword, or be the first to share something with the community.',
+                      showStatus: false,
+                      onTap: (post) => context.push('/community/posts/${post.id}'),
+                    ),
+                    _PostList(
+                      future: _mineFuture,
+                      onRetry: _reload,
+                      emptyEmoji: '📝',
+                      emptyTitle: 'You haven\'t written anything yet',
+                      emptySubtitle: 'Write a post and it\'ll appear publicly once our team reviews it.',
+                      showStatus: true,
+                      onTap: (post) => context.push('/community/posts/${post.id}'),
+                      onEdit: (post) => _compose(post: post),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -198,6 +234,27 @@ class PostStatusChip extends StatelessWidget {
   }
 }
 
+class PostLanguageBadge extends StatelessWidget {
+  final String language;
+  const PostLanguageBadge({super.key, required this.language});
+
+  @override
+  Widget build(BuildContext context) {
+    final isUrdu = language == 'ur';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.teal.shade50,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        isUrdu ? 'اردو' : 'English',
+        style: TextStyle(color: Colors.teal.shade800, fontSize: 10.5, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
 class PostCard extends StatelessWidget {
   final MemberPost post;
   final bool showStatus;
@@ -259,8 +316,11 @@ class PostCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                   ],
+                  PostLanguageBadge(language: post.language),
+                  const SizedBox(height: 6),
                   Text(
                     post.title,
+                    textDirection: post.language == 'ur' ? TextDirection.rtl : TextDirection.ltr,
                     style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800, height: 1.3),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

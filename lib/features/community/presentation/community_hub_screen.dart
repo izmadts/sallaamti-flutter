@@ -3,19 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/module_themes.dart';
-import '../../auth/state/auth_controller.dart';
 
-// Testimonials are open to every member. Member Posts (long-form articles
-// with a review queue on the web) is gated to accounts with posts.manage or
-// admin (AppUser.canWritePosts) — a common member's own posting surface in
-// this app is the Wall, not this. Blog was dropped from the app entirely.
 class CommunityHubScreen extends ConsumerWidget {
   const CommunityHubScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canWritePosts = ref.watch(authControllerProvider).user?.canWritePosts ?? false;
-
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
@@ -34,16 +27,14 @@ class CommunityHubScreen extends ConsumerWidget {
                 style: TextStyle(color: Colors.grey.shade600, height: 1.4),
               ),
               const SizedBox(height: 22),
-              if (canWritePosts) ...[
-                _HubCard(
-                  emoji: '✍️',
-                  color: const Color(0xFF0D6B6B),
-                  title: 'Member Posts',
-                  subtitle: 'Read what other members have written — or publish something of your own.',
-                  onTap: () => context.push('/community/posts'),
-                ),
-                const SizedBox(height: 14),
-              ],
+              _HubCard(
+                emoji: '✍️',
+                color: const Color(0xFF0D6B6B),
+                title: 'Sallaamti Blog',
+                subtitle: 'Read articles from the community — or write and submit your own for review.',
+                onTap: () => context.push('/community/posts'),
+              ),
+              const SizedBox(height: 14),
               _HubCard(
                 emoji: '💬',
                 color: const Color(0xFFB8962E),
