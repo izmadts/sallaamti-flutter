@@ -68,10 +68,12 @@
   "moduleVolunteer": "Volunteer",
   "moduleWall": "Sallaamti Wall",
   "moduleCommunity": "Community",
+  "moduleQa": "Ask a Question",
 
   "navHome": "Home",
   "navMore": "More",
   "navWallShort": "Wall",
+  "navQaShort": "Q&A",
   "navNikahShort": "Nikah",
   "navQuranShort": "Quran",
   "navSkillsShort": "Skills",

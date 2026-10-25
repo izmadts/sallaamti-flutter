@@ -68,10 +68,12 @@
   "moduleVolunteer": "رضاکار بنیں",
   "moduleWall": "سلامتی وال",
   "moduleCommunity": "کمیونٹی",
+  "moduleQa": "سوال پوچھیں",
 
   "navHome": "ہوم",
   "navMore": "مزید",
   "navWallShort": "وال",
+  "navQaShort": "سوالات",
   "navNikahShort": "نکاح",
   "navQuranShort": "قرآن",
   "navSkillsShort": "سکلز",

@@ -15,6 +15,7 @@ const moduleEmoji = {
   'volunteer': '🙌',
   'wall': '📣',
   'community': '📰',
+  'qa': '❓',
 };
 
 String moduleLabel(BuildContext context, String module) {
@@ -29,6 +30,7 @@ String moduleLabel(BuildContext context, String module) {
     'volunteer' => l10n.moduleVolunteer,
     'wall' => l10n.moduleWall,
     'community' => l10n.moduleCommunity,
+    'qa' => l10n.moduleQa,
     _ => module,
   };
 }
@@ -51,6 +53,7 @@ String moduleShortLabel(BuildContext context, String module) {
     'volunteer' => l10n.moduleVolunteer,
     'wall' => l10n.navWallShort,
     'community' => l10n.moduleCommunity,
+    'qa' => l10n.navQaShort,
     _ => moduleLabel(context, module),
   };
 }
@@ -67,6 +70,7 @@ String? moduleRoute(String module) => switch (module) {
       'quran' => '/quran-hub',
       'skills' => '/learning/track/skills',
       'community' => '/community',
+      'qa' => '/qa',
       _ => null,
     };
 
@@ -82,6 +86,7 @@ const _pathPrefixToModule = {
   '/donate': 'donation',
   '/volunteer': 'volunteer',
   '/community': 'community',
+  '/qa': 'qa',
 };
 
 String? moduleForPath(String path) {

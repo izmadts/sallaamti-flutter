@@ -114,15 +114,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     final message = error is ApiException ? error.message : l10n.errorGeneric;
                     return Center(child: Text(message, textAlign: TextAlign.center));
                   },
-                  data: (meta) => GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 1.05,
-                    ),
-                    itemCount: meta.modules.length,
-                    itemBuilder: (context, index) => _ModuleTile(module: meta.modules[index]),
+                  data: (meta) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _WallBanner(),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: GridView.builder(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 14,
+                            crossAxisSpacing: 14,
+                            childAspectRatio: 1.05,
+                          ),
+                          itemCount: meta.modules.length,
+                          itemBuilder: (context, index) => _ModuleTile(module: meta.modules[index]),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -189,6 +198,49 @@ class _BindIdentifierBanner extends StatelessWidget {
               constraints: const BoxConstraints(),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Full-width and visually distinct from the 2-column module grid below it —
+// the Wall is the app's social feed, not just another module tile.
+class _WallBanner extends StatelessWidget {
+  const _WallBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      borderRadius: BorderRadius.circular(20),
+      elevation: 2,
+      shadowColor: Colors.black26,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.push('/wall'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFB8962E), Color(0xFF8A6D1C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Text(moduleEmoji['wall'] ?? '📣', style: const TextStyle(fontSize: 30)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  moduleLabel(context, 'wall'),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+            ],
+          ),
         ),
       ),
     );
