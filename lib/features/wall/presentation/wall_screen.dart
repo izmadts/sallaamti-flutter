@@ -147,11 +147,13 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   }
 
   Widget _buildTagBar(BuildContext context) {
-    // 'Proposal' is hardcoded in (not just left to _availableTags) so the
-    // tab always appears even before any such post exists yet — same
-    // reasoning as 'dua'. De-duplicated since the server's own tag list
-    // will also naturally include it once a Proposal post exists.
-    final tags = {'all', 'dua', 'Proposal', ..._availableTags}.toList();
+    // 'Proposal'/'Announcement' are hardcoded in (not just left to
+    // _availableTags) so the tabs always appear even before any such post
+    // exists yet — same reasoning as 'dua'. De-duplicated since the
+    // server's own tag list will also naturally include them once a
+    // matching post exists. Unlike 'Proposal', an Announcement still shows
+    // in "All" too — it's meant to be seen widely, not tucked away.
+    final tags = {'all', 'dua', 'Proposal', 'Announcement', ..._availableTags}.toList();
     return SizedBox(
       height: 44,
       child: ListView.separated(
@@ -166,6 +168,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
             'all' => 'All',
             'dua' => '🤲 Duas',
             'Proposal' => '💍 Proposals',
+            'Announcement' => '📢 Announcements',
             _ => tag,
           };
           return ChoiceChip(
