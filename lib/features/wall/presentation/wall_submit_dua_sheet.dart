@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
-import '../../../shared/widgets/image_pick_field.dart';
 import '../data/wall_repository.dart';
 
 class WallSubmitDuaSheet extends ConsumerStatefulWidget {
@@ -18,7 +17,7 @@ class WallSubmitDuaSheet extends ConsumerStatefulWidget {
 class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
   final _bodyController = TextEditingController();
   bool _isAnonymous = false;
-  File? _image;
+  final List<File> _images = [];
   bool _submitting = false;
   String? _error;
 
@@ -28,10 +27,16 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1280, maxHeight: 1280);
-    if (picked != null) setState(() => _image = File(picked.path));
+  Future<void> _pickImages() async {
+    final picked = await ImagePicker().pickMultiImage(imageQuality: 85, maxWidth: 1280, maxHeight: 1280);
+    if (picked.isEmpty) return;
+    setState(() {
+      _images.addAll(picked.map((p) => File(p.path)));
+      if (_images.length > 10) _images.removeRange(10, _images.length);
+    });
   }
+
+  void _removeImage(int index) => setState(() => _images.removeAt(index));
 
   Future<void> _submit() async {
     final body = _bodyController.text.trim();
@@ -46,7 +51,7 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
     });
 
     try {
-      await ref.read(wallRepositoryProvider).submitDua(body: body, isAnonymous: _isAnonymous, image: _image);
+      await ref.read(wallRepositoryProvider).submitDua(body: body, isAnonymous: _isAnonymous, images: _images);
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
@@ -98,17 +103,57 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
             maxLines: 6,
             maxLength: 1000,
           ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SizedBox(
-              width: 140,
-              child: ImagePickField(
-                label: 'Add a Photo (Optional)',
-                file: _image,
-                alreadyUploaded: false,
-                onTap: _pickImage,
-              ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 80,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (var i = 0; i < _images.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(_images[i], width: 72, height: 72, fit: BoxFit.cover),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(i),
+                            child: const CircleAvatar(
+                              radius: 10,
+                              backgroundColor: Colors.black54,
+                              child: Icon(Icons.close, size: 13, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (_images.length < 10)
+                  InkWell(
+                    onTap: _pickImages,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Icon(Icons.add_photo_alternate_outlined, color: Colors.grey.shade500),
+                    ),
+                  ),
+              ],
             ),
+          ),
+          Text(
+            'Add up to 10 photos — they\'ll appear as a swipeable gallery, same as an Instagram/Facebook post.',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 8),
           SwitchListTile(

@@ -24,6 +24,19 @@ class WallAuthor {
       );
 }
 
+class WallMediaItem {
+  final String type; // 'image' | 'video'
+  final String url;
+  WallMediaItem({required this.type, required this.url});
+
+  bool get isVideo => type == 'video';
+
+  factory WallMediaItem.fromJson(Map<String, dynamic> json) => WallMediaItem(
+        type: json['type'] as String? ?? 'image',
+        url: json['url'] as String? ?? '',
+      );
+}
+
 class WallItem {
   final String type; // 'dua' | 'post'
   final int id;
@@ -33,6 +46,7 @@ class WallItem {
   final String body;
   final String? photoUrl;
   final String? videoUrl;
+  final List<WallMediaItem> media;
   final List<String> tags;
   final DateTime? eventAt;
   final bool isPinned;
@@ -51,6 +65,7 @@ class WallItem {
     required this.body,
     this.photoUrl,
     this.videoUrl,
+    this.media = const [],
     required this.tags,
     this.eventAt,
     required this.isPinned,
@@ -70,6 +85,7 @@ class WallItem {
         body: body,
         photoUrl: photoUrl,
         videoUrl: videoUrl,
+        media: media,
         tags: tags,
         eventAt: eventAt,
         isPinned: isPinned,
@@ -89,6 +105,7 @@ class WallItem {
         body: json['body'] as String? ?? '',
         photoUrl: json['photo_url'] as String?,
         videoUrl: json['video_url'] as String?,
+        media: _asList(json['media']).map((e) => WallMediaItem.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
         tags: _asList(json['tags']).map((e) => e.toString()).toList(),
         eventAt: json['event_at'] != null ? DateTime.tryParse(json['event_at'].toString()) : null,
         isPinned: json['is_pinned'] as bool? ?? false,
@@ -165,12 +182,12 @@ class WallRepository {
     );
   }
 
-  Future<void> submitDua({required String body, bool isAnonymous = false, File? image}) =>
+  Future<void> submitDua({required String body, bool isAnonymous = false, List<File> images = const []}) =>
       _client.postMultipart('/wall/dua', fields: {
         'body': body,
         'is_anonymous': isAnonymous,
       }, files: {
-        if (image != null) 'image': image,
+        if (images.isNotEmpty) 'images[]': images,
       });
 
   Future<WallItem> react(String type, int id, String reactionType) async {

@@ -63,7 +63,7 @@ class ApiClient {
   Future<Map<String, dynamic>> postMultipart(
     String path, {
     Map<String, dynamic> fields = const {},
-    Map<String, File> files = const {},
+    Map<String, dynamic> files = const {},
   }) async {
     final map = <String, dynamic>{};
     fields.forEach((key, value) {
@@ -81,7 +81,14 @@ class ApiClient {
     });
 
     for (final entry in files.entries) {
-      map[entry.key] = await MultipartFile.fromFile(entry.value.path, filename: entry.value.path.split(Platform.pathSeparator).last);
+      final value = entry.value;
+      if (value is List<File>) {
+        map[entry.key] = await Future.wait(value.map(
+          (file) => MultipartFile.fromFile(file.path, filename: file.path.split(Platform.pathSeparator).last),
+        ));
+      } else if (value is File) {
+        map[entry.key] = await MultipartFile.fromFile(value.path, filename: value.path.split(Platform.pathSeparator).last);
+      }
     }
 
     return _request(() => _dio.post(path, data: FormData.fromMap(map)));

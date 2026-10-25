@@ -5,6 +5,7 @@ import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../data/wall_repository.dart';
 import 'wall_comments_screen.dart';
+import 'wall_media_carousel.dart';
 
 String _timeAgo(DateTime date) {
   final diff = DateTime.now().difference(date);
@@ -99,7 +100,9 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               child: const Text('📌 Pinned', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
             ),
-          if (_item.photoUrl != null)
+          if (_item.media.length > 1)
+            WallMediaCarousel(media: _item.media)
+          else if (_item.photoUrl != null)
             // Full photo, not cropped — a fixed AspectRatio + BoxFit.cover
             // here forced every photo into a 16:10 box, chopping off most of
             // a portrait phone photo (the common case) to fill it. fitWidth
@@ -113,14 +116,9 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
                 aspectRatio: 16 / 10,
                 child: Container(color: Colors.grey.shade100),
               ),
-            ),
-          if (!isDua && _item.videoUrl != null && _item.photoUrl == null)
-            Container(
-              height: 160,
-              width: double.infinity,
-              color: Colors.black87,
-              child: const Center(child: Icon(Icons.play_circle_fill, color: Colors.white, size: 48)),
-            ),
+            )
+          else if (!isDua && _item.videoUrl != null)
+            WallMediaCarousel(media: [WallMediaItem(type: 'video', url: _item.videoUrl!)]),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
