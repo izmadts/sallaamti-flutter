@@ -12,7 +12,6 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
-import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_hire_repository.dart';
 import '../state/nikah_controller.dart';
 
@@ -153,7 +152,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
       return Theme(
         data: ModuleThemes.forModule('nikah'),
         child: Scaffold(
-        appBar: AppBar(title: Text(l10n.nikahPaymentSubmittedTitle), actions: const [WhatsappChannelAction()]),
+        appBar: AppBar(title: Text(l10n.nikahPaymentSubmittedTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -196,7 +195,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-      appBar: AppBar(title: const Text('Verification Fee'), actions: const [WhatsappChannelAction()]),
+      appBar: AppBar(title: const Text('Verification Fee')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -377,7 +376,6 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                     ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Text('Go Back'),
               ),
-            const WhatsappChannelAction(),
           ],
         ),
         body: SafeArea(

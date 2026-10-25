@@ -9,7 +9,6 @@ import '../../../core/storage/secure_store.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/trust_badges.dart';
-import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../../profile/presentation/edit_profile_screen.dart';
 import '../domain/nikah_card.dart';
 import '../state/nikah_controller.dart';
@@ -271,7 +270,6 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
                     ),
                 ],
               ),
-            const WhatsappChannelAction(),
           ],
         ),
         body: Column(

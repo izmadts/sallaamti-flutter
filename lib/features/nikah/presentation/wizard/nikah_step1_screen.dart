@@ -12,7 +12,6 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/async_searchable_picker.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
-import '../../../../shared/widgets/whatsapp_channel_action.dart';
 import '../../state/nikah_controller.dart';
 
 // Heights 4'0" to 7'0", matching the height-range filter the browse
@@ -290,7 +289,6 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       busy: _busy,
       errorText: _error,
       theme: ModuleThemes.forModule('nikah'),
-      actions: const [WhatsappChannelAction()],
       child: Form(
         key: _formKey,
         child: Column(

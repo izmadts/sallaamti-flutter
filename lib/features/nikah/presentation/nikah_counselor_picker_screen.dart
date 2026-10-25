@@ -6,7 +6,6 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/authed_avatar.dart';
-import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_hire_repository.dart';
 
 const _tierBadges = {
@@ -112,7 +111,6 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
                   ),
               ],
             ),
-            const WhatsappChannelAction(),
           ],
         ),
         body: _buildBody(context),

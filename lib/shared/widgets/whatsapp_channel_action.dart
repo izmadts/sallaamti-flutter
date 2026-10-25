@@ -3,10 +3,14 @@ import 'package:url_launcher/url_launcher.dart';
 
 // Fixed, not settings-driven — this is the one official channel link, same
 // treatment as a hardcoded support email would get elsewhere in the app.
-const _officialWhatsappChannelUrl = 'https://whatsapp.com/channel/0029Vakde1SFcowDP3r6C20f';
+const officialWhatsappChannelUrl = 'https://whatsapp.com/channel/0029Vakde1SFcowDP3r6C20f';
 
-Future<void> _openWhatsappChannel(BuildContext context) async {
-  final uri = Uri.parse(_officialWhatsappChannelUrl);
+// Used by the bottom nav's More sheet "Follow Us" row — moved here from a
+// per-screen AppBar action (see git history) since a "join our channel"
+// prompt belongs with the rest of the social links, not repeated on every
+// Nikah screen's topbar.
+Future<void> openWhatsappChannel(BuildContext context) async {
+  final uri = Uri.parse(officialWhatsappChannelUrl);
   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,19 +40,3 @@ class WhatsappBadge extends StatelessWidget {
   }
 }
 
-// AppBar action promoting the official WhatsApp channel — same icon/color
-// convention as AppBottomNav's WhatsApp support tile. Shown across every
-// Nikah module screen's topbar per product request, not just the entry
-// points, so it's a reusable action rather than copy-pasted per screen.
-class WhatsappChannelAction extends StatelessWidget {
-  const WhatsappChannelAction({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: const WhatsappBadge(),
-      tooltip: 'Join our WhatsApp Channel',
-      onPressed: () => _openWhatsappChannel(context),
-    );
-  }
-}

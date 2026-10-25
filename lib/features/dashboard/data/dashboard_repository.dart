@@ -5,7 +5,18 @@ import '../../auth/state/auth_controller.dart';
 class DashboardMeta {
   final List<String> modules;
   final String? whatsappNumber;
-  const DashboardMeta({required this.modules, this.whatsappNumber});
+  final String? facebookUrl;
+  final String? instagramUrl;
+  final String? youtubeUrl;
+  final String? tiktokUrl;
+  const DashboardMeta({
+    required this.modules,
+    this.whatsappNumber,
+    this.facebookUrl,
+    this.instagramUrl,
+    this.youtubeUrl,
+    this.tiktokUrl,
+  });
 }
 
 // Shared across DashboardScreen's own grid and the global bottom nav's
@@ -24,9 +35,14 @@ final dashboardMetaProvider = FutureProvider<DashboardMeta>((ref) async {
   final tileModules = modules.where((m) => m != 'quran_live').toList();
 
   final support = data['support'] as Map?;
+  final social = data['social'] as Map?;
 
   return DashboardMeta(
     modules: tileModules,
     whatsappNumber: support?['whatsapp_number'] as String?,
+    facebookUrl: social?['facebook'] as String?,
+    instagramUrl: social?['instagram'] as String?,
+    youtubeUrl: social?['youtube'] as String?,
+    tiktokUrl: social?['tiktok'] as String?,
   );
 });

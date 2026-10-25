@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_repository.dart';
 import '../state/nikah_controller.dart';
 
@@ -61,7 +60,7 @@ class _NikahBlockedScreenState extends ConsumerState<NikahBlockedScreen> {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Blocked Profiles'), actions: const [WhatsappChannelAction()]),
+        appBar: AppBar(title: const Text('Blocked Profiles')),
         body: RefreshIndicator(onRefresh: _load, child: _buildBody(context)),
       ),
     );

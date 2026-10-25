@@ -295,11 +295,115 @@ class _MoreSheet extends ConsumerWidget {
                     );
                   },
                 ),
+                const Divider(height: 24),
+                const Text(
+                  'Follow Us',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                ),
+                const SizedBox(height: 12),
+                _FollowUsRow(meta: meta),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+// WhatsApp Channel is always shown (fixed link, not settings-driven); the
+// other four only appear once configured in admin Settings, so the app
+// never shows an icon that would lead nowhere — see DashboardController's
+// 'social' block.
+class _FollowUsRow extends StatelessWidget {
+  final DashboardMeta? meta;
+  const _FollowUsRow({required this.meta});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 14,
+      runSpacing: 10,
+      children: [
+        _SocialIcon(
+          badge: const WhatsappBadge(size: 40),
+          tooltip: 'Join our WhatsApp Channel',
+          onTap: () => openWhatsappChannel(context),
+        ),
+        if ((meta?.facebookUrl ?? '').isNotEmpty)
+          _SocialIcon(
+            badge: const _SocialBadge(icon: Icons.facebook, color: Color(0xFF1877F2)),
+            tooltip: 'Facebook',
+            onTap: () => _openSocialLink(context, meta!.facebookUrl!),
+          ),
+        if ((meta?.instagramUrl ?? '').isNotEmpty)
+          _SocialIcon(
+            badge: const _SocialBadge(icon: Icons.camera_alt, color: Color(0xFFE1306C)),
+            tooltip: 'Instagram',
+            onTap: () => _openSocialLink(context, meta!.instagramUrl!),
+          ),
+        if ((meta?.youtubeUrl ?? '').isNotEmpty)
+          _SocialIcon(
+            badge: const _SocialBadge(icon: Icons.smart_display, color: Color(0xFFFF0000)),
+            tooltip: 'YouTube',
+            onTap: () => _openSocialLink(context, meta!.youtubeUrl!),
+          ),
+        if ((meta?.tiktokUrl ?? '').isNotEmpty)
+          _SocialIcon(
+            badge: const _SocialBadge(icon: Icons.music_note, color: Colors.black),
+            tooltip: 'TikTok',
+            onTap: () => _openSocialLink(context, meta!.tiktokUrl!),
+          ),
+      ],
+    );
+  }
+}
+
+Future<void> _openSocialLink(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open that link.')),
+      );
+    }
+  }
+}
+
+class _SocialIcon extends StatelessWidget {
+  final Widget badge;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _SocialIcon({required this.badge, required this.tooltip, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: badge,
+      ),
+    );
+  }
+}
+
+// Same "colored circle + close-enough Material icon" convention as
+// WhatsappBadge — no brand-icon package needed (font_awesome_flutter's
+// IconData subclasses don't compile against this SDK).
+class _SocialBadge extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  const _SocialBadge({required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: Icon(icon, color: Colors.white, size: 22),
     );
   }
 }
