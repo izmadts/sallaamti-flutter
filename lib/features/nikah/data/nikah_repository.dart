@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../../../core/api/api_client.dart';
+import '../domain/matchmaking_overview.dart';
 import '../domain/nikah_card.dart';
 import '../domain/nikah_interest.dart';
 import '../domain/nikah_profile.dart';
@@ -160,6 +161,20 @@ class NikahRepository {
   Future<void> acceptInterest(int interestId) => _client.post('/nikah/interests/$interestId/accept');
   Future<void> declineInterest(int interestId) => _client.post('/nikah/interests/$interestId/decline');
   Future<void> cancelInterest(int interestId) => _client.delete('/nikah/interests/$interestId/cancel');
+
+  // Replacement for the public /p/{lead} link's proposal/consent
+  // self-service, now that a client has a real app account — see
+  // Api\V1\NikahMatchmakingController.
+  Future<NikahMatchmakingOverview> matchmakingOverview() async {
+    final data = await _client.get('/nikah/matchmaking');
+    return NikahMatchmakingOverview.fromJson(data);
+  }
+
+  Future<void> respondToProposal(int proposalId, String response) =>
+      _client.post('/nikah/matchmaking/proposals/$proposalId/respond', data: {'response': response});
+
+  Future<void> respondToConsent(int consentRequestId, String decision) =>
+      _client.post('/nikah/matchmaking/consents/$consentRequestId/respond', data: {'decision': decision});
 
   Future<List<NikahCard>> savedProfiles() async {
     final data = await _client.get('/nikah/saved');

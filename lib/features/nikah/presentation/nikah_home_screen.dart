@@ -695,7 +695,10 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
         ),
         onTap: lead.packagePaymentStatus == null
             ? () => context.push('/nikah/counselor/package')
-            : null,
+            // Once engaged, tapping the card goes straight to the
+            // counselor's proposed matches/consent requests — see
+            // nikah_matchmaking_screen.dart.
+            : () => context.push('/nikah/matchmaking'),
       ),
     );
   }

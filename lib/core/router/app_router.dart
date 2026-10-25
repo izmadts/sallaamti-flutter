@@ -21,6 +21,7 @@ import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/profile/presentation/change_password_screen.dart';
 import '../../features/nikah/presentation/nikah_home_screen.dart';
 import '../../features/nikah/presentation/nikah_interests_screen.dart';
+import '../../features/nikah/presentation/nikah_matchmaking_screen.dart';
 import '../../features/nikah/presentation/nikah_messages_screen.dart';
 import '../../features/nikah/presentation/nikah_payment_screen.dart';
 import '../../features/nikah/presentation/nikah_profile_detail_screen.dart';
@@ -234,6 +235,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/nikah/payment', builder: (context, state) => const NikahPaymentScreen()),
       GoRoute(path: '/nikah/browse', builder: (context, state) => const NikahBrowseScreen()),
       GoRoute(path: '/nikah/interests', builder: (context, state) => const NikahInterestsScreen()),
+      GoRoute(path: '/nikah/matchmaking', builder: (context, state) => const NikahMatchmakingScreen()),
       GoRoute(path: '/nikah/saved', builder: (context, state) => const NikahSavedScreen()),
       GoRoute(path: '/nikah/blocked', builder: (context, state) => const NikahBlockedScreen()),
       GoRoute(path: '/nikah/counselor/pick', builder: (context, state) => const NikahCounselorPickerScreen()),
