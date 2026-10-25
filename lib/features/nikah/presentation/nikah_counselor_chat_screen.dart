@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../shared/widgets/whatsapp_channel_action.dart';
 import '../data/nikah_hire_repository.dart';
 import '../data/nikah_repository.dart';
 
@@ -86,6 +85,27 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
     }
   }
 
+  Future<void> _report() async {
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (ctx) => const _ReportConversationDialog(),
+    );
+    if (result == null || !mounted) return;
+
+    try {
+      await ref.read(nikahHireRepositoryProvider).reportLeadConversation(
+            widget.leadId,
+            reason: result['reason']!,
+            details: result['details'],
+          );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted. Our team will review it shortly.')));
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorGeneric)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = ModuleThemes.seedFor('nikah');
@@ -93,7 +113,10 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Your Counselor'), actions: const [WhatsappChannelAction()]),
+        appBar: AppBar(
+          title: const Text('Your Counselor'),
+          actions: [IconButton(icon: const Icon(Icons.flag_outlined), tooltip: 'Report', onPressed: _report)],
+        ),
         body: Column(
           children: [
             Expanded(child: _buildBody(context, primary)),
@@ -187,6 +210,61 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
           ),
         );
       },
+    );
+  }
+}
+
+class _ReportConversationDialog extends StatefulWidget {
+  const _ReportConversationDialog();
+
+  @override
+  State<_ReportConversationDialog> createState() => _ReportConversationDialogState();
+}
+
+class _ReportConversationDialogState extends State<_ReportConversationDialog> {
+  static const _reasons = ['Inappropriate message', 'Fake matchmaker', 'Money request', 'Other'];
+  String? _reason;
+  final _detailsController = TextEditingController();
+
+  @override
+  void dispose() {
+    _detailsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Report this conversation'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ..._reasons.map((r) => RadioListTile<String>(
+                value: r,
+                groupValue: _reason,
+                title: Text(r),
+                dense: true,
+                onChanged: (v) => setState(() => _reason = v),
+              )),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _detailsController,
+            decoration: const InputDecoration(labelText: 'Details (optional)'),
+            minLines: 2,
+            maxLines: 4,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(MaterialLocalizations.of(context).cancelButtonLabel)),
+        FilledButton(
+          onPressed: _reason == null
+              ? null
+              : () => Navigator.of(context).pop({'reason': _reason!, 'details': _detailsController.text.trim()}),
+          child: const Text('Submit Report'),
+        ),
+      ],
     );
   }
 }

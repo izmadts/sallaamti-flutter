@@ -51,6 +51,7 @@ class HiredLead {
   final int? nikahPackageId;
   final String? packagePaymentStatus;
   final String? packagePaymentRejectionReason;
+  final int unreadMessageCount;
 
   HiredLead({
     required this.id,
@@ -58,6 +59,7 @@ class HiredLead {
     this.nikahPackageId,
     this.packagePaymentStatus,
     this.packagePaymentRejectionReason,
+    this.unreadMessageCount = 0,
   });
 
   factory HiredLead.fromJson(Map<String, dynamic> json) => HiredLead(
@@ -66,6 +68,7 @@ class HiredLead {
         nikahPackageId: json['nikah_package_id'] as int?,
         packagePaymentStatus: json['package_payment_status'] as String?,
         packagePaymentRejectionReason: json['package_payment_rejection_reason'] as String?,
+        unreadMessageCount: json['unread_message_count'] as int? ?? 0,
       );
 }
 
@@ -189,6 +192,13 @@ class NikahHireRepository {
     final data = await _client.post('/leads/$leadId/messages', data: {'message': message});
     return NikahMessage.fromJson(Map<String, dynamic>.from(data['message'] as Map));
   }
+
+  Future<void> reportLeadConversation(int leadId, {required String reason, String? details, int? messageId}) =>
+      _client.post('/leads/$leadId/report', data: {
+        'reason': reason,
+        if (details != null && details.isNotEmpty) 'details': details,
+        if (messageId != null) 'lead_client_message_id': messageId,
+      });
 }
 
 final nikahHireRepositoryProvider = Provider<NikahHireRepository>(

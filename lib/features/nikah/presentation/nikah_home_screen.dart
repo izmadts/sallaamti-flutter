@@ -689,7 +689,11 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
         ),
         subtitle: Text(status),
         trailing: IconButton(
-          icon: const Icon(Icons.chat_bubble_outline),
+          icon: Badge(
+            isLabelVisible: lead.unreadMessageCount > 0,
+            label: Text('${lead.unreadMessageCount}'),
+            child: const Icon(Icons.chat_bubble_outline),
+          ),
           tooltip: 'Message',
           onPressed: () => context.push('/nikah/counselor/chat/${lead.id}'),
         ),
