@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/data/city_search_repository.dart';
+import '../../../shared/widgets/async_searchable_picker.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../auth/state/auth_controller.dart';
 import '../data/profile_repository.dart';
@@ -22,6 +24,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final _phoneController = TextEditingController(text: ref.read(authControllerProvider).user?.phone ?? '');
   late final _cityController = TextEditingController(text: ref.read(authControllerProvider).user?.city ?? '');
   String? _gender;
+  // Set once at load, from whatever gender was already on the account —
+  // not re-evaluated from `_gender` itself, which the dropdown below would
+  // otherwise mutate. Locked once a real value exists; backend drops any
+  // changed value anyway (see Api\V1\ProfileController::update()), this
+  // just keeps the UI from implying a change will take effect.
+  bool _genderLocked = false;
   File? _newAvatar;
 
   bool _savingProfile = false;
@@ -58,7 +66,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void initState() {
     super.initState();
     _gender = ref.read(authControllerProvider).user?.gender;
+    _genderLocked = _gender != null;
     _initModulesOnce();
+  }
+
+  // Same live-search picker as the Nikah wizard's City field (global, no
+  // country/state scoping here — this is the general account profile, not
+  // a Nikah-specific form) — replaces a bare free-text box that had no
+  // validation or suggestions at all.
+  Future<void> _pickCity() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => AsyncSearchablePicker(
+        title: 'Select City',
+        search: (query) => ref.read(citySearchRepositoryProvider).search(query: query),
+      ),
+    );
+    if (selected != null) setState(() => _cityController.text = selected);
   }
 
   Future<void> _pickAvatar() async {
@@ -192,10 +217,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         DropdownMenuItem(value: 'male', child: Text('Male')),
                         DropdownMenuItem(value: 'female', child: Text('Female')),
                       ],
-                      onChanged: (v) => setState(() => _gender = v),
+                      onChanged: _genderLocked ? null : (v) => setState(() => _gender = v),
                     ),
+                    if (_genderLocked) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Gender can\'t be changed here — contact support if this needs correcting.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ],
                     const SizedBox(height: 12),
-                    TextFormField(controller: _cityController, decoration: const InputDecoration(labelText: 'City')),
+                    TextFormField(
+                      controller: _cityController,
+                      readOnly: true,
+                      onTap: _pickCity,
+                      decoration: const InputDecoration(labelText: 'City', suffixIcon: Icon(Icons.search)),
+                    ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _savingProfile ? null : _saveProfile,

@@ -9,6 +9,7 @@ import '../../../../core/data/city_search_repository.dart';
 import '../../../../core/data/country_states_repository.dart';
 import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../shared/widgets/async_searchable_picker.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
 import '../../../../shared/widgets/whatsapp_channel_action.dart';
@@ -259,12 +260,13 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
 
   // Unlike Country (preloaded, ~250 entries), City is a live-search combo
   // backed by the ~150k-row cities table — see CitySearchRepository and
-  // _AsyncSearchablePicker below.
+  // AsyncSearchablePicker (shared/widgets, also used by Account > Edit
+  // Profile's own City field).
   Future<void> _pickCity() async {
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _AsyncSearchablePicker(
+      builder: (context) => AsyncSearchablePicker(
         title: 'Select City',
         search: (query) => ref
             .read(citySearchRepositoryProvider)
@@ -566,125 +568,6 @@ class _GenderTile extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: selected ? color : Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// City's picker — same sheet feel as _SearchablePicker below, but the
-// options list comes from a debounced API call (CitySearchRepository)
-// instead of filtering an in-memory list, since cities can't be preloaded.
-// Includes a "Use <typed text>" row so a real city missing from our ~150k
-// rows can still be entered, same pick-or-type leniency the backend
-// validation (and the web's equivalent combo) already allows.
-class _AsyncSearchablePicker extends StatefulWidget {
-  final String title;
-  final Future<List<String>> Function(String query) search;
-  const _AsyncSearchablePicker({required this.title, required this.search});
-
-  @override
-  State<_AsyncSearchablePicker> createState() => _AsyncSearchablePickerState();
-}
-
-class _AsyncSearchablePickerState extends State<_AsyncSearchablePicker> {
-  final _searchController = TextEditingController();
-  List<String> _results = [];
-  bool _loading = false;
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  void _onSearchChanged(String query) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () async {
-      setState(() => _loading = true);
-      try {
-        final results = await widget.search(query);
-        if (mounted) setState(() => _results = results);
-      } catch (_) {
-        if (mounted) setState(() => _results = []);
-      } finally {
-        if (mounted) setState(() => _loading = false);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final query = _searchController.text.trim();
-    final exactMatch = _results.any(
-      (r) => r.toLowerCase() == query.toLowerCase(),
-    );
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Text(
-                widget.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (v) {
-                  setState(() {});
-                  _onSearchChanged(v);
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search…',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _loading
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : null,
-                ),
-                autofocus: true,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                children: [
-                  if (query.isNotEmpty && !exactMatch)
-                    ListTile(
-                      leading: const Icon(Icons.add),
-                      title: Text('Use "$query"'),
-                      onTap: () => Navigator.of(context).pop(query),
-                    ),
-                  ..._results.map(
-                    (option) => ListTile(
-                      title: Text(option),
-                      onTap: () => Navigator.of(context).pop(option),
-                    ),
-                  ),
-                ],
               ),
             ),
           ],
