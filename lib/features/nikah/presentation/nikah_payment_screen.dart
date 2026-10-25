@@ -192,6 +192,40 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
       return _buildHiredState(context, _lead!);
     }
 
+    // Mirrors web's NikahPaymentController::show(), which redirects away
+    // from this page entirely (never renders it) once the fee is waived —
+    // a 0-fee/disabled-payment profile, or one already confirmed another
+    // way. Reachable here (rather than only via the review screen's own
+    // check) from anywhere else in the app that links straight to
+    // /nikah/payment, e.g. the dashboard's "pay now" banner.
+    if (profile?.paymentStatus == 'confirmed') {
+      return Theme(
+        data: ModuleThemes.forModule('nikah'),
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Verification Fee')),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('✅', style: TextStyle(fontSize: 56)),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No verification fee is required right now — your profile is ready.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(onPressed: () => context.go('/nikah'), child: const Text('Back to Nikah')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(

@@ -31,9 +31,24 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
       // submit() only flips verification_status server-side and doesn't
       // update the cached profile — refresh so anything reading it after
       // this (including a user backing out before paying) sees the real
-      // state instead of what was cached before submission.
+      // state instead of what was cached before submission. The refreshed
+      // profile also reflects the server's lazy fee-waiver (see
+      // Api\V1\NikahProfileController::show()) — a 0-fee/disabled-payment
+      // profile already comes back with payment_status: 'confirmed', same
+      // as the web wizard, which never shows its payment page in that case
+      // either (see NikahPaymentController::show()).
       await ref.read(nikahControllerProvider.notifier).refresh();
-      if (mounted) context.go('/nikah/payment');
+      if (!mounted) return;
+
+      final profile = ref.read(nikahControllerProvider).profile;
+      if (profile?.paymentStatus == 'confirmed') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No verification fee is required right now — your profile is ready.')),
+        );
+        context.go('/nikah');
+      } else {
+        context.go('/nikah/payment');
+      }
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
