@@ -31,7 +31,7 @@ class _WallMediaCarouselState extends State<WallMediaCarousel> {
       alignment: Alignment.bottomCenter,
       children: [
         SizedBox(
-          height: 260,
+          height: 320,
           child: PageView.builder(
             controller: _pageController,
             itemCount: widget.media.length,
@@ -72,11 +72,21 @@ class _WallImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
-      url,
-      width: double.infinity,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade100),
+    // BoxFit.cover inside this fixed-height box used to crop the top/bottom
+    // off any photo that wasn't exactly this aspect ratio — the common case
+    // for a portrait phone screenshot or tall graphic. contain shows the
+    // whole image (letterboxed on a dark background, same treatment the
+    // video player below already uses) instead of cutting content off.
+    return Container(
+      color: Colors.black,
+      alignment: Alignment.center,
+      child: Image.network(
+        url,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade100),
+      ),
     );
   }
 }

@@ -9,7 +9,11 @@ import 'wall_saved_screen.dart';
 import 'wall_submit_dua_sheet.dart';
 
 class WallScreen extends ConsumerStatefulWidget {
-  const WallScreen({super.key});
+  // Set when opening the Wall from a specific place — e.g. an Announcement
+  // push notification should land straight on the Announcements tab, not
+  // the generic "All" feed the member then has to find it in themselves.
+  final String? initialTag;
+  const WallScreen({super.key, this.initialTag});
 
   @override
   ConsumerState<WallScreen> createState() => _WallScreenState();
@@ -19,7 +23,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   final List<WallItem> _items = [];
   final _scrollController = ScrollController();
   List<String> _availableTags = [];
-  String _activeTag = 'all';
+  late String _activeTag;
   int _page = 1;
   bool _hasMore = true;
   bool _loading = true;
@@ -29,6 +33,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   @override
   void initState() {
     super.initState();
+    _activeTag = widget.initialTag ?? 'all';
     _load(reset: true);
     _scrollController.addListener(() {
       if (_scrollController.position.pixels > _scrollController.position.maxScrollExtent - 400) {

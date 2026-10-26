@@ -32,13 +32,32 @@ const _nikahMatchmakingTypes = {
   'consent_requested',
 };
 
-// CommunityAnnouncementPosted/CommentReceived/ReactionReceived — all land
-// on the Wall, where the post/comment/reaction itself actually is (no
-// comment/reaction deep-link to the specific item yet, same as web).
+// CommentReceived/ReactionReceived land on the generic Wall feed — no
+// comment/reaction deep-link to the specific item yet, same as web.
+// CommunityAnnouncementPosted is handled separately below so it can land
+// on the Announcements tab specifically, not buried in "All".
 const _wallTypes = {
-  'community_announcement',
   'wall_comment',
   'wall_reaction',
+};
+
+// NikahProfileVerified/NikahProfileRejected — both land on the Nikah hub,
+// which already shows the current verification status front and center.
+const _nikahStatusTypes = {
+  'profile_verified',
+  'profile_rejected',
+};
+
+// CounselingBookingRequested/Confirmed/Cancelled/Reassigned/Reminder — all
+// land on the member's own bookings list (Counselor\BookingController /
+// CounselingBookingAdminController notify $booking->member for every one
+// of these).
+const _counselingBookingTypes = {
+  'counseling_booking_requested',
+  'counseling_booking_confirmed',
+  'counseling_booking_cancelled',
+  'counseling_booking_reassigned',
+  'counseling_booking_reminder',
 };
 
 // [data] is the FCM push's full data payload (may be empty/absent for an
@@ -48,8 +67,15 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
   if (_nikahPaymentTypes.contains(type)) return '/nikah/payment';
   if (_nikahMatchmakingTypes.contains(type)) return '/nikah/matchmaking';
   if (_wallTypes.contains(type)) return '/wall';
+  if (_nikahStatusTypes.contains(type)) return '/nikah';
+  if (_counselingBookingTypes.contains(type)) return '/counseling/bookings';
+  if (type == 'community_announcement') return '/wall?tag=Announcement';
   if (type == 'question_answered') return '/qa';
   if (type == 'admin_message_reply') return '/support';
+  // NikahInterestReceived lands on the default (Received) tab; accepted is
+  // about an interest I SENT, so it needs the Sent tab specifically.
+  if (type == 'interest_received') return '/nikah/interests';
+  if (type == 'interest_accepted') return '/nikah/interests?tab=sent';
   if (type == 'post_reviewed') {
     final postId = data['post_id'];
     if (postId != null) return '/community/posts/$postId';
@@ -61,6 +87,14 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
   if (type == 'guardian_message') {
     final interestId = data['interest_id'];
     if (interestId != null) return '/nikah/interests/$interestId/messages';
+  }
+
+  // LeadClientMessageReceived — the counselor<->client channel's counterpart
+  // to guardian_message above; sent to whichever side didn't send the
+  // message, including the member (client) side.
+  if (type == 'lead_client_message') {
+    final leadId = data['lead_id'];
+    if (leadId != null) return '/nikah/counselor/chat/$leadId';
   }
 
   // The web route names all start with 'quran-live.', but the URL PATHS

@@ -38,6 +38,7 @@ import '../../features/community/presentation/post_detail_screen.dart';
 import '../../features/community/presentation/posts_screen.dart';
 import '../../features/community/presentation/testimonial_compose_screen.dart';
 import '../../features/community/presentation/testimonials_screen.dart';
+import '../../features/counseling/presentation/counseling_bookings_screen.dart';
 import '../../features/counseling/presentation/counseling_screen.dart';
 import '../../features/donation/presentation/donation_screen.dart';
 import '../../features/learning/presentation/learning_certificates_screen.dart';
@@ -145,8 +146,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/nikah', builder: (context, state) => const NikahHomeScreen()),
       GoRoute(path: '/volunteer', builder: (context, state) => const VolunteerScreen()),
       GoRoute(path: '/donate', builder: (context, state) => const DonationScreen()),
-      GoRoute(path: '/wall', builder: (context, state) => const WallScreen()),
+      GoRoute(
+        path: '/wall',
+        builder: (context, state) => WallScreen(initialTag: state.uri.queryParameters['tag']),
+      ),
       GoRoute(path: '/counseling', builder: (context, state) => const CounselingScreen()),
+      GoRoute(path: '/counseling/bookings', builder: (context, state) => const CounselingBookingsScreen()),
       GoRoute(path: '/quran-hub', builder: (context, state) => const QuranHubScreen()),
       GoRoute(path: '/quran-live', builder: (context, state) => const QuranLiveCoursesScreen()),
       GoRoute(path: '/quran-live/my-class', builder: (context, state) => const QuranLiveMyClassScreen()),
@@ -238,7 +243,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/nikah/wizard/review', builder: (context, state) => const NikahReviewScreen()),
       GoRoute(path: '/nikah/payment', builder: (context, state) => const NikahPaymentScreen()),
       GoRoute(path: '/nikah/browse', builder: (context, state) => const NikahBrowseScreen()),
-      GoRoute(path: '/nikah/interests', builder: (context, state) => const NikahInterestsScreen()),
+      GoRoute(
+        path: '/nikah/interests',
+        builder: (context, state) => NikahInterestsScreen(initialTabIndex: state.uri.queryParameters['tab'] == 'sent' ? 1 : 0),
+      ),
       GoRoute(path: '/nikah/matchmaking', builder: (context, state) => const NikahMatchmakingScreen()),
       GoRoute(path: '/nikah/saved', builder: (context, state) => const NikahSavedScreen()),
       GoRoute(path: '/nikah/blocked', builder: (context, state) => const NikahBlockedScreen()),

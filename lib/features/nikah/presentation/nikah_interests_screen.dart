@@ -10,7 +10,11 @@ import '../domain/nikah_interest.dart';
 import '../state/nikah_controller.dart';
 
 class NikahInterestsScreen extends ConsumerStatefulWidget {
-  const NikahInterestsScreen({super.key});
+  // Set when a push notification should land straight on "Sent" — e.g.
+  // NikahInterestAccepted means one of MY sent interests was accepted, so
+  // the default "Received" tab would show the wrong list.
+  final int initialTabIndex;
+  const NikahInterestsScreen({super.key, this.initialTabIndex = 0});
 
   @override
   ConsumerState<NikahInterestsScreen> createState() => _NikahInterestsScreenState();
@@ -116,6 +120,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
       data: ModuleThemes.forModule('nikah'),
       child: DefaultTabController(
         length: 2,
+        initialIndex: widget.initialTabIndex,
         child: Scaffold(
           appBar: AppBar(
             title: const Text('Interests'),
