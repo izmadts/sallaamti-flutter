@@ -32,12 +32,20 @@ const _nikahMatchmakingTypes = {
   'consent_requested',
 };
 
+// CommunityAnnouncementPosted — lands on the Wall, where the announcement
+// itself (and its own filter tab) actually is.
+const _wallTypes = {
+  'community_announcement',
+};
+
 // [data] is the FCM push's full data payload (may be empty/absent for an
 // in-app-list tap, which only ever has [url]/[type]).
 String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic> data = const {}}) {
   if (_quranLiveTypes.contains(type)) return '/quran-live/my-class';
   if (_nikahPaymentTypes.contains(type)) return '/nikah/payment';
   if (_nikahMatchmakingTypes.contains(type)) return '/nikah/matchmaking';
+  if (_wallTypes.contains(type)) return '/wall';
+  if (type == 'question_answered') return '/qa';
 
   // A push's data payload never carries url — NikahGuardianMessageReceived
   // sends interest_id alongside type for exactly this reason (see
