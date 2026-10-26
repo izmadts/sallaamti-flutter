@@ -114,21 +114,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     final message = error is ApiException ? error.message : l10n.errorGeneric;
                     return Center(child: Text(message, textAlign: TextAlign.center));
                   },
-                  data: (meta) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _WallBanner(),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            childAspectRatio: 1.05,
-                          ),
-                          itemCount: meta.modules.length,
-                          itemBuilder: (context, index) => _ModuleTile(module: meta.modules[index]),
+                  // One scrolling surface for the banner and the module
+                  // grid together — previously the banner sat in the
+                  // outer, non-scrolling Column while only the grid below
+                  // it scrolled, so the banner stayed pinned in place
+                  // rather than scrolling away with the cards like any
+                  // other card does.
+                  data: (meta) => CustomScrollView(
+                    slivers: [
+                      const SliverToBoxAdapter(child: _WallBanner()),
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                      SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 14,
+                          childAspectRatio: 1.05,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => _ModuleTile(module: meta.modules[index]),
+                          childCount: meta.modules.length,
                         ),
                       ),
                     ],
