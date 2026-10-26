@@ -32,10 +32,13 @@ const _nikahMatchmakingTypes = {
   'consent_requested',
 };
 
-// CommunityAnnouncementPosted — lands on the Wall, where the announcement
-// itself (and its own filter tab) actually is.
+// CommunityAnnouncementPosted/CommentReceived/ReactionReceived — all land
+// on the Wall, where the post/comment/reaction itself actually is (no
+// comment/reaction deep-link to the specific item yet, same as web).
 const _wallTypes = {
   'community_announcement',
+  'wall_comment',
+  'wall_reaction',
 };
 
 // [data] is the FCM push's full data payload (may be empty/absent for an
@@ -46,6 +49,10 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
   if (_nikahMatchmakingTypes.contains(type)) return '/nikah/matchmaking';
   if (_wallTypes.contains(type)) return '/wall';
   if (type == 'question_answered') return '/qa';
+  if (type == 'post_reviewed') {
+    final postId = data['post_id'];
+    if (postId != null) return '/community/posts/$postId';
+  }
 
   // A push's data payload never carries url — NikahGuardianMessageReceived
   // sends interest_id alongside type for exactly this reason (see
