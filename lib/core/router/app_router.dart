@@ -47,6 +47,7 @@ import '../../features/learning/presentation/learning_lesson_screen.dart';
 import '../../features/learning/presentation/learning_my_courses_screen.dart';
 import '../../features/learning/presentation/learning_quiz_screen.dart';
 import '../../features/qa/presentation/qa_screen.dart';
+import '../../features/support/presentation/support_chat_screen.dart';
 import '../../features/quran_live/presentation/quran_hub_screen.dart';
 import '../../features/quran_live/presentation/quran_live_admission_screen.dart';
 import '../../features/quran_live/presentation/quran_live_course_detail_screen.dart';
@@ -194,6 +195,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => TestimonialComposeScreen(existing: state.extra as MemberTestimonial?),
       ),
       GoRoute(path: '/qa', builder: (context, state) => const QaScreen()),
+      GoRoute(path: '/support', builder: (context, state) => const SupportChatScreen()),
 
       // Self-paced learning. Each segment after /learning is a distinct
       // static prefix (track/course/lesson/...) rather than a bare

@@ -271,6 +271,15 @@ class _MoreSheet extends ConsumerWidget {
                 ),
                 const Divider(height: 24),
                 _MoreTile(
+                  icon: Icons.chat_bubble_outline,
+                  iconColor: Colors.teal.shade700,
+                  label: 'Message Admin',
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/support');
+                  },
+                ),
+                _MoreTile(
                   leadingWidget: const WhatsappBadge(),
                   label: 'Instant Support (WhatsApp)',
                   onTap: () {

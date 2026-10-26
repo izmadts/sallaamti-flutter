@@ -49,6 +49,7 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
   if (_nikahMatchmakingTypes.contains(type)) return '/nikah/matchmaking';
   if (_wallTypes.contains(type)) return '/wall';
   if (type == 'question_answered') return '/qa';
+  if (type == 'admin_message_reply') return '/support';
   if (type == 'post_reviewed') {
     final postId = data['post_id'];
     if (postId != null) return '/community/posts/$postId';
