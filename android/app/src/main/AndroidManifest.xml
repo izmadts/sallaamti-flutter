@@ -3,6 +3,19 @@
         android:label="sallaamti_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Meta App Events only (facebook_app_events) — install/activation
+             tracking for Meta Ads, not Facebook Login. Deliberately not
+             restoring FacebookActivity/CustomTabActivity or the fb<appid>
+             URL scheme intent-filter from before — those were the login
+             flow's own requirements and are exactly what caused the
+             recurring native-SDK/key-hash crashes. App Events doesn't need
+             any of that, just these two meta-data entries. -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

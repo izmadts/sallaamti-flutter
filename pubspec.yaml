@@ -47,6 +47,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   image_picker: ^1.2.3
+  facebook_app_events: ^0.19.4
   firebase_core: ^4.1.1
   firebase_messaging: ^16.0.3
   flutter_local_notifications: ^19.5.0

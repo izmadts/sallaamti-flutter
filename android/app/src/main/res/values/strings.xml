@@ -1,3 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Meta App Events only (facebook_app_events) — install/activation
+         tracking for Meta Ads attribution, not Facebook Login. The login
+         flow (flutter_facebook_auth) stays removed; it's what caused the
+         recurring native-SDK/key-hash crashes, not this. Same "login" Meta
+         App ID as before (it already has this release keystore's key hash
+         registered), reused here purely because App Events needs an
+         ApplicationId to report under — these values are public/non-
+         sensitive per Facebook's own docs, same as a Google OAuth client ID. -->
+    <string name="facebook_app_id">2851979021835143</string>
+    <string name="facebook_client_token">78d61a788bca3b8f21bf3a0f1baa6309</string>
 </resources>
