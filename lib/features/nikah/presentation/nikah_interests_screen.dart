@@ -157,79 +157,95 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
         itemCount: items.length,
         itemBuilder: (context, index) {
           final interest = items[index];
+          final inactive = interest.isInactive;
+          final pendingAndActive = interest.status == 'pending' && !inactive;
+
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
+            color: inactive ? Colors.grey.shade100 : null,
             child: InkWell(
               borderRadius: BorderRadius.circular(18),
-              onTap: () => context.push('/nikah/profile/${interest.profileId}'),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        NikahAvatar(photoUrl: interest.photoUrl, radius: 26),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                interest.name ?? '${interest.age ?? '?'} yrs • ${interest.city ?? ''}',
-                                style: const TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              if (interest.profession != null) Text(interest.profession!, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                              const SizedBox(height: 4),
-                              _StatusPill(status: interest.status),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (showActions && interest.status == 'pending') ...[
-                      const SizedBox(height: 12),
+              onTap: inactive ? null : () => context.push('/nikah/profile/${interest.profileId}'),
+              child: Opacity(
+                opacity: inactive ? 0.6 : 1,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                       Row(
                         children: [
+                          interest.unavailable || interest.blocked
+                              ? CircleAvatar(
+                                  radius: 26,
+                                  backgroundColor: Colors.grey.shade300,
+                                  child: Icon(Icons.person_off_outlined, color: Colors.grey.shade600, size: 24),
+                                )
+                              : NikahAvatar(photoUrl: interest.photoUrl, radius: 26),
+                          const SizedBox(width: 14),
                           Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _respond(interest.interestId, true),
-                              icon: const Icon(Icons.check, size: 18),
-                              label: const Text('Accept'),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _respond(interest.interestId, false),
-                              icon: const Icon(Icons.close, size: 18),
-                              label: const Text('Decline'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red.shade700,
-                                side: BorderSide(color: Colors.red.shade200),
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  interest.unavailable || interest.blocked
+                                      ? 'This profile is no longer available'
+                                      : (interest.name ?? '${interest.age ?? '?'} yrs • ${interest.city ?? ''}'),
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                if (!interest.unavailable && !interest.blocked && interest.profession != null)
+                                  Text(interest.profession!, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                                const SizedBox(height: 4),
+                                _StatusPill(status: interest.status, blocked: interest.blocked),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ],
-                    if (allowCancel && interest.status == 'pending') ...[
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _cancel(interest.interestId),
-                          icon: const Icon(Icons.close, size: 18),
-                          label: const Text('Cancel Request'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red.shade700,
-                            side: BorderSide(color: Colors.red.shade200),
+                      if (showActions && pendingAndActive) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _respond(interest.interestId, true),
+                                icon: const Icon(Icons.check, size: 18),
+                                label: const Text('Accept'),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _respond(interest.interestId, false),
+                                icon: const Icon(Icons.close, size: 18),
+                                label: const Text('Decline'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red.shade700,
+                                  side: BorderSide(color: Colors.red.shade200),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (allowCancel && pendingAndActive) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _cancel(interest.interestId),
+                            icon: const Icon(Icons.close, size: 18),
+                            label: const Text('Cancel Request'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red.shade700,
+                              side: BorderSide(color: Colors.red.shade200),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -242,19 +258,23 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
 
 class _StatusPill extends StatelessWidget {
   final String status;
-  const _StatusPill({required this.status});
+  final bool blocked;
+  const _StatusPill({required this.status, this.blocked = false});
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (status) {
-      'accepted' => Colors.green,
-      'declined' => Colors.red,
-      _ => Colors.orange,
-    };
+    final label = blocked ? 'blocked' : status;
+    final color = blocked
+        ? Colors.grey.shade700
+        : switch (status) {
+            'accepted' => Colors.green,
+            'declined' => Colors.red,
+            _ => Colors.orange,
+          };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-      child: Text(status, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
     );
   }
 }
