@@ -68,6 +68,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _gender = ref.read(authControllerProvider).user?.gender;
     _genderLocked = _gender != null;
     _initModulesOnce();
+    _refreshGenderLockFromServer();
+  }
+
+  // The cached auth user can be stale if gender was set/changed by an admin
+  // since this device last logged in or saved its own profile (nothing else
+  // pushes a fresh user into authControllerProvider in between) — without
+  // this, the dropdown above could show as editable even though the
+  // backend already has a real value and will silently drop any change
+  // (see Api\V1\ProfileController::update()), which looked like gender
+  // "unlocking itself again" rather than the UI just being out of date.
+  Future<void> _refreshGenderLockFromServer() async {
+    try {
+      final fresh = await ref.read(authRepositoryProvider).me();
+      ref.read(authControllerProvider.notifier).setUser(fresh);
+      if (mounted) {
+        setState(() {
+          _gender = fresh.gender;
+          _genderLocked = fresh.gender != null;
+        });
+      }
+    } catch (_) {
+      // Non-fatal — keeps whatever the cached value already showed.
+    }
   }
 
   // Same live-search picker as the Nikah wizard's City field (global, no
