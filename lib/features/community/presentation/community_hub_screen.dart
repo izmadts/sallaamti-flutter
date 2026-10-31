@@ -31,7 +31,7 @@ class CommunityHubScreen extends ConsumerWidget {
                 emoji: '✍️',
                 color: const Color(0xFF0D6B6B),
                 title: 'Sallaamti Blog',
-                subtitle: 'Read articles from the community — or write and submit your own for review.',
+                subtitle: 'Read our official articles and community posts — or write and submit your own.',
                 onTap: () => context.push('/community/posts'),
               ),
               const SizedBox(height: 14),

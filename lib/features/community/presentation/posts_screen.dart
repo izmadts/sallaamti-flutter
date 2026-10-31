@@ -11,10 +11,14 @@ import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/community_repository.dart';
 
-// Two views of the same resource: everything published, and the member's own
-// submissions across every status. "Mine" is the only place a pending or
-// rejected post is visible, so it needs its own tab rather than being folded
-// into the public list.
+// Three views: Sallaamti's own staff-authored articles (read-only, the real
+// thing the website publishes at /blog), everything members have published,
+// and the member's own submissions across every status. "Sallaamti Blog" was
+// previously missing entirely — this screen used to only ever show member
+// posts, which could easily be empty, making the whole "Blog" section look
+// broken even when the real website blog had plenty of articles. "Mine" is
+// the only place a pending or rejected post is visible, so it needs its own
+// tab rather than being folded into the public list.
 class PostsScreen extends ConsumerStatefulWidget {
   const PostsScreen({super.key});
 
@@ -24,6 +28,7 @@ class PostsScreen extends ConsumerStatefulWidget {
 
 class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabs;
+  late Future<Paged<BlogArticle>> _blogFuture;
   late Future<Paged<MemberPost>> _allFuture;
   late Future<Paged<MemberPost>> _mineFuture;
   final _searchController = TextEditingController();
@@ -32,7 +37,7 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _load();
   }
 
@@ -46,7 +51,9 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
 
   void _load() {
     final repository = ref.read(communityRepositoryProvider);
-    _allFuture = repository.posts(search: _searchController.text.trim());
+    final search = _searchController.text.trim();
+    _blogFuture = repository.blogArticles(search: search);
+    _allFuture = repository.posts(search: search);
     _mineFuture = repository.myPosts();
   }
 
@@ -61,7 +68,7 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
     final saved = await context.push<bool>('/community/posts/compose', extra: post);
     if (saved == true && mounted) {
       _reload();
-      _tabs.animateTo(1);
+      _tabs.animateTo(2);
     }
   }
 
@@ -77,13 +84,20 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
-            tabs: const [Tab(text: 'All Posts'), Tab(text: 'My Posts')],
+            tabs: const [Tab(text: 'Sallaamti Blog'), Tab(text: 'Community'), Tab(text: 'My Posts')],
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _compose(),
-          icon: const Icon(Icons.edit_outlined),
-          label: const Text('Write a Post'),
+        // Writing only applies to the member-authored tabs (Community/Mine)
+        // — the official blog tab is read-only, staff-authored on the web.
+        floatingActionButton: AnimatedBuilder(
+          animation: _tabs,
+          builder: (context, _) => _tabs.index == 0
+              ? const SizedBox.shrink()
+              : FloatingActionButton.extended(
+                  onPressed: () => _compose(),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Write a Post'),
+                ),
         ),
         body: SafeArea(
           child: Column(
@@ -111,6 +125,10 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
                 child: TabBarView(
                   controller: _tabs,
                   children: [
+                    _BlogList(
+                      future: _blogFuture,
+                      onRetry: _reload,
+                    ),
                     _PostList(
                       future: _allFuture,
                       onRetry: _reload,
@@ -135,6 +153,152 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BlogList extends StatelessWidget {
+  final Future<Paged<BlogArticle>> future;
+  final VoidCallback onRetry;
+
+  const _BlogList({required this.future, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Paged<BlogArticle>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return RetryErrorView(
+            message: snapshot.error is ApiException
+                ? (snapshot.error as ApiException).displayMessage
+                : 'Something went wrong.',
+            onRetry: onRetry,
+          );
+        }
+
+        final articles = snapshot.data!.items;
+
+        return RefreshIndicator(
+          onRefresh: () async => onRetry(),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
+            children: [
+              if (articles.isEmpty)
+                const EmptyStateView(
+                  emoji: '📰',
+                  title: 'No articles found',
+                  subtitle: 'Try a different keyword, or check back soon for new articles.',
+                )
+              else
+                for (final article in articles)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _BlogArticleCard(
+                      article: article,
+                      onTap: () => context.push('/community/blog/${article.id}'),
+                    ),
+                  ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BlogArticleCard extends StatelessWidget {
+  final BlogArticle article;
+  final VoidCallback onTap;
+  const _BlogArticleCard({required this.article, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 1,
+      shadowColor: Colors.black12,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (article.coverImageUrl != null)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: Image.network(
+                  article.coverImageUrl!,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if ((article.category ?? '').isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: Colors.teal.shade50, borderRadius: BorderRadius.circular(999)),
+                      child: Text(
+                        article.category!,
+                        style: TextStyle(color: Colors.teal.shade800, fontSize: 10.5, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                  Text(
+                    article.title,
+                    style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800, height: 1.3),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if ((article.excerpt ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      article.excerpt!,
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (article.author != null) ...[
+                        AuthedAvatar(url: article.author!.avatar, radius: 11),
+                        const SizedBox(width: 7),
+                        Flexible(
+                          child: Text(
+                            article.author!.name,
+                            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                      const Spacer(),
+                      if (article.publishedAt != null)
+                        Text(
+                          DateFormat('d MMM').format(article.publishedAt!),
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

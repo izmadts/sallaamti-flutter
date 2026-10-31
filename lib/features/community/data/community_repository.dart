@@ -115,6 +115,51 @@ class MemberPost {
       );
 }
 
+// Sallaamti's own staff-authored articles (Api\V1\BlogController) — a
+// completely separate thing from MemberPost above, which is member-submitted
+// content under review. The app's "Sallaamti Blog" screen only ever rendered
+// MemberPost (often empty, since few members had submitted anything), while
+// the real blog articles the website actually publishes at /blog were never
+// shown in the app at all — this is that missing piece.
+class BlogArticle {
+  final int id;
+  final String title;
+  final String? slug;
+  final String? category;
+  final String? excerpt;
+  final String? content;
+  final String? coverImageUrl;
+  final String? shareUrl;
+  final DateTime? publishedAt;
+  final CommunityAuthor? author;
+
+  BlogArticle({
+    required this.id,
+    required this.title,
+    this.slug,
+    this.category,
+    this.excerpt,
+    this.content,
+    this.coverImageUrl,
+    this.shareUrl,
+    this.publishedAt,
+    this.author,
+  });
+
+  factory BlogArticle.fromJson(Map<String, dynamic> json) => BlogArticle(
+        id: _asInt(json['id']) ?? 0,
+        title: json['title'] as String? ?? '',
+        slug: json['slug'] as String?,
+        category: json['category'] as String?,
+        excerpt: json['excerpt'] as String?,
+        content: json['content'] as String?,
+        coverImageUrl: json['cover_image_url'] as String?,
+        shareUrl: json['share_url'] as String?,
+        publishedAt: json['published_at'] != null ? DateTime.tryParse(json['published_at'] as String) : null,
+        author: json['author'] != null ? CommunityAuthor.fromJson(Map<String, dynamic>.from(json['author'] as Map)) : null,
+      );
+}
+
 class MemberTestimonial {
   final int id;
   final String name;
@@ -200,6 +245,19 @@ class CommunityRepository {
   }
 
   Future<void> deletePost(int id) => _client.delete('/posts/$id');
+
+  Future<Paged<BlogArticle>> blogArticles({int page = 1, String? search}) async {
+    final data = await _client.get('/blog', query: {
+      'page': page,
+      if (search != null && search.isNotEmpty) 'search': search,
+    });
+    return Paged.fromJson(data, 'posts', BlogArticle.fromJson);
+  }
+
+  Future<BlogArticle> blogArticle(int id) async {
+    final data = await _client.get('/blog/$id');
+    return BlogArticle.fromJson(Map<String, dynamic>.from(data['post'] as Map));
+  }
 
   Future<Paged<MemberTestimonial>> testimonials({int page = 1}) async {
     final data = await _client.get('/testimonials', query: {'page': page});

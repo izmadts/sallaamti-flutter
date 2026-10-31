@@ -34,6 +34,7 @@ import '../../features/nikah/presentation/wizard/nikah_step4_screen.dart';
 import '../../features/community/data/community_repository.dart';
 import '../../features/community/presentation/community_hub_screen.dart';
 import '../../features/community/presentation/post_compose_screen.dart';
+import '../../features/community/presentation/blog_article_detail_screen.dart';
 import '../../features/community/presentation/post_detail_screen.dart';
 import '../../features/community/presentation/posts_screen.dart';
 import '../../features/community/presentation/testimonial_compose_screen.dart';
@@ -177,13 +178,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           admissionId: int.parse(state.pathParameters['admissionId']!),
         ),
       ),
-      // Community — member-authored posts (gated to accounts with
-      // posts.manage/admin — see AppUser.canWritePosts) and testimonials,
-      // open to everyone. Blog was dropped from the app entirely; common
-      // members' only posting surface is the Wall. The compose routes take
-      // the item being edited via `extra` rather than refetching it by id:
-      // the caller already has it, and passing it keeps the form from
-      // flashing empty while a redundant request lands.
+      // Community — open to every member: Sallaamti's own staff-authored
+      // blog (read-only), member-authored posts (auto-published for
+      // posts.manage/admin/blogger accounts, reviewed for everyone else —
+      // see Post::isAutoPublishedFor()), and testimonials. The compose
+      // routes take the item being edited via `extra` rather than
+      // refetching it by id: the caller already has it, and passing it
+      // keeps the form from flashing empty while a redundant request lands.
       GoRoute(path: '/community', builder: (context, state) => const CommunityHubScreen()),
       GoRoute(path: '/community/posts', builder: (context, state) => const PostsScreen()),
       GoRoute(
@@ -193,6 +194,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/community/posts/:id',
         builder: (context, state) => PostDetailScreen(postId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/community/blog/:id',
+        builder: (context, state) => BlogArticleDetailScreen(articleId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(path: '/community/testimonials', builder: (context, state) => const TestimonialsScreen()),
       GoRoute(
