@@ -23,7 +23,13 @@ class ApiClient {
       // sounds safer but actually meant a stalled upload hung forever
       // instead of failing with a clear, catchable error.
       sendTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 15),
+      // 15s was tight for anything that makes the server do real work
+      // after receiving the request (e.g. ImageOptimizer resizing/storing
+      // an uploaded photo on shared hosting under load) — that's not a
+      // connectivity problem at all, just a slow response, but it hit this
+      // same timeout and used to show the exact same "check your internet"
+      // message as an actual dropped connection.
+      receiveTimeout: const Duration(seconds: 30),
       headers: {'Accept': 'application/json'},
     ));
 
@@ -99,11 +105,20 @@ class ApiClient {
     try {
       response = await call();
     } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.connectionTimeout ||
+      final urdu = await SecureStore.readLocale() == 'ur';
+
+      // A genuinely dropped/unreachable connection vs. a request that got
+      // through but took too long to finish — these have different causes
+      // (the device's own network vs. a slow upload or a busy server) and
+      // telling a user to "check your internet" for the second one is
+      // often just wrong, so they're kept as separate messages.
+      if (e.type == DioExceptionType.connectionError) {
+        throw ApiException.network(urdu: urdu);
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw ApiException.network();
+        throw ApiException.timeout(urdu: urdu);
       }
       throw ApiException.fromResponseData(e.response?.data, e.response?.statusCode);
     }

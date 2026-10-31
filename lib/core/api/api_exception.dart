@@ -30,8 +30,21 @@ class ApiException implements Exception {
     return message;
   }
 
-  factory ApiException.network() => ApiException(
-        message: 'Couldn\'t connect. Check your internet connection.',
+  // True connection failure (no network reachable at all) — distinct from
+  // .timeout() below, which used to show this exact same "check your
+  // internet" text even when the connection was fine but a slow upload or
+  // a slow server response just took too long. That collapsed two very
+  // different situations into one misleading message.
+  factory ApiException.network({bool urdu = false}) => ApiException(
+        message: urdu
+            ? 'رابطہ نہیں ہو سکا۔ اپنا انٹرنیٹ کنکشن چیک کریں۔'
+            : 'Couldn\'t connect. Check your internet connection.',
+      );
+
+  factory ApiException.timeout({bool urdu = false}) => ApiException(
+        message: urdu
+            ? 'جواب آنے میں معمول سے زیادہ وقت لگ رہا ہے — ہو سکتا ہے آپ کا کنکشن سست ہو یا سرور مصروف ہو۔ براہ کرم دوبارہ کوشش کریں۔'
+            : 'This is taking longer than expected — your connection may be slow, or our server is busy. Please try again.',
       );
 
   factory ApiException.fromResponseData(dynamic data, int? statusCode) {
