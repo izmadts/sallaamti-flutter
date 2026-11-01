@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/analytics/meta_app_events.dart';
 import '../../../../core/api/api_exception.dart';
 import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
@@ -28,6 +29,10 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
 
     try {
       await ref.read(nikahControllerProvider.notifier).submit();
+      // Fired right after a successful submit, using the gender already on
+      // the cached profile from before this call — the real "signed up for
+      // the thing we advertise" moment for Meta's campaign optimization.
+      await logNikahProfileCompleted(gender: ref.read(nikahControllerProvider).profile?.gender);
       // submit() only flips verification_status server-side and doesn't
       // update the cached profile — refresh so anything reading it after
       // this (including a user backing out before paying) sees the real

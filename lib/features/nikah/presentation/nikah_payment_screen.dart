@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/analytics/meta_app_events.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -133,6 +134,8 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
       // home screen shows "waiting for approval" instead of the stale
       // "pay now" prompt when the user taps back.
       await ref.read(nikahControllerProvider.notifier).refresh();
+      final amount = double.tryParse(ref.read(nikahControllerProvider).profile?.paymentAmount ?? '');
+      if (amount != null) await logVerificationFeePaid(amount);
       setState(() => _submitted = true);
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);

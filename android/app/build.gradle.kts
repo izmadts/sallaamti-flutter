@@ -76,6 +76,11 @@ kotlin {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Lets the Meta SDK read Google Play's install referrer string, which
+    // is how it attributes an install back to the ad that caused it —
+    // without this, every install looks organic to Meta Ads regardless of
+    // which campaign actually drove it.
+    implementation("com.android.installreferrer:installreferrer:2.2")
 }
 
 flutter {
