@@ -384,6 +384,12 @@ class _NikahHubState extends ConsumerState<_NikahHub> {
           onTap: () => context.push('/nikah/saved'),
         ),
         _HubTile(
+          emoji: '👀',
+          title: 'Who Viewed My Profile',
+          subtitle: 'Members who\'ve opened your full profile',
+          onTap: () => context.push('/nikah/who-viewed-me'),
+        ),
+        _HubTile(
           emoji: '⚙️',
           title: l10n.nikahEditProfileTitle,
           subtitle: l10n.nikahEditProfileSubtitle,

@@ -26,6 +26,9 @@ class NikahCard {
   final String? prayerFrequency;
   final String? hijabOrBeard;
   final String? diet;
+  // Only present on a card returned by /nikah/who-viewed-me.
+  final int? viewCount;
+  final DateTime? lastViewedAt;
 
   NikahCard({
     required this.id,
@@ -53,6 +56,8 @@ class NikahCard {
     this.prayerFrequency,
     this.hijabOrBeard,
     this.diet,
+    this.viewCount,
+    this.lastViewedAt,
   });
 
   factory NikahCard.fromJson(Map<String, dynamic> json) => NikahCard(
@@ -81,5 +86,7 @@ class NikahCard {
         prayerFrequency: json['prayer_frequency'] as String?,
         hijabOrBeard: json['hijab_or_beard'] as String?,
         diet: json['diet'] as String?,
+        viewCount: json['view_count'] as int?,
+        lastViewedAt: json['last_viewed_at'] != null ? DateTime.tryParse(json['last_viewed_at'] as String) : null,
       );
 }

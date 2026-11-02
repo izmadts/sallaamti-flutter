@@ -181,6 +181,14 @@ class NikahRepository {
     return (data['profiles'] as List).map((e) => NikahCard.fromJson(Map<String, dynamic>.from(e as Map))).toList();
   }
 
+  // Available to a pending member too, not just a verified/paid one — this
+  // reads their own incoming view data, unrelated to their own eligibility
+  // to browse others.
+  Future<List<NikahCard>> whoViewedMe() async {
+    final data = await _client.get('/nikah/who-viewed-me');
+    return (data['views'] as List).map((e) => NikahCard.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+  }
+
   Future<List<NikahMessage>> listMessages(int interestId) async {
     final data = await _client.get('/nikah/interests/$interestId/messages');
     return (data['messages'] as List).map((e) => NikahMessage.fromJson(Map<String, dynamic>.from(e as Map))).toList();
