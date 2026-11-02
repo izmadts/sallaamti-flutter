@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/state/locale_controller.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../core/update/app_version_checker.dart';
 import '../state/auth_controller.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -19,9 +20,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final locale = ref.watch(localeControllerProvider);
     final localeRestored = ref.watch(localeRestoredProvider);
     final auth = ref.watch(authControllerProvider);
+    final updateStatus = ref.watch(appUpdateProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+
+      // Checked before anything else, logged in or not — still loading is
+      // treated as "wait" rather than "no update needed" so a slow network
+      // never lets someone slip past into the app with a flash first, and
+      // the provider itself fails open on any error so a check that can't
+      // complete doesn't block forever either.
+      if (updateStatus.isLoading) return;
+      if (updateStatus.valueOrNull?.updateRequired == true) {
+        context.go('/update-required', extra: updateStatus.value!.updateUrl);
+        return;
+      }
 
       // Still reading from storage — wait for the rebuild this triggers
       // once it resolves, rather than treating "not checked yet" the same

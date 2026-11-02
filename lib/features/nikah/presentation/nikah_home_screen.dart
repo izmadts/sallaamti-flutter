@@ -334,13 +334,6 @@ class _NikahHubState extends ConsumerState<_NikahHub> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 6, left: 4),
-          child: Text(
-            'Profile #${profile.id}',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600),
-          ),
-        ),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -353,7 +346,7 @@ class _NikahHubState extends ConsumerState<_NikahHub> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  l10n.nikahProfileLiveMessage,
+                  l10n.nikahProfileLiveMessage(profile.id),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),

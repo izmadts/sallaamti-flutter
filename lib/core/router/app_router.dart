@@ -8,6 +8,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/auth/presentation/update_required_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/auth/state/auth_controller.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
@@ -98,6 +99,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final path = state.matchedLocation;
 
       if (path == '/') return null; // splash decides the first hop itself
+      // A forced update blocks regardless of locale/auth state — it must
+      // never bounce to /language or /welcome once SplashScreen has routed
+      // here.
+      if (path == '/update-required') return null;
 
       if (locale == null) return '/language';
 
@@ -131,6 +136,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(
+        path: '/update-required',
+        builder: (context, state) => UpdateRequiredScreen(updateUrl: state.extra as String?),
+      ),
       GoRoute(path: '/language', builder: (context, state) => const LanguageScreen()),
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),

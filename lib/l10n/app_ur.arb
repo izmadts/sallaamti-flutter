@@ -140,7 +140,7 @@
   "nikahProfileUnderVerificationTitle": "پروفائل زیرِ تصدیق ہے",
   "nikahProfileNeedsChangesMessage": "آپ کی پروفائل میں کچھ تبدیلیاں درکار ہیں — براہ کرم اپنی تفصیلات اپ ڈیٹ کریں۔",
   "nikahProfileReviewingMessage": "ہماری ٹیم آپ کی تفصیلات اور شناختی کارڈ کا جائزہ لے رہی ہے۔ منظوری کے بعد آپ کو اطلاع دی جائے گی۔",
-  "nikahProfileLiveMessage": "آپ کی پروفائل فعال اور تصدیق شدہ ہے!",
+  "nikahProfileLiveMessage": "آپ کی پروفائل #{id} فعال اور تصدیق شدہ ہے!",
   "nikahBrowseMatchesTitle": "رشتے دیکھیں",
   "nikahBrowseMatchesSubtitle": "اپنی ترجیحات سے میل کھاتی پروفائلز دیکھیں",
   "nikahMyInterestsTitle": "میری دلچسپیاں",
