@@ -117,7 +117,18 @@ class NikahHomeScreen extends ConsumerWidget {
     return Theme(
       data: theme,
       child: Scaffold(
-        appBar: AppBar(title: const Text('💍 Nikah Matchmaking')),
+        appBar: AppBar(
+          title: const Text('💍 Nikah Matchmaking'),
+          // Available to a pending member too, not just a verified one —
+          // see NikahRepository.whoViewedMe()'s own comment.
+          actions: [
+            IconButton(
+              tooltip: 'Who Viewed My Profile',
+              icon: const Text('👀', style: TextStyle(fontSize: 20)),
+              onPressed: () => context.push('/nikah/who-viewed-me'),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: () =>
