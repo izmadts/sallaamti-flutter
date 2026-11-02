@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/api/api_exception.dart';
 import '../../../core/push/notification_route_resolver.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../auth/state/auth_controller.dart';
+import '../../profile/data/profile_repository.dart';
 import '../data/notification_repository.dart';
 
 // A real notification inbox, not a decorative placeholder — every
@@ -46,6 +49,14 @@ class NotificationsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.notificationsTitle),
         actions: [
+          IconButton(
+            tooltip: 'Notification settings',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              builder: (_) => const _NotificationSettingsSheet(),
+            ),
+          ),
           TextButton(
             onPressed: () async {
               await ref.read(notificationRepositoryProvider).markAllRead();
@@ -111,6 +122,66 @@ class NotificationsScreen extends ConsumerWidget {
               },
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+// Every notification still arrives either way (database row, in-app badge,
+// the push itself) — this only controls whether the device plays a sound/
+// vibrates for it. See the backend's notification_sound_enabled migration
+// comment for why it's framed as "silent", not "off".
+class _NotificationSettingsSheet extends ConsumerStatefulWidget {
+  const _NotificationSettingsSheet();
+
+  @override
+  ConsumerState<_NotificationSettingsSheet> createState() => _NotificationSettingsSheetState();
+}
+
+class _NotificationSettingsSheetState extends ConsumerState<_NotificationSettingsSheet> {
+  bool _saving = false;
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _saving = true);
+    try {
+      final updated = await ref.read(profileRepositoryProvider).updateNotificationPreferences(soundEnabled: value);
+      ref.read(authControllerProvider.notifier).setUser(updated);
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save — try again.')));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final soundEnabled = ref.watch(authControllerProvider).user?.notificationSoundEnabled ?? true;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Notification Settings', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(
+              'You\'ll still get every notification either way — this only controls sound and vibration.',
+              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Notification Sound'),
+              subtitle: Text(soundEnabled ? 'Sound and vibration on' : 'Silent — notifications still show'),
+              value: soundEnabled,
+              onChanged: _saving ? null : _toggle,
+            ),
+          ],
         ),
       ),
     );

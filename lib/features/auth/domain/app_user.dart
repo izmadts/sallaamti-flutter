@@ -21,6 +21,9 @@ class AppUser {
   // Community Posts feature in the app; common members are pointed at Wall
   // for their own posting instead.
   final bool canWritePosts;
+  // "Silent" mode, not "off" — see the backend's notification_sound_enabled
+  // migration comment. True (sound on) by default.
+  final bool notificationSoundEnabled;
 
   AppUser({
     required this.id,
@@ -37,6 +40,7 @@ class AppUser {
     this.mustChangePassword = false,
     this.hasRealPassword = true,
     this.canWritePosts = false,
+    this.notificationSoundEnabled = true,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
@@ -54,9 +58,10 @@ class AppUser {
         mustChangePassword: json['must_change_password'] as bool? ?? false,
         hasRealPassword: json['has_real_password'] as bool? ?? true,
         canWritePosts: json['can_write_posts'] as bool? ?? false,
+        notificationSoundEnabled: json['notification_sound_enabled'] as bool? ?? true,
       );
 
-  AppUser copyWith({bool? mustChangePassword, bool? hasRealPassword}) => AppUser(
+  AppUser copyWith({bool? mustChangePassword, bool? hasRealPassword, bool? notificationSoundEnabled}) => AppUser(
         id: id,
         name: name,
         username: username,
@@ -71,5 +76,6 @@ class AppUser {
         mustChangePassword: mustChangePassword ?? this.mustChangePassword,
         hasRealPassword: hasRealPassword ?? this.hasRealPassword,
         canWritePosts: canWritePosts,
+        notificationSoundEnabled: notificationSoundEnabled ?? this.notificationSoundEnabled,
       );
 }

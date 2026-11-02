@@ -56,6 +56,13 @@ class ProfileRepository {
     });
     return AppUser.fromJson(Map<String, dynamic>.from(data['user'] as Map));
   }
+
+  Future<AppUser> updateNotificationPreferences({required bool soundEnabled}) async {
+    final data = await _client.postMultipart('/profile/notification-preferences', fields: {
+      'notification_sound_enabled': soundEnabled,
+    });
+    return AppUser.fromJson(Map<String, dynamic>.from(data['user'] as Map));
+  }
 }
 
 final profileRepositoryProvider = Provider((ref) => ProfileRepository(ref.watch(apiClientProvider)));

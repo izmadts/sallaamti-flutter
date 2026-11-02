@@ -17,6 +17,20 @@ const _androidChannel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 
+// A member who's turned off notification sound (see the Notifications
+// screen's own settings toggle) still gets every notification — this is
+// the channel PushNotificationService picks for them server-side; "low"
+// importance is what suppresses sound/vibration/heads-up on Android while
+// still showing the notification in the shade and the status bar.
+const _silentAndroidChannel = AndroidNotificationChannel(
+  'silent_channel',
+  'Silent Notifications',
+  description: 'Same notifications as General, without sound or vibration.',
+  importance: Importance.low,
+  playSound: false,
+  enableVibration: false,
+);
+
 final _localNotifications = FlutterLocalNotificationsPlugin();
 
 // Android only shows a push automatically from the system tray while the
@@ -29,9 +43,9 @@ Future<void> initLocalNotifications() async {
     const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
   );
 
-  await _localNotifications
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(_androidChannel);
+  final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+  await androidPlugin?.createNotificationChannel(_androidChannel);
+  await androidPlugin?.createNotificationChannel(_silentAndroidChannel);
 }
 
 // A push's data payload only ever carries `type` (never `url` — see
@@ -52,17 +66,26 @@ void _showForegroundNotification(RemoteMessage message) {
   final notification = message.notification;
   if (notification == null) return;
 
+  // The channel PushNotificationService picked server-side (default or
+  // silent, per the recipient's own sound preference) — Android only auto-
+  // applies that choice while the app is backgrounded/terminated; a
+  // foreground push is shown manually here, so it has to read the same
+  // choice back out of the payload to match.
+  final channel = notification.android?.channelId == _silentAndroidChannel.id ? _silentAndroidChannel : _androidChannel;
+
   _localNotifications.show(
     notification.hashCode,
     notification.title,
     notification.body,
     NotificationDetails(
       android: AndroidNotificationDetails(
-        _androidChannel.id,
-        _androidChannel.name,
-        channelDescription: _androidChannel.description,
-        importance: Importance.high,
-        priority: Priority.high,
+        channel.id,
+        channel.name,
+        channelDescription: channel.description,
+        importance: channel.importance,
+        priority: channel.importance == Importance.low ? Priority.low : Priority.high,
+        playSound: channel.playSound,
+        enableVibration: channel.enableVibration,
       ),
     ),
   );

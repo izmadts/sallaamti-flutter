@@ -39,6 +39,9 @@ const _nikahMatchmakingTypes = {
 const _wallTypes = {
   'wall_comment',
   'wall_reaction',
+  // CommunityPostPublished — every non-announcement Community Post, see
+  // that notification's own class docblock.
+  'community_post',
 };
 
 // NikahProfileVerified/NikahProfileRejected — both land on the Nikah hub,
