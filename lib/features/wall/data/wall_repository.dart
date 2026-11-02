@@ -37,6 +37,21 @@ class WallMediaItem {
       );
 }
 
+class PollOption {
+  final int index;
+  final String label;
+  final int votes;
+  final int percentage;
+  PollOption({required this.index, required this.label, required this.votes, required this.percentage});
+
+  factory PollOption.fromJson(Map<String, dynamic> json) => PollOption(
+        index: _asInt(json['index']) ?? 0,
+        label: json['label'] as String? ?? '',
+        votes: _asInt(json['votes']) ?? 0,
+        percentage: _asInt(json['percentage']) ?? 0,
+      );
+}
+
 class WallItem {
   final String type; // 'dua' | 'post'
   final int id;
@@ -55,6 +70,11 @@ class WallItem {
   final int commentsCount;
   final bool isSaved;
   final DateTime createdAt;
+  // Only non-null for a 'post' created as a poll — a 'dua' never is.
+  final List<PollOption>? pollResults;
+  final int? myPollVote;
+
+  bool get isPoll => pollResults != null;
 
   WallItem({
     required this.type,
@@ -74,9 +94,19 @@ class WallItem {
     required this.commentsCount,
     required this.isSaved,
     required this.createdAt,
+    this.pollResults,
+    this.myPollVote,
   });
 
-  WallItem copyWith({Map<String, int>? reactionCounts, String? myReaction, bool clearMyReaction = false, bool? isSaved}) => WallItem(
+  WallItem copyWith({
+    Map<String, int>? reactionCounts,
+    String? myReaction,
+    bool clearMyReaction = false,
+    bool? isSaved,
+    List<PollOption>? pollResults,
+    int? myPollVote,
+  }) =>
+      WallItem(
         type: type,
         id: id,
         author: author,
@@ -94,6 +124,8 @@ class WallItem {
         commentsCount: commentsCount,
         isSaved: isSaved ?? this.isSaved,
         createdAt: createdAt,
+        pollResults: pollResults ?? this.pollResults,
+        myPollVote: myPollVote ?? this.myPollVote,
       );
 
   factory WallItem.fromJson(Map<String, dynamic> json) => WallItem(
@@ -114,6 +146,10 @@ class WallItem {
         commentsCount: _asInt(json['comments_count']) ?? 0,
         isSaved: json['is_saved'] as bool? ?? false,
         createdAt: DateTime.parse(json['created_at'] as String),
+        pollResults: json['poll_results'] != null
+            ? _asList(json['poll_results']).map((e) => PollOption.fromJson(Map<String, dynamic>.from(e as Map))).toList()
+            : null,
+        myPollVote: _asInt(json['my_poll_vote']),
       );
 }
 
@@ -193,6 +229,18 @@ class WallRepository {
   Future<WallItem> react(String type, int id, String reactionType) async {
     final data = await _client.post('/wall/$type/$id/react', data: {'type': reactionType});
     return WallItem.fromJson(data);
+  }
+
+  // Returns just the (index, pollResults, myPollVote) triple, not a whole
+  // WallItem — the caller already has everything else and only needs to
+  // patch these two fields in place, same reasoning as react()/toggleSave()
+  // returning the minimum needed.
+  Future<(List<PollOption>, int)> vote(String type, int id, int optionIndex) async {
+    final data = await _client.post('/wall/$type/$id/vote', data: {'option_index': optionIndex});
+    return (
+      (data['poll_results'] as List).map((e) => PollOption.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+      data['my_poll_vote'] as int,
+    );
   }
 
   Future<bool> toggleSave(String type, int id) async {

@@ -33,6 +33,7 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
   late WallItem _item = widget.item;
   bool _reacting = false;
   bool _saving = false;
+  bool _voting = false;
 
   @override
   void didUpdateWidget(covariant WallItemCard oldWidget) {
@@ -68,6 +69,21 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save — try again.')));
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _vote(int optionIndex) async {
+    if (_voting) return;
+    setState(() => _voting = true);
+    try {
+      final (results, myVote) = await ref.read(wallRepositoryProvider).vote(_item.type, _item.id, optionIndex);
+      final updated = _item.copyWith(pollResults: results, myPollVote: myVote);
+      setState(() => _item = updated);
+      widget.onChanged?.call(updated);
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not vote — try again.')));
+    } finally {
+      if (mounted) setState(() => _voting = false);
     }
   }
 
@@ -184,6 +200,15 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
                         .toList(),
                   ),
                 ],
+                if (_item.isPoll) ...[
+                  const SizedBox(height: 12),
+                  _PollWidget(
+                    options: _item.pollResults!,
+                    myVote: _item.myPollVote,
+                    busy: _voting,
+                    onVote: _vote,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -233,6 +258,78 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Facebook/Instagram-style poll — before a vote, plain tappable option
+// rows; after voting (or if already voted on a previous visit), every
+// option shows its live fill bar + percentage, and tapping a different
+// option changes the vote rather than being locked out.
+class _PollWidget extends StatelessWidget {
+  final List<PollOption> options;
+  final int? myVote;
+  final bool busy;
+  final ValueChanged<int> onVote;
+  const _PollWidget({required this.options, required this.myVote, required this.busy, required this.onVote});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasVoted = myVote != null;
+    final total = options.fold<int>(0, (sum, o) => sum + o.votes);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final option in options)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: InkWell(
+              onTap: busy ? null : () => onVote(option.index),
+              borderRadius: BorderRadius.circular(10),
+              child: LayoutBuilder(
+                builder: (context, constraints) => Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: myVote == option.index ? const Color(0xFF0D6B6B) : Colors.grey.shade300),
+                      ),
+                    ),
+                    if (hasVoted)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        height: 38,
+                        width: constraints.maxWidth * (option.percentage / 100),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D6B6B).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Expanded(child: Text(option.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                            if (hasVoted)
+                              Text('${option.percentage}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        Text(
+          '$total ${total == 1 ? 'vote' : 'votes'}',
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+        ),
+      ],
     );
   }
 }
