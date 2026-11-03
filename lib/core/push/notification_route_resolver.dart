@@ -51,6 +51,17 @@ const _nikahStatusTypes = {
   'profile_rejected',
 };
 
+// DonationReceived/DonationConfirmed — both land on the donate screen. These
+// used to carry no `type` at all, and their `url` (route('donate.my'),
+// "/my-donations") doesn't contain any of the substrings the url-fallback
+// checks below look for ('payment'/'interests'/'browse'/'edit'), so they
+// fell all the way through to the final catch-all and opened the Nikah hub
+// instead — exactly the "old notification opens the Nikah tab" bug.
+const _donationTypes = {
+  'donation_received',
+  'donation_confirmed',
+};
+
 // CounselingBookingRequested/Confirmed/Cancelled/Reassigned/Reminder — all
 // land on the member's own bookings list (Counselor\BookingController /
 // CounselingBookingAdminController notify $booking->member for every one
@@ -71,6 +82,7 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
   if (_nikahMatchmakingTypes.contains(type)) return '/nikah/matchmaking';
   if (_wallTypes.contains(type)) return '/wall';
   if (_nikahStatusTypes.contains(type)) return '/nikah';
+  if (_donationTypes.contains(type)) return '/donate';
   if (_counselingBookingTypes.contains(type)) return '/counseling/bookings';
   if (type == 'community_announcement') return '/wall?tag=Announcement';
   if (type == 'question_answered') return '/qa';
@@ -106,6 +118,14 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
   // substring that's actually present in every one of them. No other
   // module's routes contain that word.
   if (url != null && Uri.tryParse(url)?.path.contains('quran') == true) return '/quran-live/my-class';
+
+  // Covers DonationReceived/DonationConfirmed rows already sitting in the
+  // database from before `type` was added to their toArray() above — a
+  // notification's data is serialized once at creation time, so adding
+  // `type` only fixes notifications sent from now on. Pre-existing rows
+  // only have `url` (route('donate.my'), "/my-donations"), which this
+  // catches the same way the 'quran' substring check above does.
+  if (url != null && Uri.tryParse(url)?.path.contains('donat') == true) return '/donate';
 
   if (url == null) return null;
   final uri = Uri.tryParse(url);
