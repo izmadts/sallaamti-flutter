@@ -60,7 +60,7 @@ class _QaScreenState extends ConsumerState<QaScreen> with SingleTickerProviderSt
       data: ModuleThemes.forModule('qa'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Ap k Sawalat'),
+          title: const Text('Ask from Alim/Mufti'),
           bottom: TabBar(
             controller: _tabs,
             indicatorColor: Colors.white,
