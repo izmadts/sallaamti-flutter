@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/push/push_notification_service.dart';
 import '../../../core/state/locale_controller.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../core/update/app_version_checker.dart';
@@ -21,6 +22,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final localeRestored = ref.watch(localeRestoredProvider);
     final auth = ref.watch(authControllerProvider);
     final updateStatus = ref.watch(appUpdateProvider);
+    final initialPushRoute = ref.watch(initialPushRouteProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -47,7 +49,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
 
       if (auth.status == AuthStatus.authenticated) {
-        context.go('/dashboard');
+        // A cold start from tapping a notification — land directly on its
+        // target instead of the dashboard. Still waits for this to resolve
+        // (isLoading check) rather than racing it, same reasoning as the
+        // update-check above; it's just reading an already-buffered native
+        // value, so in practice this never adds a perceptible delay.
+        if (initialPushRoute.isLoading) return;
+        context.go(initialPushRoute.valueOrNull ?? '/dashboard');
       } else if (auth.status == AuthStatus.unauthenticated) {
         context.go('/welcome');
       }

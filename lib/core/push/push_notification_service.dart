@@ -10,6 +10,26 @@ import '../api/api_exception.dart';
 import '../router/app_router.dart';
 import 'notification_route_resolver.dart';
 
+// Read once by SplashScreen before it decides where to land — a cold start
+// from tapping a notification used to lose the race against the splash
+// screen's own unconditional context.go('/dashboard'): that go() fires the
+// instant auth state resolves, while the old getInitialMessage() check
+// inside registerThisDevice() only ran after requestPermission()/getToken()/
+// a device-token HTTP call had all already finished, by which point the
+// splash screen had already navigated away and the deep-link push on top
+// of it landed too late to matter (or silently found a stale context). This
+// reads the SAME already-buffered initial message directly and independently,
+// fast enough to actually win that race.
+final initialPushRouteProvider = FutureProvider<String?>((ref) async {
+  try {
+    final message = await FirebaseMessaging.instance.getInitialMessage();
+    if (message == null) return null;
+    return resolveNotificationRoute(type: message.data['type'] as String?, data: message.data);
+  } catch (_) {
+    return null;
+  }
+});
+
 const _androidChannel = AndroidNotificationChannel(
   'default_channel',
   'General Notifications',
@@ -129,15 +149,13 @@ class PushNotificationService {
     if (!_foregroundListenerAttached) {
       _foregroundListenerAttached = true;
       FirebaseMessaging.onMessage.listen(_showForegroundNotification);
-      // Tapping a push while the app is backgrounded (not terminated).
+      // Tapping a push while the app is backgrounded (not terminated) —
+      // the app is already running with a settled route, so there's no
+      // splash-screen navigation to race against here, unlike the cold-
+      // start case (see initialPushRouteProvider's own comment, which
+      // SplashScreen uses for that case instead of this method).
       FirebaseMessaging.onMessageOpenedApp.listen((message) => _navigateFromPushData(message.data));
     }
-
-    // Tapping a push that launched the app from fully terminated — only
-    // present on this specific cold start, so it's checked once here rather
-    // than as a stream listener.
-    final initialMessage = await messaging.getInitialMessage();
-    if (initialMessage != null) _navigateFromPushData(initialMessage.data);
   }
 
   Future<void> unregisterThisDevice() async {
