@@ -102,14 +102,36 @@ class _WallVideoPlayer extends StatefulWidget {
 class _WallVideoPlayerState extends State<_WallVideoPlayer> {
   late final VideoPlayerController _controller;
   bool _initialized = false;
+  // Without this, a video that fails to load (bad URL, unreachable host,
+  // unsupported codec) left the page stuck on the loading spinner forever —
+  // initialize() rejecting was never caught, so neither _initialized nor
+  // any error state was ever set. From the member's side this looked
+  // exactly like "the video doesn't play": a permanent spinner with no
+  // feedback and nothing to retry.
+  bool _failed = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
-      ..initialize().then((_) {
-        if (mounted) setState(() => _initialized = true);
-      });
+    _startLoading();
+  }
+
+  void _startLoading() {
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    _controller.initialize().then((_) {
+      if (mounted) setState(() => _initialized = true);
+    }).catchError((_) {
+      if (mounted) setState(() => _failed = true);
+    });
+  }
+
+  Future<void> _retry() async {
+    setState(() {
+      _failed = false;
+      _initialized = false;
+    });
+    await _controller.dispose();
+    _startLoading();
   }
 
   @override
@@ -124,6 +146,24 @@ class _WallVideoPlayerState extends State<_WallVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    if (_failed) {
+      return Container(
+        color: Colors.black87,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white70, size: 36),
+              const SizedBox(height: 8),
+              const Text('Could not load this video', style: TextStyle(color: Colors.white70, fontSize: 13)),
+              const SizedBox(height: 8),
+              TextButton(onPressed: _retry, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (!_initialized) {
       return Container(
         color: Colors.black87,

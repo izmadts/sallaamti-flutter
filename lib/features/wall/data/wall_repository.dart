@@ -70,6 +70,7 @@ class WallItem {
   final int commentsCount;
   final bool isSaved;
   final DateTime createdAt;
+  final String? shareUrl;
   // Only non-null for a 'post' created as a poll — a 'dua' never is.
   final List<PollOption>? pollResults;
   final int? myPollVote;
@@ -94,6 +95,7 @@ class WallItem {
     required this.commentsCount,
     required this.isSaved,
     required this.createdAt,
+    this.shareUrl,
     this.pollResults,
     this.myPollVote,
   });
@@ -124,6 +126,7 @@ class WallItem {
         commentsCount: commentsCount,
         isSaved: isSaved ?? this.isSaved,
         createdAt: createdAt,
+        shareUrl: shareUrl,
         pollResults: pollResults ?? this.pollResults,
         myPollVote: myPollVote ?? this.myPollVote,
       );
@@ -146,6 +149,7 @@ class WallItem {
         commentsCount: _asInt(json['comments_count']) ?? 0,
         isSaved: json['is_saved'] as bool? ?? false,
         createdAt: DateTime.parse(json['created_at'] as String),
+        shareUrl: json['share_url'] as String?,
         pollResults: json['poll_results'] != null
             ? _asList(json['poll_results']).map((e) => PollOption.fromJson(Map<String, dynamic>.from(e as Map))).toList()
             : null,

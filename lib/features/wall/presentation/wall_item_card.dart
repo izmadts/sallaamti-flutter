@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/html_text.dart';
@@ -89,6 +90,13 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
 
   void _openComments() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => WallCommentsScreen(item: _item)));
+  }
+
+  void _share() {
+    final url = _item.shareUrl;
+    if (url == null) return;
+    final caption = _item.type == 'dua' ? 'A dua from the Sallaamti community' : (_item.title ?? stripHtmlToText(_item.body));
+    SharePlus.instance.share(ShareParams(text: '$caption\n\n$url'));
   }
 
   @override
@@ -251,6 +259,15 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
                         ),
                       ),
                     ),
+                    if (_item.shareUrl != null)
+                      InkWell(
+                        onTap: _share,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: Icon(Icons.share_outlined, size: 18, color: Colors.grey.shade600),
+                        ),
+                      ),
                   ],
                 ),
               ],
