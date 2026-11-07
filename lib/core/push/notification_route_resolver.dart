@@ -15,6 +15,7 @@ const _quranLiveTypes = {
   'quran_class_assigned',
   'quran_payment_confirmed',
   'quran_class_link_posted',
+  'quran_progress_ready',
 };
 
 // Nikah types resolved directly off `type` alone — needed because an FCM
@@ -44,11 +45,20 @@ const _wallTypes = {
   'community_post',
 };
 
-// NikahProfileVerified/NikahProfileRejected — both land on the Nikah hub,
-// which already shows the current verification status front and center.
+// NikahProfileVerified/NikahProfileRejected/NikahProfileSuspended — all land
+// on the Nikah hub, which already shows the current verification status
+// front and center.
 const _nikahStatusTypes = {
   'profile_verified',
   'profile_rejected',
+  'profile_suspended',
+};
+
+// CourseCertificateDecided — approved or rejected, both land on the
+// member's certificates list.
+const _certificateTypes = {
+  'certificate_approved',
+  'certificate_rejected',
 };
 
 // DonationReceived/DonationConfirmed — both land on the donate screen. These
@@ -84,12 +94,17 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
   if (_nikahStatusTypes.contains(type)) return '/nikah';
   if (_donationTypes.contains(type)) return '/donate';
   if (_counselingBookingTypes.contains(type)) return '/counseling/bookings';
+  if (_certificateTypes.contains(type)) return '/learning/certificates';
   if (type == 'community_announcement') return '/wall?tag=Announcement';
   if (type == 'question_answered') return '/qa';
   if (type == 'admin_message_reply') return '/support';
+  if (type == 'volunteer_decision') return '/volunteer';
+  if (type == 'counselor_certified') return '/dashboard';
+  if (type == 'nikah_admin_message') return '/nikah/wizard/step1';
   // NikahInterestReceived lands on the default (Received) tab; accepted is
   // about an interest I SENT, so it needs the Sent tab specifically.
   if (type == 'interest_received') return '/nikah/interests';
+  if (type == 'interest_declined') return '/nikah/interests';
   if (type == 'interest_accepted') return '/nikah/interests?tab=sent';
   if (type == 'post_reviewed') {
     final postId = data['post_id'];

@@ -114,7 +114,7 @@ class NotificationsScreen extends ConsumerWidget {
                         await ref.read(notificationRepositoryProvider).markRead(n.id);
                         ref.invalidate(notificationsListProvider);
                       }
-                      final route = resolveNotificationRoute(url: n.url, type: n.type);
+                      final route = resolveNotificationRoute(url: n.url, type: n.type, data: n.data);
                       if (route != null && context.mounted) context.push(route);
                     },
                   ),

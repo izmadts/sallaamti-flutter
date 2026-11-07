@@ -10,6 +10,16 @@ class AppNotification {
   final String? url;
   final bool read;
   final DateTime createdAt;
+  // The notification's full raw database payload (post_id, comment_id,
+  // interest_id, lead_id, etc. — whatever that notification class's
+  // toArray() included beyond type/message/url). Several resolver branches
+  // in notification_route_resolver.dart (post_reviewed, guardian_message,
+  // lead_client_message) need one of these ids to build the exact deep
+  // link — without passing this through, tapping a notification from this
+  // in-app list (as opposed to a live push, which always carries its full
+  // data payload) had nothing for those branches to read and fell through
+  // to a generic/wrong screen.
+  final Map<String, dynamic> data;
 
   AppNotification({
     required this.id,
@@ -18,6 +28,7 @@ class AppNotification {
     this.url,
     required this.read,
     required this.createdAt,
+    this.data = const {},
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) => AppNotification(
@@ -27,6 +38,7 @@ class AppNotification {
         url: json['url'] as String?,
         read: json['read'] as bool? ?? false,
         createdAt: DateTime.parse(json['created_at'] as String),
+        data: json['data'] != null ? Map<String, dynamic>.from(json['data'] as Map) : const {},
       );
 }
 
