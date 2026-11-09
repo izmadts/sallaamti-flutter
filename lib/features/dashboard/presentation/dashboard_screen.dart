@@ -120,23 +120,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   // it scrolled, so the banner stayed pinned in place
                   // rather than scrolling away with the cards like any
                   // other card does.
-                  data: (meta) => CustomScrollView(
-                    slivers: [
-                      const SliverToBoxAdapter(child: _WallBanner()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                      SliverGrid(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          childAspectRatio: 1.05,
+                  data: (meta) => RefreshIndicator(
+                    onRefresh: () => ref.refresh(dashboardMetaProvider.future),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        const SliverToBoxAdapter(child: _WallBanner()),
+                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                        SliverGrid(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 14,
+                            crossAxisSpacing: 14,
+                            childAspectRatio: 1.05,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => _ModuleTile(module: meta.modules[index]),
+                            childCount: meta.modules.length,
+                          ),
                         ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => _ModuleTile(module: meta.modules[index]),
-                          childCount: meta.modules.length,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

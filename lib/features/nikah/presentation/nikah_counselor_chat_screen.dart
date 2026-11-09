@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shared/widgets/message_tick.dart';
 import '../data/nikah_hire_repository.dart';
 import '../data/nikah_repository.dart';
 
@@ -27,36 +30,42 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
   bool _loading = true;
   bool _sending = false;
   String? _error;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _load(showLoading: true);
+    _pollTimer = Timer.periodic(const Duration(seconds: 7), (_) => _load(showLoading: false));
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _load({required bool showLoading}) async {
+    if (showLoading) setState(() => _loading = true);
     try {
       final repo = ref.read(nikahHireRepositoryProvider);
       final messages = await repo.listLeadMessages(widget.leadId);
-      setState(() => _messages = messages);
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      if (!mounted) return;
+      final grew = messages.length > _messages.length;
+      setState(() {
+        _messages = messages;
+        _error = null;
+      });
+      if (grew) WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } on ApiException catch (e) {
-      setState(() => _error = e.displayMessage);
+      if (showLoading && mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
+      // A silent background poll failing is fine — it'll just retry in 7s.
+      if (showLoading && mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (showLoading && mounted) setState(() => _loading = false);
     }
   }
 
@@ -201,9 +210,18 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
                 ],
                 Text(m.message, style: TextStyle(color: m.isMine ? Colors.white : Colors.black87)),
                 const SizedBox(height: 4),
-                Text(
-                  DateFormat('h:mm a').format(m.createdAt.toLocal()),
-                  style: TextStyle(fontSize: 10, color: m.isMine ? Colors.white70 : Colors.grey.shade500),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      DateFormat('h:mm a').format(m.createdAt.toLocal()),
+                      style: TextStyle(fontSize: 10, color: m.isMine ? Colors.white70 : Colors.grey.shade500),
+                    ),
+                    if (m.isMine) ...[
+                      const SizedBox(width: 4),
+                      MessageTick(isRead: m.isRead, color: Colors.white70),
+                    ],
+                  ],
                 ),
               ],
             ),

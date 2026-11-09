@@ -152,7 +152,10 @@ class _ViewerTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${card.age} yrs · ${card.city}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                    Text(
+                      [if (card.age > 0) '${card.age} yrs', if (card.city.isNotEmpty) card.city].join(' · '),
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    ),
                     if ((card.profession ?? card.sect) != null) ...[
                       const SizedBox(height: 2),
                       Text(

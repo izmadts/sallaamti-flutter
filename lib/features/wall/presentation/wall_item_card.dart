@@ -4,9 +4,11 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/html_text.dart';
+import '../../../shared/widgets/selectable_linkified_text.dart';
 import '../data/wall_repository.dart';
 import 'wall_comments_screen.dart';
 import 'wall_media_carousel.dart';
+import 'wall_media_viewer_screen.dart';
 
 String _timeAgo(DateTime date) {
   final diff = DateTime.now().difference(date);
@@ -132,13 +134,18 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
             // a portrait phone photo (the common case) to fill it. fitWidth
             // instead scales to the card's width and lets height follow the
             // photo's own real proportions.
-            Image.network(
-              _item.photoUrl!,
-              width: double.infinity,
-              fit: BoxFit.fitWidth,
-              errorBuilder: (context, error, stack) => AspectRatio(
-                aspectRatio: 16 / 10,
-                child: Container(color: Colors.grey.shade100),
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => WallMediaViewerScreen(media: [WallMediaItem(type: 'image', url: _item.photoUrl!)]),
+              )),
+              child: Image.network(
+                _item.photoUrl!,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+                errorBuilder: (context, error, stack) => AspectRatio(
+                  aspectRatio: 16 / 10,
+                  child: Container(color: Colors.grey.shade100),
+                ),
               ),
             )
           else if (!isDua && _item.videoUrl != null)
@@ -180,12 +187,14 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
                   Text(_item.title!, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   const SizedBox(height: 6),
                 ],
-                Text(
+                SelectableLinkifiedText(
                   // A 'post' item's body can be Trix-authored HTML from the
                   // web admin panel — this is a compact feed card, not a
                   // detail view, so a flat stripped snippet (matching
                   // learning_widgets.dart's course-card pattern) is right
-                  // here, not full HtmlText block rendering.
+                  // here, not full HtmlText block rendering. Selectable (so
+                  // a member can copy a verse reference, a phone number,
+                  // etc.) and auto-linkifies a bare URL the member typed.
                   stripHtmlToText(_item.body),
                   style: TextStyle(
                     fontSize: 14,

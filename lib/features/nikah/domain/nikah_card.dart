@@ -62,13 +62,21 @@ class NikahCard {
 
   factory NikahCard.fromJson(Map<String, dynamic> json) => NikahCard(
         id: json['id'] as int,
-        age: json['age'] as int,
+        // age/marital_status/city are hard-required on a normal, finished
+        // profile — but a profile saved mid-way through the NC walk-in
+        // wizard (see ClientController's "skip for now, pay later" flow)
+        // can still be incomplete while already recorded as having
+        // "viewed" someone, which is enough to land it in /who-viewed-me's
+        // results. A bare `as int`/`as String` crashed the whole screen
+        // with a generic "Something went wrong" for every other viewer in
+        // the list too, not just the incomplete one.
+        age: json['age'] as int? ?? 0,
         height: json['height'] as String?,
-        maritalStatus: json['marital_status'] as String,
+        maritalStatus: json['marital_status'] as String? ?? '',
         sect: json['sect'] as String?,
         education: json['education'] as String?,
         profession: json['profession'] as String?,
-        city: json['city'] as String,
+        city: json['city'] as String? ?? '',
         country: json['country'] as String?,
         about: json['about'] as String?,
         gender: json['gender'] as String?,

@@ -53,7 +53,17 @@ class NikahMessage {
   final bool isMine;
   final String? senderName;
   final DateTime createdAt;
-  NikahMessage({required this.id, required this.message, required this.isMine, this.senderName, required this.createdAt});
+  // Only meaningful for a message I sent — whether the other party has
+  // opened it yet. Drives the single/double-tick shown under my own bubbles.
+  final bool isRead;
+  NikahMessage({
+    required this.id,
+    required this.message,
+    required this.isMine,
+    this.senderName,
+    required this.createdAt,
+    this.isRead = false,
+  });
 
   factory NikahMessage.fromJson(Map<String, dynamic> json) => NikahMessage(
         id: json['id'] as int,
@@ -61,7 +71,19 @@ class NikahMessage {
         isMine: json['is_mine'] as bool? ?? false,
         senderName: json['sender_name'] as String?,
         createdAt: DateTime.parse(json['created_at'] as String),
+        isRead: json['is_read'] as bool? ?? false,
       );
+}
+
+// listMessages()'s own return shape — the message list plus who the other
+// party in this guardian-mediated conversation is, so the screen can show a
+// real header (and a Block option targeting the right profile) instead of a
+// generic "Messages" title.
+class NikahMessageThread {
+  final List<NikahMessage> messages;
+  final int? otherProfileId;
+  final String? otherProfileName;
+  NikahMessageThread({required this.messages, this.otherProfileId, this.otherProfileName});
 }
 
 class NikahBlockedProfile {
@@ -189,9 +211,14 @@ class NikahRepository {
     return (data['views'] as List).map((e) => NikahCard.fromJson(Map<String, dynamic>.from(e as Map))).toList();
   }
 
-  Future<List<NikahMessage>> listMessages(int interestId) async {
+  Future<NikahMessageThread> listMessages(int interestId) async {
     final data = await _client.get('/nikah/interests/$interestId/messages');
-    return (data['messages'] as List).map((e) => NikahMessage.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+    final other = data['other_profile'] as Map?;
+    return NikahMessageThread(
+      messages: (data['messages'] as List).map((e) => NikahMessage.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+      otherProfileId: other != null ? other['id'] as int? : null,
+      otherProfileName: other != null ? other['name'] as String? : null,
+    );
   }
 
   Future<NikahMessage> sendMessage(int interestId, String message) async {

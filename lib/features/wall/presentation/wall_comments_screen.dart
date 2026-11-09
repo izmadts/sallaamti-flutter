@@ -79,7 +79,7 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              Expanded(child: _buildBody(context)),
+              Expanded(child: RefreshIndicator(onRefresh: _load, child: _buildBody(context))),
               if (_replyingTo != null)
                 Container(
                   width: double.infinity,
@@ -134,16 +134,25 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Each of these stays a ListView (not a Center) so RefreshIndicator's
+    // pull gesture still has a scrollable to attach to even with nothing —
+    // or the wrong thing — on screen yet.
     if (_error != null) {
-      return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!, textAlign: TextAlign.center)));
+      return ListView(
+        children: [
+          Padding(padding: const EdgeInsets.all(24), child: Text(_error!, textAlign: TextAlign.center)),
+        ],
+      );
     }
 
     if (_comments.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text('No comments yet — be the first to reply.', style: TextStyle(color: Colors.grey.shade600)),
-        ),
+      return ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text('No comments yet — be the first to reply.', style: TextStyle(color: Colors.grey.shade600), textAlign: TextAlign.center),
+          ),
+        ],
       );
     }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../data/wall_repository.dart';
+import 'wall_media_viewer_screen.dart';
 
 // A swipeable gallery for a post's full media set, same as an Instagram/
 // Facebook carousel — one or more photos and/or videos with dot indicators.
@@ -25,6 +26,12 @@ class _WallMediaCarouselState extends State<WallMediaCarousel> {
     super.dispose();
   }
 
+  void _openViewer(BuildContext context, int index) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => WallMediaViewerScreen(media: widget.media, initialIndex: index),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -38,7 +45,9 @@ class _WallMediaCarouselState extends State<WallMediaCarousel> {
             onPageChanged: (index) => setState(() => _page = index),
             itemBuilder: (context, index) {
               final item = widget.media[index];
-              return item.isVideo ? _WallVideoPlayer(url: item.url) : _WallImage(url: item.url);
+              return item.isVideo
+                  ? _WallVideoPlayer(url: item.url, onExpand: () => _openViewer(context, index))
+                  : _WallImage(url: item.url, onTap: () => _openViewer(context, index));
             },
           ),
         ),
@@ -68,7 +77,8 @@ class _WallMediaCarouselState extends State<WallMediaCarousel> {
 
 class _WallImage extends StatelessWidget {
   final String url;
-  const _WallImage({required this.url});
+  final VoidCallback onTap;
+  const _WallImage({required this.url, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -77,15 +87,18 @@ class _WallImage extends StatelessWidget {
     // for a portrait phone screenshot or tall graphic. contain shows the
     // whole image (letterboxed on a dark background, same treatment the
     // video player below already uses) instead of cutting content off.
-    return Container(
-      color: Colors.black,
-      alignment: Alignment.center,
-      child: Image.network(
-        url,
-        width: double.infinity,
-        height: double.infinity,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade100),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: Colors.black,
+        alignment: Alignment.center,
+        child: Image.network(
+          url,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade100),
+        ),
       ),
     );
   }
@@ -93,7 +106,8 @@ class _WallImage extends StatelessWidget {
 
 class _WallVideoPlayer extends StatefulWidget {
   final String url;
-  const _WallVideoPlayer({required this.url});
+  final VoidCallback onExpand;
+  const _WallVideoPlayer({required this.url, required this.onExpand});
 
   @override
   State<_WallVideoPlayer> createState() => _WallVideoPlayerState();
@@ -186,6 +200,19 @@ class _WallVideoPlayerState extends State<_WallVideoPlayer> {
             ),
             if (!_controller.value.isPlaying)
               const Icon(Icons.play_circle_fill, color: Colors.white70, size: 56),
+            Positioned(
+              right: 8,
+              top: 8,
+              child: Material(
+                color: Colors.black45,
+                shape: const CircleBorder(),
+                child: IconButton(
+                  icon: const Icon(Icons.fullscreen, color: Colors.white, size: 20),
+                  tooltip: 'Expand',
+                  onPressed: widget.onExpand,
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -113,7 +113,7 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
             ),
           ],
         ),
-        body: _buildBody(context),
+        body: RefreshIndicator(onRefresh: _load, child: _buildBody(context)),
       ),
     );
   }
@@ -123,22 +123,28 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Both stay a ListView (not a Center) so RefreshIndicator's pull
+    // gesture still has a scrollable to attach to.
     if (_error != null && _counselors.isEmpty) {
-      return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!, textAlign: TextAlign.center)));
+      return ListView(
+        children: [Padding(padding: const EdgeInsets.all(24), child: Text(_error!, textAlign: TextAlign.center))],
+      );
     }
 
     if (_counselors.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(
-            _filters.isNotEmpty
-                ? 'No counselors match that filter — try widening your search.'
-                : 'No counselors are available right now — please check back soon.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600),
+      return ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text(
+              _filters.isNotEmpty
+                  ? 'No counselors match that filter — try widening your search.'
+                  : 'No counselors are available right now — please check back soon.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
           ),
-        ),
+        ],
       );
     }
 

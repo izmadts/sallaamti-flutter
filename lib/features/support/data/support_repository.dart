@@ -15,14 +15,18 @@ class SupportMessage {
   final String body;
   final bool isMine;
   final DateTime createdAt;
+  // Only meaningful for a message I sent — whether Support has opened it
+  // yet. Drives the single/double-tick shown under my own bubbles.
+  final bool isRead;
 
-  SupportMessage({required this.id, required this.body, required this.isMine, required this.createdAt});
+  SupportMessage({required this.id, required this.body, required this.isMine, required this.createdAt, this.isRead = false});
 
   factory SupportMessage.fromJson(Map<String, dynamic> json) => SupportMessage(
         id: _asInt(json['id']) ?? 0,
         body: json['body'] as String? ?? '',
         isMine: json['is_mine'] as bool? ?? false,
         createdAt: DateTime.parse(json['created_at'] as String),
+        isRead: json['is_read'] as bool? ?? false,
       );
 }
 

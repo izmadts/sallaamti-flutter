@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/api/api_exception.dart';
+import '../../../shared/widgets/message_tick.dart';
 import '../data/support_repository.dart';
 
 // Polled, not pushed — no persistent websocket process available on this
@@ -177,9 +178,18 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                 ],
                 Text(m.body, style: TextStyle(color: m.isMine ? Colors.white : Colors.black87)),
                 const SizedBox(height: 4),
-                Text(
-                  DateFormat('h:mm a').format(m.createdAt.toLocal()),
-                  style: TextStyle(fontSize: 10, color: m.isMine ? Colors.white70 : Colors.grey.shade500),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      DateFormat('h:mm a').format(m.createdAt.toLocal()),
+                      style: TextStyle(fontSize: 10, color: m.isMine ? Colors.white70 : Colors.grey.shade500),
+                    ),
+                    if (m.isMine) ...[
+                      const SizedBox(width: 4),
+                      MessageTick(isRead: m.isRead, color: Colors.white70),
+                    ],
+                  ],
                 ),
               ],
             ),
