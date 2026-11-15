@@ -127,6 +127,15 @@ String? resolveNotificationRoute({String? url, String? type, Map<String, dynamic
     if (leadId != null) return '/nikah/counselor/chat/$leadId';
   }
 
+  // LibraryItemPublished (see app/Notifications/LibraryItemPublished.php) —
+  // without this the push's data payload (no url, type+slug only) fell
+  // through to the final catch-all and opened the Nikah hub instead of the
+  // book that was just announced.
+  if (type == 'library_item') {
+    final slug = data['library_item_slug'];
+    if (slug != null) return '/library/$slug';
+  }
+
   // The web route names all start with 'quran-live.', but the URL PATHS
   // themselves don't consistently — /my-quran-class (my-class) vs
   // /quran-live/{course}/... (fee reminder) — so 'quran' alone is the
