@@ -12,6 +12,17 @@
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<!-- Meta App Events only (facebook_app_events) — matches the
+		     Android meta-data pair in AndroidManifest.xml exactly, same
+		     App ID/Client Token. Without these the iOS side of the SDK has
+		     no App ID to report install/activation events under at all
+		     (found 15 Nov 2026 investigating a separate Meta-events bug). -->
+		<key>FacebookAppID</key>
+		<string>2851979021835143</string>
+		<key>FacebookClientToken</key>
+		<string>78d61a788bca3b8f21bf3a0f1baa6309</string>
+		<key>FacebookDisplayName</key>
+		<string>Sallaamti App</string>
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
