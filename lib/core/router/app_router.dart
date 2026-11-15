@@ -50,6 +50,10 @@ import '../../features/learning/presentation/learning_courses_screen.dart';
 import '../../features/learning/presentation/learning_lesson_screen.dart';
 import '../../features/learning/presentation/learning_my_courses_screen.dart';
 import '../../features/learning/presentation/learning_quiz_screen.dart';
+import '../../features/library/domain/library_item.dart';
+import '../../features/library/presentation/library_detail_screen.dart';
+import '../../features/library/presentation/library_reader_screen.dart';
+import '../../features/library/presentation/library_screen.dart';
 import '../../features/qa/presentation/qa_screen.dart';
 import '../../features/support/presentation/support_chat_screen.dart';
 import '../../features/quran_live/presentation/quran_hub_screen.dart';
@@ -215,6 +219,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => TestimonialComposeScreen(existing: state.extra as MemberTestimonial?),
       ),
       GoRoute(path: '/qa', builder: (context, state) => const QaScreen()),
+      GoRoute(path: '/library', builder: (context, state) => const LibraryScreen()),
+      GoRoute(
+        path: '/library/:slug',
+        builder: (context, state) => LibraryDetailScreen(slug: state.pathParameters['slug']!),
+      ),
+      GoRoute(
+        path: '/library/:slug/read',
+        builder: (context, state) => LibraryReaderScreen(item: state.extra as LibraryItem),
+      ),
       GoRoute(path: '/support', builder: (context, state) => const SupportChatScreen()),
 
       // Self-paced learning. Each segment after /learning is a distinct

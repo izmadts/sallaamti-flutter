@@ -69,11 +69,13 @@
   "moduleWall": "سلامتی وال",
   "moduleCommunity": "کمیونٹی",
   "moduleQa": "عالم/مفتی سے سوال",
+  "moduleLibrary": "کتب خانہ",
 
   "navHome": "ہوم",
   "navMore": "مزید",
   "navWallShort": "وال",
   "navQaShort": "عالم/مفتی",
+  "navLibraryShort": "کتب خانہ",
   "navNikahShort": "نکاح",
   "navQuranShort": "قرآن",
   "navSkillsShort": "سکلز",

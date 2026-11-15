@@ -69,11 +69,13 @@
   "moduleWall": "Sallaamti Wall",
   "moduleCommunity": "Community",
   "moduleQa": "Ask from Alim/Mufti",
+  "moduleLibrary": "Library",
 
   "navHome": "Home",
   "navMore": "More",
   "navWallShort": "Wall",
   "navQaShort": "Alim/Mufti",
+  "navLibraryShort": "Library",
   "navNikahShort": "Nikah",
   "navQuranShort": "Quran",
   "navSkillsShort": "Skills",

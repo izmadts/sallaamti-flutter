@@ -76,6 +76,7 @@ class ModuleThemes {
     'wall': Color(0xFF0D6B6B), // brand teal
     'community': Color(0xFF1D5FB8), // blue — blog, member posts, testimonials
     'qa': Color(0xFF2E8B8B), // calm blue-green — Ap k Sawalat
+    'library': Color(0xFF065F46), // emerald — matches the website's /library page
   };
 
   static Color seedFor(String moduleKey) => _seeds[moduleKey] ?? AppTheme.brandTeal;
