@@ -7,6 +7,7 @@ import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
+import '../../domain/nikah_profile.dart';
 import '../../state/nikah_controller.dart';
 import 'nikah_step1_screen.dart' show maritalStatusOptions;
 import 'nikah_step2_screen.dart' show sectOptions, educationLevels;
@@ -34,27 +35,33 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
   String? _prefMaritalStatus;
   bool _busy = false;
   String? _error;
+  bool _prefilled = false;
 
   @override
   void initState() {
     super.initState();
+    // Same race condition as nikah_step1_screen.dart (see its comment) —
+    // build()'s ref.listen below catches the profile-still-loading case.
     final profile = ref.read(nikahControllerProvider).profile;
-    if (profile != null) {
-      _aboutController.text = profile.about ?? '';
-      _expectationsController.text = profile.expectations ?? '';
-      _prefMinAgeController.text = profile.prefMinAge?.toString() ?? '';
-      _prefMaxAgeController.text = profile.prefMaxAge?.toString() ?? '';
-      _prefCityController.text = profile.prefCity ?? '';
-      // Falls back to "Any" (null) if a previously-saved free-text value
-      // (from before this was a dropdown) doesn't match one of the fixed
-      // options — avoids a Flutter error from an initialValue that isn't
-      // actually one of the dropdown's items.
-      _prefSect = sectOptions.contains(profile.prefSect) ? profile.prefSect : null;
-      _prefEducation = educationLevels.contains(profile.prefEducation) ? profile.prefEducation : null;
-      _prefIncomeController.text = profile.prefIncome ?? '';
-      _prefOtherController.text = profile.prefOther ?? '';
-      _prefMaritalStatus = profile.prefMaritalStatus;
-    }
+    if (profile != null) _prefillFrom(profile);
+  }
+
+  void _prefillFrom(NikahProfile profile) {
+    _prefilled = true;
+    _aboutController.text = profile.about ?? '';
+    _expectationsController.text = profile.expectations ?? '';
+    _prefMinAgeController.text = profile.prefMinAge?.toString() ?? '';
+    _prefMaxAgeController.text = profile.prefMaxAge?.toString() ?? '';
+    _prefCityController.text = profile.prefCity ?? '';
+    // Falls back to "Any" (null) if a previously-saved free-text value
+    // (from before this was a dropdown) doesn't match one of the fixed
+    // options — avoids a Flutter error from an initialValue that isn't
+    // actually one of the dropdown's items.
+    _prefSect = sectOptions.contains(profile.prefSect) ? profile.prefSect : null;
+    _prefEducation = educationLevels.contains(profile.prefEducation) ? profile.prefEducation : null;
+    _prefIncomeController.text = profile.prefIncome ?? '';
+    _prefOtherController.text = profile.prefOther ?? '';
+    _prefMaritalStatus = profile.prefMaritalStatus;
   }
 
   @override
@@ -109,6 +116,14 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_prefilled) {
+      ref.listen(nikahControllerProvider, (previous, next) {
+        if (next.profile != null && !_prefilled) {
+          setState(() => _prefillFrom(next.profile!));
+        }
+      });
+    }
+
     return StepWizardScaffold(
       title: 'About & Preferences',
       stepIndex: 2,

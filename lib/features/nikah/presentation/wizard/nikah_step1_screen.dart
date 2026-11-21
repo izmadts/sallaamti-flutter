@@ -12,6 +12,7 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/async_searchable_picker.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
+import '../../domain/nikah_profile.dart';
 import '../../state/nikah_controller.dart';
 
 // Heights 4'0" to 7'0", matching the height-range filter the browse
@@ -97,13 +98,27 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   String? _guardianRelation;
   bool _busy = false;
   String? _error;
+  bool _prefilled = false;
 
   @override
   void initState() {
     super.initState();
+    // Found live (16 Nov 2026): nikahControllerProvider fetches the profile
+    // asynchronously (NikahController's constructor calls refresh()) — on a
+    // cold app start, a slow connection, or a deep link straight into Edit
+    // Profile, this ran before that fetch finished, saw profile == null,
+    // and gave up for good (initState only ever runs once). Every field
+    // below — including Date of Birth — then stayed blank for the rest of
+    // the screen's life, and an unsuspecting save() could overwrite a
+    // member's real saved values with empty ones. build()'s ref.listen
+    // below covers the case this misses: profile arriving after mount.
     final profile = ref.read(nikahControllerProvider).profile;
     if (profile == null) return;
+    _prefillFrom(profile);
+  }
 
+  void _prefillFrom(NikahProfile profile) {
+    _prefilled = true;
     _gender = profile.gender;
     _dateOfBirth = profile.dateOfBirth;
     _maritalStatus = profile.maritalStatus;
@@ -279,6 +294,19 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final countryStatesAsync = ref.watch(countryStatesProvider);
+
+    // Catches the case initState() can't: the profile fetch still in
+    // flight when this screen first mounted, resolving some time after.
+    // setState() runs synchronously inside the listener here, before this
+    // same build() pass's own widgets are laid out, so the fields appear
+    // already filled rather than flashing empty for a frame.
+    if (!_prefilled) {
+      ref.listen(nikahControllerProvider, (previous, next) {
+        if (next.profile != null && !_prefilled) {
+          setState(() => _prefillFrom(next.profile!));
+        }
+      });
+    }
 
     return StepWizardScaffold(
       title: 'Basic Info',

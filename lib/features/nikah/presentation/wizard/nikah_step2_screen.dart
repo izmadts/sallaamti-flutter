@@ -7,6 +7,7 @@ import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
+import '../../domain/nikah_profile.dart';
 import '../../state/nikah_controller.dart';
 
 // Public (no leading underscore) — reused by nikah_step3_screen.dart so
@@ -77,21 +78,68 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
   final Set<String> _languages = {};
   bool _busy = false;
   String? _error;
+  bool _prefilled = false;
 
   @override
   void initState() {
     super.initState();
+    // Same race condition as nikah_step1_screen.dart (see its comment) —
+    // nikahControllerProvider's profile fetch can still be in flight when
+    // this screen first mounts; build()'s ref.listen below catches that
+    // case. This initState() call only covers the common case: the
+    // profile already loaded by the time someone reaches step 2.
     final profile = ref.read(nikahControllerProvider).profile;
-    if (profile != null) {
-      _casteController.text = profile.caste ?? '';
-      _ethnicityController.text = profile.ethnicity ?? '';
-      _education = (profile.education?.isNotEmpty ?? false)
-          ? profile.education
-          : null;
-      _professionController.text = profile.profession ?? '';
-      _openToPolygamy = profile.openToPolygamy ?? false;
-      _familyType = profile.familyType;
-      _sect = profile.sect;
+    if (profile != null) _prefillFrom(profile);
+  }
+
+  void _prefillFrom(NikahProfile profile) {
+    _prefilled = true;
+    _casteController.text = profile.caste ?? '';
+    _ethnicityController.text = profile.ethnicity ?? '';
+    _education = (profile.education?.isNotEmpty ?? false)
+        ? profile.education
+        : null;
+    _professionController.text = profile.profession ?? '';
+    _openToPolygamy = profile.openToPolygamy ?? false;
+    // Found live (16 Nov 2026) — these four were never restored at all,
+    // race condition or not: the code to read them back from `profile`
+    // was simply never written, so they showed blank on every single edit.
+    _prayerFrequency = profile.prayerFrequency;
+    _hijabOrBeard = profile.hijabOrBeard;
+    _smokes = profile.smokes;
+    _diet = profile.diet;
+
+    if (profile.sect != null && profile.sect!.isNotEmpty) {
+      if (sectOptions.contains(profile.sect)) {
+        _sect = profile.sect;
+      } else {
+        _sect = 'Other';
+        _sectOtherController.text = profile.sect!;
+      }
+    }
+
+    if (profile.familyType != null && profile.familyType!.isNotEmpty) {
+      if (_familyTypeOptions.contains(profile.familyType)) {
+        _familyType = profile.familyType;
+      } else {
+        _familyType = 'Other';
+        _familyTypeOtherController.text = profile.familyType!;
+      }
+    }
+
+    // Reverses ValidatesNikahProfile::resolveLanguage() on the backend —
+    // the common ones selected from the checklist plus one free-text
+    // "other" entry, joined with ', '.
+    if (profile.language != null && profile.language!.isNotEmpty) {
+      for (final part in profile.language!.split(',')) {
+        final trimmed = part.trim();
+        if (trimmed.isEmpty) continue;
+        if (_commonLanguages.contains(trimmed)) {
+          _languages.add(trimmed);
+        } else {
+          _languageOtherController.text = trimmed;
+        }
+      }
     }
   }
 
@@ -160,6 +208,14 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_prefilled) {
+      ref.listen(nikahControllerProvider, (previous, next) {
+        if (next.profile != null && !_prefilled) {
+          setState(() => _prefillFrom(next.profile!));
+        }
+      });
+    }
+
     return StepWizardScaffold(
       title: 'Deen & Lifestyle',
       stepIndex: 1,
