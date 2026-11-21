@@ -189,11 +189,10 @@ class NikahProfile {
     canBrowse: json['can_browse'] as bool? ?? false,
   );
 
-  // CNIC front/back photo requirement retired — the wizard's own step-level
-  // validation already enforces CNIC number and photo being filled in
-  // before reaching review, so there's nothing left to gate here beyond
-  // that having actually happened.
-  bool get isComplete => hasCnicNumber && hasPhoto;
+  // CNIC is optional (policy change — payment confirmation is the real
+  // verification signal, not CNIC). Photo is still required, enforced by
+  // the wizard's own step-level validation before reaching review.
+  bool get isComplete => hasPhoto;
 }
 
 // Wherever to actually send the verification fee — configured by admins in

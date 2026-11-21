@@ -15,12 +15,11 @@ import '../../domain/nikah_profile.dart';
 import '../../state/nikah_controller.dart';
 
 // CNIC front/back photo upload is retired — policy change to stop
-// collecting these images anywhere, on either platform. CNIC number stays
-// on screen looking mandatory (still uses requiredLabel, still blocks
-// Next) but the backend now accepts it blank — members were avoiding the
-// identity step entirely rather than upload a CNIC, and payment
-// confirmation is the verification signal now. The profile photo picks up
-// the same "looks required, isn't" treatment for the same reason.
+// collecting these images anywhere, on either platform. CNIC number is now
+// genuinely optional on screen too (no validator, label says so) — the
+// backend already accepted it blank; payment confirmation is the
+// verification signal, not CNIC. The profile photo still looks required
+// and still blocks Next (out of scope for this change).
 class NikahStep4Screen extends ConsumerStatefulWidget {
   const NikahStep4Screen({super.key});
 
@@ -132,8 +131,7 @@ class _NikahStep4ScreenState extends ConsumerState<NikahStep4Screen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _cnicController,
-              decoration: InputDecoration(label: requiredLabel('CNIC Number')),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'This field is required' : null,
+              decoration: const InputDecoration(labelText: 'CNIC Number (Optional)'),
             ),
             const SizedBox(height: 24),
             const Text('Your Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
