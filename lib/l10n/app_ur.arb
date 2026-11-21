@@ -149,5 +149,10 @@
   "nikahMyInterestsSubtitle": "بھیجی اور موصول ہونے والی دلچسپیاں",
   "nikahEditProfileTitle": "میری پروفائل میں تبدیلی کریں",
   "nikahEditProfileSubtitle": "اپنی تفصیلات کسی بھی وقت اپ ڈیٹ کریں",
-  "nikahFaqsSubtitle": "نکاح میچنگ کے بارے میں عام سوالات"
+  "nikahFaqsSubtitle": "نکاح میچنگ کے بارے میں عام سوالات",
+
+  "emailVerificationDialogTitle": "اپنی ای میل تصدیق کریں",
+  "emailVerificationDialogMessage": "جاری رکھنے کے لیے اپنی ای میل پر بھیجا گیا 6 ہندسوں کا کوڈ درج کریں۔",
+  "emailVerificationCodeSent": "تصدیقی کوڈ بھیج دیا گیا — اپنا ای میل چیک کریں۔",
+  "emailVerifiedSuccess": "ای میل تصدیق ہو گئی! اب آپ جاری رکھ سکتے ہیں۔"
 }

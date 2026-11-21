@@ -90,6 +90,16 @@ class AuthRepository {
     return AuthResult.fromJson(data);
   }
 
+  // The code AuthController::sendEmailVerificationCode() emails at
+  // register() time, or re-sent below. Returns the updated user so the
+  // caller can refresh its own cached copy (email_verified_at now set).
+  Future<AppUser> verifyEmailCode(String code) async {
+    final data = await _client.post('/auth/email/verify', data: {'code': code});
+    return AppUser.fromJson(Map<String, dynamic>.from(data['user'] as Map));
+  }
+
+  Future<void> resendEmailVerificationCode() => _client.post('/auth/email/resend');
+
   Future<void> logout() => _client.post('/auth/logout');
 
   Future<AppUser> me() async {

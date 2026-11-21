@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../config/app_config.dart';
 import '../storage/secure_store.dart';
 import 'api_exception.dart';
+import 'email_verification_gate.dart';
 
 // Thin Dio wrapper: every request automatically carries the stored bearer
 // token (if any) and Accept: application/json, and every failure is
@@ -120,7 +121,12 @@ class ApiClient {
           e.type == DioExceptionType.receiveTimeout) {
         throw ApiException.timeout(urdu: urdu);
       }
-      throw ApiException.fromResponseData(e.response?.data, e.response?.statusCode);
+      final exception = ApiException.fromResponseData(e.response?.data, e.response?.statusCode);
+      // 16 Nov 2026 fix — pop the verification dialog itself the instant
+      // this specific block happens, anywhere in the app, instead of
+      // leaving the member with only prose and no way to act on it.
+      maybeShowEmailVerificationGate(exception.code);
+      throw exception;
     }
 
     // A 2xx response isn't guaranteed to be the JSON object we expect — a

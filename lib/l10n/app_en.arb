@@ -152,5 +152,10 @@
   "nikahMyInterestsSubtitle": "Sent and received interest requests",
   "nikahEditProfileTitle": "Edit My Profile",
   "nikahEditProfileSubtitle": "Update your details anytime",
-  "nikahFaqsSubtitle": "Common questions about Nikah matching"
+  "nikahFaqsSubtitle": "Common questions about Nikah matching",
+
+  "emailVerificationDialogTitle": "Verify Your Email",
+  "emailVerificationDialogMessage": "Enter the 6-digit code we sent to your email to continue.",
+  "emailVerificationCodeSent": "Verification code sent — check your inbox.",
+  "emailVerifiedSuccess": "Email verified! You can continue now."
 }
