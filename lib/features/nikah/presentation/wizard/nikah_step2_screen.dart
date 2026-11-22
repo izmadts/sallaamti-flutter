@@ -7,12 +7,17 @@ import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
+import '../../domain/nikah_labels.dart';
 import '../../domain/nikah_profile.dart';
 import '../../state/nikah_controller.dart';
 
 // Public (no leading underscore) — reused by nikah_step3_screen.dart so
 // "Preferred Sect"/"Preferred Education" offer the exact same options as
-// these, instead of asking for the same fixed value as free text.
+// these, instead of asking for the same fixed value as free text. The
+// stored/API value is always this literal English string (matching the
+// backend's validation and web's own dropdowns exactly) — only the
+// DISPLAYED label is translated, via sectLabel()/educationLabel() in
+// nikah_labels.dart, never these lists themselves.
 const sectOptions = ['Sunni', 'Shia', 'Ahle Hadith', 'Deobandi', 'Other'];
 // Matches web's step-basic.blade.php $educationLevels exactly.
 const educationLevels = [
@@ -24,27 +29,11 @@ const educationLevels = [
   'PhD',
   'Madrassah / Islamic Education',
 ];
-const _prayerOptions = {
-  'always': 'Always (5x daily)',
-  'usually': 'Usually',
-  'sometimes': 'Sometimes',
-  'rarely': 'Rarely',
-};
-const _hijabBeardOptions = {'yes': 'Yes', 'no': 'No', 'sometimes': 'Sometimes'};
-const _smokesOptions = {
-  'no': 'No',
-  'occasionally': 'Occasionally',
-  'yes': 'Yes',
-};
-const _dietOptions = {
-  'halal_only': 'Halal only',
-  'halal_mostly': 'Mostly halal',
-  'no_restriction': 'No restriction',
-};
 // Social-class terms, not household structure (owner, 21 Nov 2026):
 // "joint/nuclear logo ko samajh nahi aati" — members didn't understand the
 // old Joint Family/Nuclear Family wording, so this field now describes
-// family social standing instead. Same change on the web wizard.
+// family social standing instead. Same change on the web wizard. Stored
+// value stays this literal English string — see familyTypeLabel().
 const _familyTypeOptions = ['Elite', 'High Class', 'Middle', 'Lower Middle', 'Other'];
 const _commonLanguages = [
   'Urdu',
@@ -162,15 +151,15 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_sect == null || _sect!.isEmpty) {
-      setState(() => _error = 'Please select your sect');
+      setState(() => _error = l10n.nikahPleaseSelectSect);
       return;
     }
     if (_education == null || _education!.isEmpty) {
-      setState(() => _error = 'Please select your education');
+      setState(() => _error = l10n.nikahPleaseSelectEducation);
       return;
     }
     if (_professionController.text.trim().isEmpty) {
-      setState(() => _error = 'Please enter your profession');
+      setState(() => _error = l10n.nikahPleaseEnterProfession);
       return;
     }
 
@@ -212,6 +201,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (!_prefilled) {
       ref.listen(nikahControllerProvider, (previous, next) {
         if (next.profile != null && !_prefilled) {
@@ -221,10 +211,10 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
     }
 
     return StepWizardScaffold(
-      title: 'Deen & Lifestyle',
+      title: l10n.nikahDeenLifestyleTitle,
       stepIndex: 1,
       totalSteps: 5,
-      nextLabel: 'Next: About & Preferences',
+      nextLabel: l10n.nikahNextAboutPreferences,
       onNext: _next,
       busy: _busy,
       theme: ModuleThemes.forModule('nikah'),
@@ -233,16 +223,16 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Sect, Education, and Profession are required — the rest is optional, share what you\'re comfortable with',
-            style: TextStyle(fontSize: 14),
+          Text(
+            l10n.nikahStep2IntroMessage,
+            style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _sect,
-            decoration: InputDecoration(label: requiredLabel('Sect')),
+            decoration: InputDecoration(label: requiredLabel(l10n.sectLabel)),
             items: sectOptions
-                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .map((s) => DropdownMenuItem(value: s, child: Text(sectLabel(l10n, s))))
                 .toList(),
             onChanged: (v) => setState(() => _sect = v),
           ),
@@ -250,16 +240,16 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _sectOtherController,
-              decoration: const InputDecoration(labelText: 'Enter sect'),
+              decoration: InputDecoration(labelText: l10n.nikahEnterSectLabel),
             ),
           ],
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _prayerFrequency,
-            decoration: const InputDecoration(
-              labelText: 'How often do you pray?',
+            decoration: InputDecoration(
+              labelText: l10n.nikahPrayerFrequencyLabel,
             ),
-            items: _prayerOptions.entries
+            items: prayerOptions(l10n).entries
                 .map(
                   (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
                 )
@@ -269,8 +259,8 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _hijabOrBeard,
-            decoration: const InputDecoration(labelText: 'Hijab / Beard'),
-            items: _hijabBeardOptions.entries
+            decoration: InputDecoration(labelText: l10n.hijabBeardLabel),
+            items: hijabBeardOptions(l10n).entries
                 .map(
                   (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
                 )
@@ -280,8 +270,8 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _smokes,
-            decoration: const InputDecoration(labelText: 'Smoking'),
-            items: _smokesOptions.entries
+            decoration: InputDecoration(labelText: l10n.nikahSmokingLabel),
+            items: smokesOptions(l10n).entries
                 .map(
                   (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
                 )
@@ -291,8 +281,8 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _diet,
-            decoration: const InputDecoration(labelText: 'Diet'),
-            items: _dietOptions.entries
+            decoration: InputDecoration(labelText: l10n.dietLabel),
+            items: dietOptions(l10n).entries
                 .map(
                   (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
                 )
@@ -302,26 +292,26 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Open to polygamy'),
+            title: Text(l10n.nikahOpenToPolygamyLabel),
             value: _openToPolygamy,
             onChanged: (v) => setState(() => _openToPolygamy = v),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Background',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            l10n.nikahBackgroundTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _casteController,
-            decoration: const InputDecoration(labelText: 'Caste'),
+            decoration: InputDecoration(labelText: l10n.casteLabel),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _familyType,
-            decoration: const InputDecoration(labelText: 'Family Type'),
+            decoration: InputDecoration(labelText: l10n.familyTypeLabel),
             items: _familyTypeOptions
-                .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                .map((f) => DropdownMenuItem(value: f, child: Text(familyTypeLabel(l10n, f))))
                 .toList(),
             onChanged: (v) => setState(() => _familyType = v),
           ),
@@ -329,39 +319,39 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _familyTypeOtherController,
-              decoration: const InputDecoration(labelText: 'Enter family type'),
+              decoration: InputDecoration(labelText: l10n.nikahEnterFamilyTypeLabel),
             ),
           ],
           const SizedBox(height: 16),
           TextFormField(
             controller: _ethnicityController,
-            decoration: const InputDecoration(labelText: 'Ethnicity'),
+            decoration: InputDecoration(labelText: l10n.ethnicityLabel),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _education,
-            decoration: InputDecoration(label: requiredLabel('Education')),
+            decoration: InputDecoration(label: requiredLabel(l10n.educationLabel)),
             items: educationLevels
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .map((e) => DropdownMenuItem(value: e, child: Text(educationLabel(l10n, e))))
                 .toList(),
             onChanged: (v) => setState(() => _education = v),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _professionController,
-            decoration: InputDecoration(label: requiredLabel('Profession')),
+            decoration: InputDecoration(label: requiredLabel(l10n.professionLabel)),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Languages Spoken',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          Text(
+            l10n.nikahLanguagesSpokenLabel,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           Wrap(
             spacing: 8,
             children: _commonLanguages.map((lang) {
               final selected = _languages.contains(lang);
               return FilterChip(
-                label: Text(lang),
+                label: Text(languageLabel(l10n, lang)),
                 selected: selected,
                 onSelected: (v) => setState(
                   () => v ? _languages.add(lang) : _languages.remove(lang),
@@ -372,7 +362,7 @@ class _NikahStep2ScreenState extends ConsumerState<NikahStep2Screen> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _languageOtherController,
-            decoration: const InputDecoration(labelText: 'Other language'),
+            decoration: InputDecoration(labelText: l10n.nikahOtherLanguageLabel),
           ),
         ],
       ),
