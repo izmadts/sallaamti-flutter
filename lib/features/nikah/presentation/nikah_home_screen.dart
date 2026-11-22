@@ -45,33 +45,31 @@ String _nextIncompleteStepRoute(NikahProfile profile) {
 // to how the module actually works, which earlier audits this session
 // found is exactly where less tech-savvy members get lost. Content mirrors
 // the hub tiles' own order below.
-const _nikahTourSteps = [
+List<TourStep> _nikahTourSteps(AppLocalizations l10n) => [
   TourStep(
     emoji: '💍',
-    title: 'Your profile is live!',
-    description:
-        'Verified members can now find and send interest in your profile. Sallaamti is for serious proposals — your guardian stays involved at every step, as it should be.',
+    title: l10n.nikahTourStep1Title,
+    description: l10n.nikahTourStep1Description,
   ),
   TourStep(
     emoji: '🔎',
-    title: 'Browse Matches',
-    description: 'Search verified profiles filtered by what actually matters to you — sect, education, city, and more.',
+    title: l10n.nikahBrowseMatchesTitle,
+    description: l10n.nikahTourStep2Description,
   ),
   TourStep(
     emoji: '💌',
-    title: 'Interests & Messages',
-    description:
-        'When someone shows interest in you, or you in them, it shows up here. Accept it and guardian contact details are shared so families can connect.',
+    title: l10n.nikahTourStep3Title,
+    description: l10n.nikahTourStep3Description,
   ),
   TourStep(
     emoji: '⭐',
-    title: 'Saved Profiles',
-    description: 'Found someone promising while browsing? Star their profile to come back to it later.',
+    title: l10n.nikahTourStep4Title,
+    description: l10n.nikahTourStep4Description,
   ),
   TourStep(
     emoji: '⚙️',
-    title: 'Edit Profile',
-    description: 'Update your details any time — a complete, honest profile gets better, more serious matches.',
+    title: l10n.nikahTourStep5Title,
+    description: l10n.nikahTourStep5Description,
   ),
 ];
 
@@ -80,6 +78,7 @@ class NikahHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(nikahControllerProvider);
 
     if (state.status == NikahLoadStatus.loading) {
@@ -118,12 +117,12 @@ class NikahHomeScreen extends ConsumerWidget {
       data: theme,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('💍 Nikah Matchmaking'),
+          title: Text(l10n.nikahMatchmakingAppBarTitle),
           // Available to a pending member too, not just a verified one —
           // see NikahRepository.whoViewedMe()'s own comment.
           actions: [
             IconButton(
-              tooltip: 'Who Viewed My Profile',
+              tooltip: l10n.nikahWhoViewedMyProfileTitle,
               icon: const Text('👀', style: TextStyle(fontSize: 20)),
               onPressed: () => context.push('/nikah/who-viewed-me'),
             ),
@@ -235,7 +234,7 @@ class _PausedForNonPaymentCardState extends ConsumerState<_PausedForNonPaymentCa
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -247,13 +246,14 @@ class _PausedForNonPaymentCardState extends ConsumerState<_PausedForNonPaymentCa
     final uri = Uri.parse(link);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open WhatsApp.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nikahCouldNotOpenWhatsapp)));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final remaining = widget.profile.maxPaymentDeadlineExtensions - widget.profile.paymentDeadlineExtensionsUsed;
 
     return ListView(
@@ -268,14 +268,14 @@ class _PausedForNonPaymentCardState extends ConsumerState<_PausedForNonPaymentCa
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
-          'Your profile is paused',
+        Text(
+          l10n.nikahPausedCardTitle,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Text(
-          'The 7-day window to complete your verification fee payment ran out, so your profile is hidden from search. Nothing is lost — it\'s all still saved.',
+          l10n.nikahPausedCardMessage,
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey.shade600),
         ),
@@ -293,11 +293,11 @@ class _PausedForNonPaymentCardState extends ConsumerState<_PausedForNonPaymentCa
             onPressed: _busy ? null : _extend,
             child: _busy
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Extend 7 Days'),
+                : Text(l10n.nikahExtend7Days),
           ),
           const SizedBox(height: 8),
           Text(
-            '$remaining self-service extension(s) left after this.',
+            l10n.nikahExtensionsLeft(remaining),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           ),
@@ -306,11 +306,11 @@ class _PausedForNonPaymentCardState extends ConsumerState<_PausedForNonPaymentCa
             onPressed: _contactSupport,
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
             icon: const Icon(Icons.chat_bubble, color: Colors.white),
-            label: const Text('Contact Support on WhatsApp'),
+            label: Text(l10n.nikahContactSupportWhatsapp),
           ),
           const SizedBox(height: 8),
           Text(
-            'You\'ve used all your self-service extensions — our team can reactivate it for you.',
+            l10n.nikahExtensionsUsedUpMessage,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           ),
@@ -333,7 +333,7 @@ class _NikahHubState extends ConsumerState<_NikahHub> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) FirstVisitTour.showIfNeeded(context, storageKey: 'nikah_hub_tour_seen', steps: _nikahTourSteps);
+      if (mounted) FirstVisitTour.showIfNeeded(context, storageKey: 'nikah_hub_tour_seen', steps: _nikahTourSteps(AppLocalizations.of(context)!));
     });
   }
 
@@ -368,9 +368,9 @@ class _NikahHubState extends ConsumerState<_NikahHub> {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
-            onPressed: () => FirstVisitTour.show(context, steps: _nikahTourSteps),
+            onPressed: () => FirstVisitTour.show(context, steps: _nikahTourSteps(l10n)),
             icon: const Text('❓'),
-            label: const Text('How does this work?'),
+            label: Text(l10n.nikahHowDoesThisWork),
           ),
         ),
         const SizedBox(height: 8),
@@ -390,14 +390,14 @@ class _NikahHubState extends ConsumerState<_NikahHub> {
         ),
         _HubTile(
           emoji: '⭐',
-          title: 'Saved Profiles',
-          subtitle: 'Candidates you starred while browsing',
+          title: l10n.nikahSavedProfilesTitle,
+          subtitle: l10n.nikahSavedProfilesSubtitle,
           onTap: () => context.push('/nikah/saved'),
         ),
         _HubTile(
           emoji: '👀',
-          title: 'Who Viewed My Profile',
-          subtitle: 'Members who\'ve opened your full profile',
+          title: l10n.nikahWhoViewedMyProfileTitle,
+          subtitle: l10n.nikahWhoViewedMyProfileSubtitle,
           onTap: () => context.push('/nikah/who-viewed-me'),
         ),
         _HubTile(
@@ -408,8 +408,8 @@ class _NikahHubState extends ConsumerState<_NikahHub> {
         ),
         _HubTile(
           emoji: '🚫',
-          title: 'Blocked Profiles',
-          subtitle: 'Manage who you\'ve blocked',
+          title: l10n.nikahBlockedProfilesTitle,
+          subtitle: l10n.nikahBlockedProfilesSubtitle,
           onTap: () => context.push('/nikah/blocked'),
         ),
         _ActiveToggleTile(isActive: profile.isActive),
@@ -444,8 +444,8 @@ class _ActiveToggleTileState extends ConsumerState<_ActiveToggleTile> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not update visibility — try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.nikahCouldNotUpdateVisibility),
           ),
         );
       }
@@ -456,6 +456,7 @@ class _ActiveToggleTileState extends ConsumerState<_ActiveToggleTile> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final primary = Theme.of(context).colorScheme.primary;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -470,13 +471,13 @@ class _ActiveToggleTileState extends ConsumerState<_ActiveToggleTile> {
           ),
         ),
         title: Text(
-          widget.isActive ? 'Visible in Search' : 'Hidden from Search',
+          widget.isActive ? l10n.nikahVisibleInSearch : l10n.nikahHiddenFromSearch,
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
           widget.isActive
-              ? 'Other members can find your profile'
-              : 'Your profile is paused',
+              ? l10n.nikahVisibleInSearchSubtitle
+              : l10n.nikahProfilePausedSubtitle,
         ),
         trailing: _busy
             ? const SizedBox(
@@ -648,6 +649,7 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
   Widget build(BuildContext context) {
     if (_loading) return const SizedBox.shrink();
 
+    final l10n = AppLocalizations.of(context)!;
     final primary = Theme.of(context).colorScheme.primary;
     final lead = _lead;
 
@@ -664,13 +666,11 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
             backgroundColor: primary.withValues(alpha: 0.15),
             child: const Text('🤝', style: TextStyle(fontSize: 20)),
           ),
-          title: const Text(
-            'Want hands-on help?',
-            style: TextStyle(fontWeight: FontWeight.w700),
+          title: Text(
+            l10n.nikahWantHandsOnHelp,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          subtitle: const Text(
-            'Bring in a Nikah Counselor to search and guide you personally',
-          ),
+          subtitle: Text(l10n.nikahBringInCounselorSubtitle),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/nikah/counselor/pick'),
         ),
@@ -679,11 +679,11 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
 
     final counselor = lead.counselor;
     final status = switch (lead.packagePaymentStatus) {
-      null => 'Choose a package to get started',
-      'submitted' => 'Payment under review',
+      null => l10n.nikahChoosePackageToGetStarted,
+      'submitted' => l10n.nikahPaymentUnderReview,
       'rejected' =>
-        lead.packagePaymentRejectionReason ?? 'Payment needs attention',
-      _ => 'Active',
+        lead.packagePaymentRejectionReason ?? l10n.nikahPaymentNeedsAttention,
+      _ => l10n.nikahCounselorActive,
     };
 
     return Card(
@@ -700,7 +700,7 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
               : null,
         ),
         title: Text(
-          counselor?.name ?? 'Your Nikah Counselor',
+          counselor?.name ?? l10n.nikahYourCounselorFallback,
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(status),
@@ -710,7 +710,7 @@ class _CounselorSectionState extends ConsumerState<_CounselorSection> {
             label: Text('${lead.unreadMessageCount}'),
             child: const Icon(Icons.chat_bubble_outline),
           ),
-          tooltip: 'Message',
+          tooltip: l10n.nikahMessageTooltip,
           onPressed: () => context.push('/nikah/counselor/chat/${lead.id}'),
         ),
         onTap: lead.packagePaymentStatus == null
