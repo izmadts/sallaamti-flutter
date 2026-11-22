@@ -332,7 +332,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
               else ...[
                 DropdownButtonFormField<String>(
                   initialValue: _method,
-                  decoration: InputDecoration(label: requiredLabel('Payment Method')),
+                  decoration: InputDecoration(label: requiredLabel(l10n.paymentMethodLabel)),
                   items: [
                     DropdownMenuItem(value: 'jazzcash', child: Text(l10n.jazzcashMethodLabel)),
                     DropdownMenuItem(value: 'bank_transfer', child: Text(l10n.bankTransferMethodLabel)),

@@ -310,7 +310,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         initialValue: _method,
-                        decoration: InputDecoration(label: requiredLabel('Payment Method')),
+                        decoration: InputDecoration(label: requiredLabel(l10n.paymentMethodLabel)),
                         items: _availableMethods
                             .map((m) => DropdownMenuItem(value: m, child: Text(_methodLabels(l10n)[m]!)))
                             .toList(),

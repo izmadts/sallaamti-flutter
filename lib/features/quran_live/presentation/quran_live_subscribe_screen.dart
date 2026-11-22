@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
@@ -46,7 +47,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
 
   Future<void> _copy(String value) async {
     await Clipboard.setData(ClipboardData(text: value));
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 2)));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nikahCopiedToClipboard), duration: const Duration(seconds: 2)));
   }
 
   Widget _copyableRow(String value, {TextStyle? style}) {
@@ -71,8 +72,9 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_screenshot == null) {
-      setState(() => _error = 'Please attach your payment screenshot.');
+      setState(() => _error = l10n.quranLiveAttachScreenshotError);
       return;
     }
 
@@ -92,7 +94,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -100,10 +102,11 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Monthly Fee')),
+        appBar: AppBar(title: Text(l10n.quranLiveMonthlyFeeTitle)),
         body: SafeArea(
           child: _submitted ? _buildSubmitted(context) : _buildForm(context),
         ),
@@ -112,6 +115,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
   }
 
   Widget _buildSubmitted(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -120,19 +124,19 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
           children: [
             const Text('✅', style: TextStyle(fontSize: 56)),
             const SizedBox(height: 16),
-            const Text('Payment Submitted', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
+            Text(l10n.quranLivePaymentSubmittedTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
-              'Our team will confirm it shortly. Once confirmed, your teacher\'s daily class link will appear under My Class.',
+              l10n.quranLivePaymentSubmittedMessage,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.go('/quran-live/my-class'),
-              child: const Text('Go to My Class'),
+              child: Text(l10n.quranLiveGoToMyClassButton),
             ),
-            TextButton(onPressed: () => context.go('/dashboard'), child: const Text('Back to Dashboard')),
+            TextButton(onPressed: () => context.go('/dashboard'), child: Text(l10n.backToDashboardButton)),
           ],
         ),
       ),
@@ -140,6 +144,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
   }
 
   Widget _buildForm(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<(QuranLiveSubscriptionInfo?, String, String, QuranLivePaymentInstructions)>(
       future: _future,
       builder: (context, snapshot) {
@@ -147,7 +152,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : 'Something went wrong.';
+          final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : l10n.quranLiveSomethingWentWrong;
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -158,7 +163,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => setState(() => _future = ref.read(quranLiveRepositoryProvider).subscription(widget.admissionId)),
-                    child: const Text('Retry'),
+                    child: Text(l10n.retryLabel),
                   ),
                 ],
               ),
@@ -177,9 +182,9 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
                 children: [
                   const Text('⏳', style: TextStyle(fontSize: 48)),
                   const SizedBox(height: 12),
-                  const Text('Awaiting Confirmation', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  Text(l10n.quranLiveAwaitingConfirmationTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 6),
-                  Text('Your payment for $month is under review.', style: TextStyle(color: Colors.grey.shade600), textAlign: TextAlign.center),
+                  Text(l10n.quranLivePaymentUnderReviewForMonth(month), style: TextStyle(color: Colors.grey.shade600), textAlign: TextAlign.center),
                 ],
               ),
             ),
@@ -206,9 +211,9 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Fee for $month', style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text(l10n.quranLiveFeeForMonthLabel(month), style: const TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
-                      Text('Rs. ${double.tryParse(amount)?.toStringAsFixed(0) ?? amount}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
+                      Text(l10n.nikahFeeAmount(double.tryParse(amount)?.toStringAsFixed(0) ?? amount), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
                     ],
                   ),
                 ),
@@ -221,10 +226,10 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Send payment to', style: TextStyle(fontWeight: FontWeight.w700)),
+                        Text(l10n.nikahSendPaymentTo, style: const TextStyle(fontWeight: FontWeight.w700)),
                         const SizedBox(height: 12),
                         if (instructions.hasJazzcash) ...[
-                          const Text('📱 JazzCash', style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(l10n.nikahJazzcashLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 2),
                           _copyableRow(instructions.jazzcashNumber!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                           if ((instructions.jazzcashAccountTitle ?? '').isNotEmpty)
@@ -232,14 +237,14 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
                         ],
                         if (instructions.hasJazzcash && instructions.hasBankTransfer) const SizedBox(height: 16),
                         if (instructions.hasBankTransfer) ...[
-                          const Text('🏦 Bank Transfer', style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(l10n.nikahBankTransferLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 2),
-                          Text('Bank: ${instructions.bankName}', style: TextStyle(color: Colors.grey.shade700)),
-                          if ((instructions.bankAccountTitle ?? '').isNotEmpty) Text('Account Title: ${instructions.bankAccountTitle}', style: TextStyle(color: Colors.grey.shade700)),
+                          Text(l10n.nikahBankLabel(instructions.bankName ?? ''), style: TextStyle(color: Colors.grey.shade700)),
+                          if ((instructions.bankAccountTitle ?? '').isNotEmpty) Text(l10n.nikahAccountTitleLabel(instructions.bankAccountTitle ?? ''), style: TextStyle(color: Colors.grey.shade700)),
                           if ((instructions.bankAccountNumber ?? '').isNotEmpty)
-                            Row(children: [Text('Account No: ', style: TextStyle(color: Colors.grey.shade700)), Expanded(child: _copyableRow(instructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700)))]),
+                            Row(children: [Text(l10n.nikahAccountNoLabel, style: TextStyle(color: Colors.grey.shade700)), Expanded(child: _copyableRow(instructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700)))]),
                           if ((instructions.bankAccountIban ?? '').isNotEmpty)
-                            Row(children: [Text('IBAN: ', style: TextStyle(color: Colors.grey.shade700)), Expanded(child: _copyableRow(instructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700)))]),
+                            Row(children: [Text(l10n.nikahIbanLabel, style: TextStyle(color: Colors.grey.shade700)), Expanded(child: _copyableRow(instructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700)))]),
                         ],
                       ],
                     ),
@@ -249,34 +254,34 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
-                  child: const Text('Payment details have not been configured yet. Please contact support before sending any payment.', style: TextStyle(color: Colors.deepOrange)),
+                  child: Text(l10n.nikahPaymentNotConfiguredMessage, style: const TextStyle(color: Colors.deepOrange)),
                 ),
               const SizedBox(height: 20),
               DropdownButtonFormField<String>(
                 initialValue: _method,
-                decoration: InputDecoration(label: requiredLabel('Payment Method')),
-                items: const [
-                  DropdownMenuItem(value: 'jazzcash', child: Text('JazzCash')),
-                  DropdownMenuItem(value: 'bank_transfer', child: Text('Bank Transfer')),
+                decoration: InputDecoration(label: requiredLabel(l10n.paymentMethodLabel)),
+                items: [
+                  DropdownMenuItem(value: 'jazzcash', child: Text(l10n.jazzcashMethodLabel)),
+                  DropdownMenuItem(value: 'bank_transfer', child: Text(l10n.bankTransferMethodLabel)),
                 ],
                 onChanged: (v) => setState(() => _method = v!),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _referenceController,
-                decoration: const InputDecoration(labelText: 'Transaction Reference (optional)'),
+                decoration: InputDecoration(labelText: l10n.quranLiveTransactionReferenceLabel),
               ),
               const SizedBox(height: 16),
               SizedBox(
                 width: 160,
-                child: ImagePickField(label: 'Screenshot', file: _screenshot, alreadyUploaded: false, onTap: _pickScreenshot),
+                child: ImagePickField(label: l10n.quranLiveScreenshotLabel, file: _screenshot, alreadyUploaded: false, onTap: _pickScreenshot),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _busy ? null : _submit,
                 child: _busy
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Submit Payment'),
+                    : Text(l10n.quranLiveSubmitPaymentButton),
               ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/info_pill.dart';
 import '../data/quran_live_repository.dart';
 
@@ -30,11 +31,12 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Live Class Details'),
+          title: Text(l10n.quranLiveClassDetailsTitle),
           actions: [
             // This screen's own admission card tells a confirmed parent to
             // "see My Class to join" but had no way to actually get there —
@@ -42,7 +44,7 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
             // one navigation hop back.
             IconButton(
               icon: const Icon(Icons.school_outlined),
-              tooltip: 'My Class',
+              tooltip: l10n.quranLiveMyClassTooltip,
               onPressed: () => context.push('/quran-live/my-class'),
             ),
           ],
@@ -55,7 +57,7 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : 'Something went wrong.';
+                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : l10n.quranLiveSomethingWentWrong;
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -64,7 +66,7 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                       children: [
                         Text(message, textAlign: TextAlign.center),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _reload, child: const Text('Retry')),
+                        ElevatedButton(onPressed: _reload, child: Text(l10n.retryLabel)),
                       ],
                     ),
                   ),
@@ -90,9 +92,9 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                               Text(course.description!, style: TextStyle(color: Colors.grey.shade700, height: 1.4)),
                             ],
                             const SizedBox(height: 10),
-                            Text('Teacher: ${course.teacher?.name ?? 'TBA'} · ${course.classTime ?? ''}', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                            Text(l10n.quranLiveTeacherScheduleLabel(course.teacher?.name ?? l10n.quranLiveTeacherTba, course.classTime ?? ''), style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                             const SizedBox(height: 4),
-                            Text('Rs. ${course.monthlyFee}/month', style: const TextStyle(color: Color(0xFFB8962E), fontWeight: FontWeight.w800)),
+                            Text('${l10n.nikahFeeAmount(course.monthlyFee)}${l10n.perMonthSuffix}', style: const TextStyle(color: Color(0xFFB8962E), fontWeight: FontWeight.w800)),
                             if (course.minAge != null || course.maxAge != null || course.genderPreference != null && course.genderPreference != 'both') ...[
                               const SizedBox(height: 10),
                               Wrap(
@@ -100,18 +102,18 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                                 runSpacing: 6,
                                 children: [
                                   if (course.minAge != null || course.maxAge != null)
-                                    InfoPill(text: '🎂 Ages ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}', color: const Color(0xFF0D6B6B)),
+                                    InfoPill(text: '🎂 ${l10n.quranLiveAgesLabel('${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}')}', color: const Color(0xFF0D6B6B)),
                                   // 'both' means no restriction — showing it as
                                   // a badge would read as a restriction that
                                   // doesn't exist.
-                                  if (course.genderPreference == 'male') const InfoPill(text: '♂ Boys only', color: Color(0xFF0D6B6B)),
-                                  if (course.genderPreference == 'female') const InfoPill(text: '♀ Girls only', color: Color(0xFF0D6B6B)),
+                                  if (course.genderPreference == 'male') InfoPill(text: l10n.quranLiveBoysOnlyBadge, color: const Color(0xFF0D6B6B)),
+                                  if (course.genderPreference == 'female') InfoPill(text: l10n.quranLiveGirlsOnlyBadge, color: const Color(0xFF0D6B6B)),
                                 ],
                               ),
                             ],
                             if (course.topics.isNotEmpty) ...[
                               const SizedBox(height: 14),
-                              const Text('What you\'ll cover', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text(l10n.quranLiveWhatYoullCoverTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
                               const SizedBox(height: 6),
                               ...course.topics.map((t) => Padding(
                                     padding: const EdgeInsets.only(bottom: 3),
@@ -126,14 +128,14 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(14)),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Text('🛡️', style: TextStyle(fontSize: 20)),
-                          SizedBox(width: 10),
+                          const Text('🛡️', style: TextStyle(fontSize: 20)),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'For your child\'s safety, all classes are recorded and teachers are vetted. You can message the teacher any time from My Class.',
-                              style: TextStyle(fontSize: 12.5, color: Color(0xFF7A5C00)),
+                              l10n.quranLiveSafetyMessage,
+                              style: const TextStyle(fontSize: 12.5, color: Color(0xFF7A5C00)),
                             ),
                           ),
                         ],
@@ -147,11 +149,11 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text('Register for this Class', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text(l10n.quranLiveRegisterForClassTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
                               const SizedBox(height: 10),
                               ElevatedButton(
                                 onPressed: () => context.push('/quran-live/${course.id}/admission'),
-                                child: const Text('Apply for Admission'),
+                                child: Text(l10n.quranLiveApplyForAdmissionButton),
                               ),
                             ],
                           ),
@@ -165,7 +167,7 @@ class _QuranLiveCourseDetailScreenState extends ConsumerState<QuranLiveCourseDet
                       Center(
                         child: TextButton(
                           onPressed: () => context.push('/quran-live/${course.id}/admission'),
-                          child: const Text('+ Apply for another child'),
+                          child: Text(l10n.quranLiveApplyAnotherChildButton),
                         ),
                       ),
                     ],
@@ -207,9 +209,10 @@ class _AdmissionStatusCard extends StatelessWidget {
   // a still-PENDING or already-REJECTED application showed the exact same
   // "Pay This Month's Fee" prompt as an approved one.
   Widget _body(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (admission.isPending) {
       return Text(
-        '⏳ Your application is under review — our team will assign a class group shortly.',
+        l10n.quranLiveAdmissionPendingMessage,
         style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
       );
     }
@@ -218,7 +221,7 @@ class _AdmissionStatusCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('❌ This application wasn\'t approved.', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+          Text(l10n.quranLiveAdmissionRejectedMessage, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
           if ((admission.adminNotes ?? '').isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(admission.adminNotes!, style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
@@ -228,12 +231,12 @@ class _AdmissionStatusCard extends StatelessWidget {
     }
 
     if (admission.isCompleted) {
-      return const Text('🎓 Course completed — congratulations!', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700));
+      return Text(l10n.quranLiveAdmissionCompletedMessage, style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700));
     }
 
     if (admission.isDropped) {
       return Text(
-        'This admission is no longer active. Contact us if you\'d like to re-enroll.',
+        l10n.quranLiveAdmissionDroppedMessage,
         style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
       );
     }
@@ -245,29 +248,29 @@ class _AdmissionStatusCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('💳 This month\'s fee payment required.', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          Text(l10n.quranLiveFeeRequiredMessage, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
           const SizedBox(height: 10),
           ElevatedButton(
             onPressed: () => context.push('/quran-live/$courseId/subscribe/${admission.id}'),
-            child: const Text('Pay This Month\'s Fee'),
+            child: Text(l10n.quranLivePayFeeButton),
           ),
         ],
       );
     }
 
     if (subscription.paymentStatus == 'submitted') {
-      return const Text('⏳ Payment under review.', style: TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600));
+      return Text(l10n.quranLivePaymentUnderReviewBadge, style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600));
     }
 
     if (subscription.paymentStatus == 'rejected') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('❌ Rejected: ${subscription.paymentRejectionReason ?? ''}', style: const TextStyle(color: Colors.red)),
+          Text(l10n.quranLivePaymentRejectedLabel(subscription.paymentRejectionReason ?? ''), style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 10),
           ElevatedButton(
             onPressed: () => context.push('/quran-live/$courseId/subscribe/${admission.id}'),
-            child: const Text('Resubmit Payment'),
+            child: Text(l10n.quranLiveResubmitPaymentButton),
           ),
         ],
       );
@@ -277,7 +280,7 @@ class _AdmissionStatusCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('✅ Active for ${subscription.month}', style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
+        Text(l10n.quranLiveActiveForMonthLabel(subscription.month), style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         if (admission.todaysLink != null)
           Material(
@@ -289,24 +292,24 @@ class _AdmissionStatusCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFBBF7D0))),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.videocam, color: Color(0xFF16A34A), size: 20),
-                    SizedBox(width: 10),
+                    const Icon(Icons.videocam, color: Color(0xFF16A34A), size: 20),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Today\'s class link is ready',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF166534)),
+                        l10n.quranLiveClassLinkReadyMessage,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF166534)),
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: Color(0xFF16A34A)),
+                    const Icon(Icons.chevron_right, color: Color(0xFF16A34A)),
                   ],
                 ),
               ),
             ),
           )
         else
-          Text('Today\'s link hasn\'t been posted yet by your teacher. Check back closer to class time.', style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5)),
+          Text(l10n.quranLiveLinkNotPostedMessage, style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5)),
       ],
     );
   }
