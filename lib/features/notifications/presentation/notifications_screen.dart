@@ -50,7 +50,7 @@ class NotificationsScreen extends ConsumerWidget {
         title: Text(l10n.notificationsTitle),
         actions: [
           IconButton(
-            tooltip: 'Notification settings',
+            tooltip: l10n.notificationSettingsTooltip,
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => showModalBottomSheet(
               context: context,
@@ -150,7 +150,7 @@ class _NotificationSettingsSheetState extends ConsumerState<_NotificationSetting
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notificationSaveError)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -158,6 +158,7 @@ class _NotificationSettingsSheetState extends ConsumerState<_NotificationSetting
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final soundEnabled = ref.watch(authControllerProvider).user?.notificationSoundEnabled ?? true;
 
     return SafeArea(
@@ -167,17 +168,17 @@ class _NotificationSettingsSheetState extends ConsumerState<_NotificationSetting
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Notification Settings', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            Text(l10n.notificationSettingsTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
             const SizedBox(height: 4),
             Text(
-              'You\'ll still get every notification either way — this only controls sound and vibration.',
+              l10n.notificationSettingsSubtitle,
               style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 12),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Notification Sound'),
-              subtitle: Text(soundEnabled ? 'Sound and vibration on' : 'Silent — notifications still show'),
+              title: Text(l10n.notificationSoundLabel),
+              subtitle: Text(soundEnabled ? l10n.soundVibrationOnLabel : l10n.silentNotificationsLabel),
               value: soundEnabled,
               onChanged: _saving ? null : _toggle,
             ),

@@ -33,24 +33,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void _maybePromptPasswordChange() {
     final user = ref.read(authControllerProvider).user;
     if (user == null || !user.mustChangePassword || !mounted) return;
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Set Your Own Password'),
+        title: Text(l10n.setYourOwnPasswordTitle),
         content: Text(
           user.hasRealPassword
-              ? 'Your Nikah Counselor set up a temporary password for you. For your account\'s security, please choose your own password.'
-              : 'For your account\'s security, please set a password — you can then log in with it any time, using either your phone number or email.',
+              ? l10n.tempPasswordDashboardNoticeMessage
+              : l10n.setPasswordNoticeMessage,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Ignore')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.ignoreLabel)),
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
               context.push('/change-password');
             },
-            child: const Text('Change Password'),
+            child: Text(l10n.changePasswordLabel),
           ),
         ],
       ),
@@ -78,7 +79,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               backgroundColor: Colors.white24,
               fallback: const Icon(Icons.person, size: 18, color: Colors.white),
             ),
-            tooltip: 'Account',
+            tooltip: l10n.accountTooltip,
             onPressed: () => showModalBottomSheet(
               context: context,
               isScrollControlled: true,
@@ -165,6 +166,7 @@ class _BindIdentifierBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.blue.shade50,
       borderRadius: BorderRadius.circular(12),
@@ -179,13 +181,13 @@ class _BindIdentifierBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    missingPhone ? 'Add your mobile number' : 'Add your email address',
+                    missingPhone ? l10n.addMobileNumberLabel : l10n.addEmailAddressLabel,
                     style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.blueGrey),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    'So you can always log in with either one, and so you never end up with two separate accounts.',
-                    style: TextStyle(fontSize: 12, color: Colors.blueGrey),
+                  Text(
+                    l10n.bindIdentifierMessage,
+                    style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
                   ),
                   const SizedBox(height: 8),
                   Align(
@@ -193,7 +195,7 @@ class _BindIdentifierBanner extends StatelessWidget {
                     child: TextButton(
                       style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
                       onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen())),
-                      child: const Text('Add Now'),
+                      child: Text(l10n.addNowButton),
                     ),
                   ),
                 ],

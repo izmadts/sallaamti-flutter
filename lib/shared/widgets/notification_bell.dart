@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/notifications/data/notification_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 class NotificationBell extends ConsumerWidget {
   const NotificationBell({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final unreadAsync = ref.watch(unreadNotificationCountProvider);
     final count = unreadAsync.valueOrNull ?? 0;
 
@@ -19,7 +21,7 @@ class NotificationBell extends ConsumerWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            tooltip: 'Notifications',
+            tooltip: l10n.notificationsLabel,
             onPressed: () async {
               await context.push('/notifications');
               ref.invalidate(unreadNotificationCountProvider);

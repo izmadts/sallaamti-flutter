@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+
 // A TextFormField with a show/hide eye toggle — used everywhere a password
 // is typed (login, register, register-confirm) so nobody has to type a
 // password blind with no way to check what they entered.
@@ -31,6 +33,7 @@ class _PasswordFieldState extends State<PasswordField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return TextFormField(
       controller: widget.controller,
       obscureText: _obscured,
@@ -40,7 +43,7 @@ class _PasswordFieldState extends State<PasswordField> {
         errorText: widget.errorText,
         suffixIcon: IconButton(
           icon: Icon(_obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-          tooltip: _obscured ? 'Show password' : 'Hide password',
+          tooltip: _obscured ? l10n.showPasswordTooltip : l10n.hidePasswordTooltip,
           onPressed: () => setState(() => _obscured = !_obscured),
         ),
       ),

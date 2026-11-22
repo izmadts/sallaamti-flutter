@@ -47,9 +47,16 @@ class ApiException implements Exception {
             : 'This is taking longer than expected — your connection may be slow, or our server is busy. Please try again.',
       );
 
-  factory ApiException.fromResponseData(dynamic data, int? statusCode) {
+  // The fallback text here only fires when the server's own response has no
+  // 'message' field at all (or isn't a Map) — a rarer path than .network()/
+  // .timeout() above, but the same bug applied: it used to always be
+  // English even on a device set to Urdu, since this bypassed the `urdu`
+  // check those two already had.
+  factory ApiException.fromResponseData(dynamic data, int? statusCode, {bool urdu = false}) {
+    final fallback = urdu ? 'کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔' : 'Something went wrong. Please try again.';
+
     if (data is Map) {
-      final message = data['message']?.toString() ?? 'Something went wrong. Please try again.';
+      final message = data['message']?.toString() ?? fallback;
       final rawErrors = data['errors'];
       final fieldErrors = <String, List<String>>{};
 
@@ -64,6 +71,6 @@ class ApiException implements Exception {
       return ApiException(message: message, fieldErrors: fieldErrors, statusCode: statusCode, code: data['code']?.toString());
     }
 
-    return ApiException(message: 'Something went wrong. Please try again.', statusCode: statusCode);
+    return ApiException(message: fallback, statusCode: statusCode);
   }
 }

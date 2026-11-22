@@ -121,7 +121,7 @@ class ApiClient {
           e.type == DioExceptionType.receiveTimeout) {
         throw ApiException.timeout(urdu: urdu);
       }
-      final exception = ApiException.fromResponseData(e.response?.data, e.response?.statusCode);
+      final exception = ApiException.fromResponseData(e.response?.data, e.response?.statusCode, urdu: urdu);
       // 16 Nov 2026 fix — pop the verification dialog itself the instant
       // this specific block happens, anywhere in the app, instead of
       // leaving the member with only prose and no way to act on it.
@@ -137,8 +137,11 @@ class ApiClient {
     // an ApiException here keeps the "every failure carries a real,
     // specific message" guarantee for this one remaining gap too.
     if (response.data is! Map) {
+      final urdu = await SecureStore.readLocale() == 'ur';
       throw ApiException(
-        message: 'Unexpected response from the server (status ${response.statusCode ?? '?'}). Please try again.',
+        message: urdu
+            ? 'سرور سے غیر متوقع جواب ملا (اسٹیٹس ${response.statusCode ?? '?'})۔ براہ کرم دوبارہ کوشش کریں۔'
+            : 'Unexpected response from the server (status ${response.statusCode ?? '?'}). Please try again.',
         statusCode: response.statusCode,
       );
     }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+
 // One step of a FirstVisitTour — a 👆 hand points at the emoji while the
 // title/description explain what that part of the screen is for. Content
 // lives wherever the tour is shown (e.g. NikahHomeScreen), not here — this
@@ -83,6 +85,7 @@ class _TourDialogState extends State<_TourDialog> with SingleTickerProviderState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final step = widget.steps[_index];
     final primary = Theme.of(context).colorScheme.primary;
 
@@ -96,7 +99,7 @@ class _TourDialogState extends State<_TourDialog> with SingleTickerProviderState
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-              child: Align(alignment: Alignment.centerRight, child: Text('Skip', style: TextStyle(color: Colors.grey.shade500))),
+              child: Align(alignment: Alignment.centerRight, child: Text(l10n.skipLabel, style: TextStyle(color: Colors.grey.shade500))),
             ),
             const SizedBox(height: 4),
             AnimatedBuilder(
@@ -145,7 +148,7 @@ class _TourDialogState extends State<_TourDialog> with SingleTickerProviderState
                     setState(() => _index++);
                   }
                 },
-                child: Text(_isLast ? "Got it!" : 'Next'),
+                child: Text(_isLast ? l10n.gotItLabel : l10n.nextLabel),
               ),
             ),
           ],

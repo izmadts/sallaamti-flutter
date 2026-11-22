@@ -31,7 +31,10 @@ class _SocialSignInButtonsState extends ConsumerState<SocialSignInButtons> {
       // providerConfigurationError) instead of a generic message — this is
       // the only signal we get for Google sign-in config problems without
       // pulling device logs.
-      _showError('Google sign-in failed: ${e.code.name}${e.description != null ? ' — ${e.description}' : ''}');
+      if (mounted) {
+        _showError(AppLocalizations.of(context)!.googleSignInFailedPrefix(
+            '${e.code.name}${e.description != null ? ' — ${e.description}' : ''}'));
+      }
     } catch (_) {
       if (mounted) _showError(AppLocalizations.of(context)!.errorGeneric);
     } finally {

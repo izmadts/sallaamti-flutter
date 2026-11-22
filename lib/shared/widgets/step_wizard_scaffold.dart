@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import 'error_banner.dart';
 
 // Shared shell for every multi-step wizard in the app (Nikah profile
@@ -78,6 +79,7 @@ class _StepWizardScaffoldState extends State<StepWizardScaffold> {
   }
 
   Widget _buildScaffold(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // A plain color lookup, not Theme.of(context) — this method's context
     // sits above the Theme this widget wraps itself in, so Theme.of here
     // would still resolve to whatever was ambient before it.
@@ -113,7 +115,7 @@ class _StepWizardScaffoldState extends State<StepWizardScaffold> {
               ),
             ),
             Text(
-              'Step ${widget.stepIndex + 1} of ${widget.totalSteps}',
+              l10n.stepOfTotalLabel(widget.stepIndex + 1, widget.totalSteps),
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),

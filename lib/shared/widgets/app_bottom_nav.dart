@@ -143,10 +143,11 @@ class _MoreSheet extends ConsumerWidget {
     // Watched fresh at tap-time (not passed in from outside) so a slow
     // first fetch doesn't leave this permanently stuck on "not set up yet"
     // — see AppBottomNav's pre-warming comment for the full story.
+    final l10n = AppLocalizations.of(context)!;
     final number = ref.read(dashboardMetaProvider).valueOrNull?.whatsappNumber;
     if (number == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Support contact is not set up yet.')),
+        SnackBar(content: Text(l10n.supportContactNotSetUpMessage)),
       );
       return;
     }
@@ -156,7 +157,7 @@ class _MoreSheet extends ConsumerWidget {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open WhatsApp.')),
+          SnackBar(content: Text(l10n.couldNotOpenWhatsappMessage)),
         );
       }
     }
@@ -164,6 +165,7 @@ class _MoreSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final locale = ref.watch(localeControllerProvider);
     final isUrdu = locale?.languageCode == 'ur';
 
@@ -208,9 +210,9 @@ class _MoreSheet extends ConsumerWidget {
                   ),
                 ),
                 if (modules.isNotEmpty) ...[
-                  const Text(
-                    'More Modules',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  Text(
+                    l10n.moreModulesLabel,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                   const SizedBox(height: 12),
                   GridView.builder(
@@ -234,7 +236,7 @@ class _MoreSheet extends ConsumerWidget {
                 ],
                 _MoreTile(
                   icon: Icons.notifications_outlined,
-                  label: 'Notifications',
+                  label: l10n.notificationsLabel,
                   onTap: () {
                     Navigator.of(context).pop();
                     context.push('/notifications');
@@ -242,7 +244,7 @@ class _MoreSheet extends ConsumerWidget {
                 ),
                 _MoreTile(
                   icon: Icons.account_circle_outlined,
-                  label: 'My Account',
+                  label: l10n.myAccountLabel,
                   onTap: () {
                     Navigator.of(context).pop();
                     showModalBottomSheet(
@@ -254,16 +256,14 @@ class _MoreSheet extends ConsumerWidget {
                 ),
                 _MoreTile(
                   icon: Icons.language,
-                  label: isUrdu
-                      ? 'زبان: اردو (Switch to English)'
-                      : 'Language: English (Switch to Urdu)',
+                  label: l10n.languageToggleLabel,
                   onTap: () => ref
                       .read(localeControllerProvider.notifier)
                       .choose(isUrdu ? 'en' : 'ur'),
                 ),
                 _MoreTile(
                   icon: Icons.help_outline,
-                  label: 'FAQ',
+                  label: l10n.faqLabel,
                   onTap: () {
                     Navigator.of(context).pop();
                     context.push('/faq/general');
@@ -273,7 +273,7 @@ class _MoreSheet extends ConsumerWidget {
                 _MoreTile(
                   icon: Icons.chat_bubble_outline,
                   iconColor: Colors.teal.shade700,
-                  label: 'Message Admin',
+                  label: l10n.messageAdminLabel,
                   onTap: () {
                     Navigator.of(context).pop();
                     context.push('/support');
@@ -281,33 +281,33 @@ class _MoreSheet extends ConsumerWidget {
                 ),
                 _MoreTile(
                   leadingWidget: const WhatsappBadge(),
-                  label: 'Instant Support (WhatsApp)',
+                  label: l10n.instantSupportWhatsappLabel,
                   onTap: () {
                     Navigator.of(context).pop();
                     _openWhatsapp(
                       context,
                       ref,
-                      'Assalam-o-Alaikum, I need help with the Sallaamti app.',
+                      l10n.whatsappHelpMessage,
                     );
                   },
                 ),
                 _MoreTile(
                   icon: Icons.flag_outlined,
                   iconColor: Colors.orange.shade700,
-                  label: 'Report a Problem',
+                  label: l10n.reportAProblemLabel,
                   onTap: () {
                     Navigator.of(context).pop();
                     _openWhatsapp(
                       context,
                       ref,
-                      'Assalam-o-Alaikum, I\'d like to report a problem in the Sallaamti app:',
+                      l10n.whatsappReportProblemMessage,
                     );
                   },
                 ),
                 const Divider(height: 24),
-                const Text(
-                  'Follow Us',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                Text(
+                  l10n.followUsLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
                 const SizedBox(height: 12),
                 _FollowUsRow(meta: meta),
@@ -330,13 +330,14 @@ class _FollowUsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Wrap(
       spacing: 14,
       runSpacing: 10,
       children: [
         _SocialIcon(
           badge: const WhatsappBadge(size: 40),
-          tooltip: 'Join our WhatsApp Channel',
+          tooltip: l10n.joinWhatsappChannelTooltip,
           onTap: () => openWhatsappChannel(context),
         ),
         if ((meta?.facebookUrl ?? '').isNotEmpty)
@@ -369,11 +370,12 @@ class _FollowUsRow extends StatelessWidget {
 }
 
 Future<void> _openSocialLink(BuildContext context, String url) async {
+  final l10n = AppLocalizations.of(context)!;
   final uri = Uri.tryParse(url);
   if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open that link.')),
+        SnackBar(content: Text(l10n.learningOpenLinkError)),
       );
     }
   }

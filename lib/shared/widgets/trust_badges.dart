@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+
 // The three verification signals (CNIC / payment / guardian) a Nikah
 // profile can carry — rendered as bold filled pills, not generic grey
 // chips, so trust reads the same way everywhere it's shown: on the Browse
@@ -16,20 +18,20 @@ class TrustBadges extends StatelessWidget {
     this.direction = Axis.horizontal,
   });
 
-  // 'payment' deliberately isn't a badge of its own — the 'cnic' key here
-  // is a legacy name, but the signal it carries is verification_status
-  // (admin-confirmed payment), not actual CNIC presence, which is optional.
-  // It keeps the single "Trusted" label rather than stacking a second pill.
-  static final _labelsAndColors = {
-    'cnic': ('🪪 Trusted', const Color(0xFF10B981)),
-    'guardian': ('👨‍👩‍👦 Guardian Verified', Colors.purple.shade500),
-  };
-
   @override
   Widget build(BuildContext context) {
-    final active = _labelsAndColors.entries.where((e) => trustBadges[e.key] == true).map((e) => e.value).toList();
+    final l10n = AppLocalizations.of(context)!;
+    // 'payment' deliberately isn't a badge of its own — the 'cnic' key here
+    // is a legacy name, but the signal it carries is verification_status
+    // (admin-confirmed payment), not actual CNIC presence, which is optional.
+    // It keeps the single "Trusted" label rather than stacking a second pill.
+    final labelsAndColors = {
+      'cnic': (l10n.trustBadgeTrusted, const Color(0xFF10B981)),
+      'guardian': (l10n.trustBadgeGuardianVerified, Colors.purple.shade500),
+    };
+    final active = labelsAndColors.entries.where((e) => trustBadges[e.key] == true).map((e) => e.value).toList();
     final pills = active.isEmpty
-        ? [('⏳ Pending', Colors.grey.shade600)]
+        ? [(l10n.trustBadgePending, Colors.grey.shade600)]
         : active;
 
     final children = pills.map((p) => _pill(p.$1, p.$2)).toList();

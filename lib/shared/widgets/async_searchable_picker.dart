@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+
 // A bottom-sheet picker backed by a debounced async search call (e.g.
 // CitySearchRepository) rather than filtering an in-memory list — for
 // option sets too large to preload. Includes a "Use <typed text>" row so a
@@ -49,6 +51,7 @@ class _AsyncSearchablePickerState extends State<AsyncSearchablePicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final query = _searchController.text.trim();
     final exactMatch = _results.any(
       (r) => r.toLowerCase() == query.toLowerCase(),
@@ -84,7 +87,7 @@ class _AsyncSearchablePickerState extends State<AsyncSearchablePicker> {
                   _onSearchChanged(v);
                 },
                 decoration: InputDecoration(
-                  hintText: 'Search…',
+                  hintText: l10n.searchEllipsisHint,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _loading
                       ? const Padding(
@@ -104,7 +107,7 @@ class _AsyncSearchablePickerState extends State<AsyncSearchablePicker> {
                   if (query.isNotEmpty && !exactMatch)
                     ListTile(
                       leading: const Icon(Icons.add),
-                      title: Text('Use "$query"'),
+                      title: Text(l10n.useTypedValueLabel(query)),
                       onTap: () => Navigator.of(context).pop(query),
                     ),
                   ..._results.map(
