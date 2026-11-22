@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/donation_repository.dart';
+import 'donation_screen.dart' show donationPurposeLabel;
 
 class DonationHistoryScreen extends ConsumerStatefulWidget {
   const DonationHistoryScreen({super.key});
@@ -35,24 +37,28 @@ class _DonationHistoryScreenState extends ConsumerState<DonationHistoryScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      // Called from initState() on first load — looked up after the await
+      // above rather than hoisted, since the Localizations InheritedWidget
+      // isn't registered yet if this throws before any await yields control.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  (String, Color) _statusDisplay(String status) => switch (status) {
-        'confirmed' => ('Confirmed', Colors.green),
-        'rejected' => ('Rejected', Colors.red),
-        _ => ('Under Review', Colors.amber),
+  (String, Color) _statusDisplay(AppLocalizations l10n, String status) => switch (status) {
+        'confirmed' => (l10n.donationStatusConfirmed, Colors.green),
+        'rejected' => (l10n.donationStatusRejected, Colors.red),
+        _ => (l10n.donationStatusUnderReview, Colors.amber),
       };
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('donation'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Donations')),
+        appBar: AppBar(title: Text(l10n.myDonationsLabel)),
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: _load,
@@ -64,6 +70,7 @@ class _DonationHistoryScreenState extends ConsumerState<DonationHistoryScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -85,7 +92,7 @@ class _DonationHistoryScreenState extends ConsumerState<DonationHistoryScreen> {
           Padding(
             padding: const EdgeInsets.all(32),
             child: Center(
-              child: Text('No donations yet.', style: TextStyle(color: Colors.grey.shade600)),
+              child: Text(l10n.noDonationsYetMessage, style: TextStyle(color: Colors.grey.shade600)),
             ),
           ),
         ],
@@ -97,7 +104,7 @@ class _DonationHistoryScreenState extends ConsumerState<DonationHistoryScreen> {
       itemCount: _donations.length,
       itemBuilder: (context, index) {
         final donation = _donations[index];
-        final (statusLabel, statusColor) = _statusDisplay(donation.paymentStatus);
+        final (statusLabel, statusColor) = _statusDisplay(l10n, donation.paymentStatus);
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -125,7 +132,7 @@ class _DonationHistoryScreenState extends ConsumerState<DonationHistoryScreen> {
                 Text(donation.donationNumber, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
                 if ((donation.purpose ?? '').isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text(donation.purpose!.replaceAll('_', ' '), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(donationPurposeLabel(l10n, donation.purpose), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ],
                 if ((donation.message ?? '').isNotEmpty) ...[
                   const SizedBox(height: 6),
@@ -133,7 +140,7 @@ class _DonationHistoryScreenState extends ConsumerState<DonationHistoryScreen> {
                 ],
                 if (donation.paymentStatus == 'rejected' && (donation.paymentRejectionReason ?? '').isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text('Reason: ${donation.paymentRejectionReason}', style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                  Text(l10n.reasonLabel(donation.paymentRejectionReason ?? ''), style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
                 ],
                 const SizedBox(height: 8),
                 Text(

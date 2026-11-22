@@ -8,10 +8,23 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
 import '../data/donation_repository.dart';
 import 'donation_history_screen.dart';
+
+String donationMethodLabel(AppLocalizations l10n, String value) => {
+      'bank_transfer': l10n.donationMethodBankTransferLabel,
+      'international': l10n.donationMethodInternationalLabel,
+    }[value] ?? value;
+
+String donationPurposeLabel(AppLocalizations l10n, String? value) => {
+      'general': l10n.donationPurposeGeneral,
+      'quran_education': l10n.donationPurposeQuranEducation,
+      'orphan_support': l10n.donationPurposeOrphanSupport,
+      'nikah_fund': l10n.donationPurposeNikahFund,
+    }[value] ?? (value ?? '');
 
 class DonationScreen extends ConsumerStatefulWidget {
   const DonationScreen({super.key});
@@ -21,7 +34,7 @@ class DonationScreen extends ConsumerStatefulWidget {
 }
 
 class _DonationScreenState extends ConsumerState<DonationScreen> {
-  static const _methodLabels = {'bank_transfer': 'Bank Transfer (Pakistan)', 'international': 'International Wire'};
+  static const _methodKeys = ['bank_transfer', 'international'];
 
   DonationMeta? _meta;
   bool _loading = true;
@@ -69,7 +82,11 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      // Called from initState() on first load, so the Localizations
+      // InheritedWidget may not be registered yet if this throws before any
+      // await yields control — looked up here (after the await above has
+      // already suspended at least once) rather than hoisted to the top.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -78,7 +95,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
   // Both methods pay into the same bank account (just labeled Pakistan vs
   // international wire) — only offer either once there's actually
   // something configured to send money to.
-  List<String> _availableMethods(DonationMeta meta) => meta.paymentInstructions.hasAnyMethod ? _methodLabels.keys.toList() : [];
+  List<String> _availableMethods(DonationMeta meta) => meta.paymentInstructions.hasAnyMethod ? _methodKeys : [];
 
   num? get _amount {
     if (_useCustomAmount) return num.tryParse(_customAmountController.text.trim());
@@ -88,7 +105,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
   Future<void> _copy(String value) async {
     await Clipboard.setData(ClipboardData(text: value));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 2)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nikahCopiedToClipboard), duration: const Duration(seconds: 2)));
     }
   }
 
@@ -115,13 +132,14 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     final amount = _amount;
     if (amount == null || amount < 100) {
-      setState(() => _submitError = 'Please enter an amount of at least PKR 100.');
+      setState(() => _submitError = l10n.donationMinAmountError);
       return;
     }
     if (_method == null) {
-      setState(() => _submitError = 'No payment method is configured yet — please contact support.');
+      setState(() => _submitError = l10n.donationNoMethodConfiguredError);
       return;
     }
 
@@ -143,7 +161,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
     } on ApiException catch (e) {
       setState(() => _submitError = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _submitError = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _submitError = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -151,15 +169,16 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('donation'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Donate'),
+          title: Text(l10n.donateTitle),
           actions: [
             IconButton(
               icon: const Icon(Icons.history),
-              tooltip: 'My Donations',
+              tooltip: l10n.myDonationsLabel,
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DonationHistoryScreen())),
             ),
           ],
@@ -170,6 +189,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -183,7 +203,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
             children: [
               Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _load, child: const Text('Retry')),
+              ElevatedButton(onPressed: _load, child: Text(l10n.retry)),
             ],
           ),
         ),
@@ -199,15 +219,15 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
             children: [
               const Text('🤲', style: TextStyle(fontSize: 56)),
               const SizedBox(height: 16),
-              const Text('JazakAllah Khair!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
+              Text(l10n.donationThankYouTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
               const SizedBox(height: 8),
               Text(
-                'Your donation has been submitted. Our team will verify it within 24 hours, in sha Allah.',
+                l10n.donationSubmittedMessage,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(onPressed: () => context.go('/dashboard'), child: const Text('Back to Dashboard')),
+              ElevatedButton(onPressed: () => context.go('/dashboard'), child: Text(l10n.backToDashboardButton)),
             ],
           ),
         ),
@@ -224,9 +244,9 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
         children: [
           const Text('🤲', style: TextStyle(fontSize: 40)),
           const SizedBox(height: 8),
-          const Text('Support Sallaamti', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(l10n.supportSallaamtiTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
           Text(
-            '"The believer\'s shade on the Day of Resurrection will be his charity." — Tirmidhi',
+            l10n.donationHadithQuote,
             style: TextStyle(color: Colors.grey.shade600, fontStyle: FontStyle.italic, fontSize: 13),
           ),
           const SizedBox(height: 20),
@@ -238,7 +258,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          const Text('Choose an Amount', style: TextStyle(fontWeight: FontWeight.w700)),
+          Text(l10n.chooseAnAmountLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -246,7 +266,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
             children: [
               for (final tier in meta.tiers)
                 _AmountChip(
-                  label: 'PKR ${tier.toString()}',
+                  label: l10n.pkrAmountChipLabel(tier.toString()),
                   selected: !_useCustomAmount && _selectedTier == tier,
                   onTap: () => setState(() {
                     _useCustomAmount = false;
@@ -254,7 +274,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
                   }),
                 ),
               _AmountChip(
-                label: 'Custom',
+                label: l10n.customAmountLabel,
                 selected: _useCustomAmount,
                 onTap: () => setState(() => _useCustomAmount = true),
               ),
@@ -265,14 +285,14 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
             TextFormField(
               controller: _customAmountController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(label: requiredLabel('Amount (PKR)')),
+              decoration: InputDecoration(label: requiredLabel(l10n.amountPkrLabel)),
             ),
           ],
           const SizedBox(height: 20),
           DropdownButtonFormField<String>(
             initialValue: _purpose,
-            decoration: const InputDecoration(labelText: 'Purpose'),
-            items: meta.purposes.map((p) => DropdownMenuItem(value: p.value, child: Text(p.label))).toList(),
+            decoration: InputDecoration(labelText: l10n.purposeLabel),
+            items: meta.purposes.map((p) => DropdownMenuItem(value: p.value, child: Text(donationPurposeLabel(l10n, p.value)))).toList(),
             onChanged: (v) => setState(() => _purpose = v),
           ),
           const SizedBox(height: 16),
@@ -283,23 +303,23 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Send payment to', style: TextStyle(fontWeight: FontWeight.w700)),
+                    Text(l10n.nikahSendPaymentTo, style: const TextStyle(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     if ((meta.paymentInstructions.bankName ?? '').isNotEmpty)
-                      Text('Bank: ${meta.paymentInstructions.bankName}', style: TextStyle(color: Colors.grey.shade700)),
+                      Text(l10n.nikahBankLabel(meta.paymentInstructions.bankName ?? ''), style: TextStyle(color: Colors.grey.shade700)),
                     if ((meta.paymentInstructions.accountTitle ?? '').isNotEmpty)
-                      Text('Account Title: ${meta.paymentInstructions.accountTitle}', style: TextStyle(color: Colors.grey.shade700)),
+                      Text(l10n.nikahAccountTitleLabel(meta.paymentInstructions.accountTitle ?? ''), style: TextStyle(color: Colors.grey.shade700)),
                     if ((meta.paymentInstructions.bankAccountNumber ?? '').isNotEmpty)
                       Row(
                         children: [
-                          Text('Account No: ', style: TextStyle(color: Colors.grey.shade700)),
+                          Text(l10n.nikahAccountNoLabel, style: TextStyle(color: Colors.grey.shade700)),
                           Expanded(child: _copyableRow(meta.paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700))),
                         ],
                       ),
                     if ((meta.paymentInstructions.bankAccountIban ?? '').isNotEmpty)
                       Row(
                         children: [
-                          Text('IBAN: ', style: TextStyle(color: Colors.grey.shade700)),
+                          Text(l10n.nikahIbanLabel, style: TextStyle(color: Colors.grey.shade700)),
                           Expanded(child: _copyableRow(meta.paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700))),
                         ],
                       ),
@@ -311,23 +331,23 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
-              child: const Text(
-                'Payment details have not been configured yet. Please contact support before sending any payment.',
-                style: TextStyle(color: Colors.deepOrange),
+              child: Text(
+                l10n.nikahPaymentNotConfiguredMessage,
+                style: const TextStyle(color: Colors.deepOrange),
               ),
             ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _method,
-            decoration: InputDecoration(label: requiredLabel('Payment Method')),
-            items: methods.map((m) => DropdownMenuItem(value: m, child: Text(_methodLabels[m]!))).toList(),
+            decoration: InputDecoration(label: requiredLabel(l10n.paymentMethodLabel)),
+            items: methods.map((m) => DropdownMenuItem(value: m, child: Text(donationMethodLabel(l10n, m)))).toList(),
             onChanged: methods.isEmpty ? null : (v) => setState(() => _method = v),
           ),
           const SizedBox(height: 16),
           SizedBox(
             width: 160,
             child: ImagePickField(
-              label: 'Payment Screenshot (Optional)',
+              label: l10n.donationScreenshotOptionalLabel,
               file: _screenshot,
               alreadyUploaded: false,
               onTap: _pickScreenshot,
@@ -336,14 +356,14 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _messageController,
-            decoration: const InputDecoration(labelText: 'A note to go with your donation (optional)'),
+            decoration: InputDecoration(labelText: l10n.donationNoteOptionalLabel),
             minLines: 2,
             maxLines: 4,
           ),
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Donate anonymously'),
+            title: Text(l10n.donateAnonymouslyLabel),
             value: _isAnonymous,
             onChanged: (v) => setState(() => _isAnonymous = v),
           ),
@@ -352,7 +372,7 @@ class _DonationScreenState extends ConsumerState<DonationScreen> {
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Submit Donation'),
+                : Text(l10n.submitDonationButton),
           ),
         ],
       ),
