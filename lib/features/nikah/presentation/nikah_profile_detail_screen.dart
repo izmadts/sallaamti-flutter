@@ -10,15 +10,25 @@ import '../../../shared/widgets/trust_badges.dart';
 import '../data/nikah_repository.dart';
 import '../state/nikah_controller.dart';
 
-const _reportReasons = {
-  'fake_profile': 'Fake profile',
-  'fake_matchmaker': 'Suspected fake matchmaker / mass outreach',
-  'inappropriate_content': 'Inappropriate content',
-  'money_request': 'Asking for money or financial details',
-  'harassment': 'Harassment',
-  'already_married': 'Already married',
-  'other': 'Other',
-};
+Map<String, String> _reportReasons(AppLocalizations l10n) => {
+      'fake_profile': l10n.nikahReportReasonFakeProfile,
+      'fake_matchmaker': l10n.nikahReportReasonFakeMatchmaker,
+      'inappropriate_content': l10n.nikahReportReasonInappropriateContent,
+      'money_request': l10n.nikahReportReasonMoneyRequest,
+      'harassment': l10n.nikahReportReasonHarassment,
+      'already_married': l10n.nikahReportReasonAlreadyMarried,
+      'other': l10n.nikahReportReasonOther,
+    };
+
+// Marital status used to just be the raw enum value with underscores
+// swapped for spaces (e.g. "never married") — never actually translated.
+Map<String, String> _maritalStatusLabels(AppLocalizations l10n) => {
+      'never_married': l10n.maritalStatusNeverMarried,
+      'divorced': l10n.maritalStatusDivorced,
+      'widowed': l10n.maritalStatusWidowed,
+      'separated': l10n.maritalStatusSeparated,
+      'married': l10n.maritalStatusMarried,
+    };
 
 class NikahProfileDetailScreen extends ConsumerStatefulWidget {
   final int profileId;
@@ -97,14 +107,15 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
   }
 
   Future<void> _block() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Block this profile?'),
-        content: const Text('You will no longer see each other in Browse or be able to message.'),
+        title: Text(l10n.nikahBlockDialogTitle),
+        content: Text(l10n.nikahBlockDialogMessage),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Block')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.block)),
         ],
       ),
     );
@@ -114,17 +125,18 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
       final repo = ref.read(nikahRepositoryProvider);
       await repo.blockProfile(widget.profileId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile blocked.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nikahProfileBlockedMessage)));
         context.pop();
       }
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorGeneric)));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     }
   }
 
   Future<void> _report() async {
+    final l10n = AppLocalizations.of(context)!;
     final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (context) => _ReportDialog(interestId: _detail?.interestId),
@@ -139,11 +151,11 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
         details: result['details']?.isEmpty ?? true ? null : result['details'],
         interestId: _detail?.interestId,
       );
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted. Our team will review it shortly.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nikahReportSubmittedMessage)));
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorGeneric)));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     }
   }
 
@@ -177,9 +189,9 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
           ),
           PopupMenuButton<String>(
             onSelected: (value) => value == 'block' ? _block() : _report(),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'report', child: Text('Report profile')),
-              PopupMenuItem(value: 'block', child: Text('Block profile')),
+            itemBuilder: (context) => [
+              PopupMenuItem(value: 'report', child: Text(l10n.nikahReportProfileMenuItem)),
+              PopupMenuItem(value: 'block', child: Text(l10n.nikahBlockProfileMenuItem)),
             ],
           ),
         ],
@@ -191,41 +203,41 @@ class _NikahProfileDetailScreenState extends ConsumerState<NikahProfileDetailScr
             Center(child: NikahAvatar(photoUrl: card.photoUrl, radius: 56)),
             const SizedBox(height: 16),
             Center(
-              child: Text('${card.age} years old', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              child: Text(l10n.nikahAgeYearsOld(card.age), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
             ),
             const SizedBox(height: 4),
             Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(color: primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-                child: Text('${detail.matchPercentage}% match', style: TextStyle(color: primary, fontWeight: FontWeight.w700)),
+                child: Text(l10n.nikahMatchPercentage(detail.matchPercentage), style: TextStyle(color: primary, fontWeight: FontWeight.w700)),
               ),
             ),
             const SizedBox(height: 16),
             Center(child: TrustBadges(trustBadges: card.trustBadges)),
             const SizedBox(height: 20),
-            _section('Basic Info', [
-              _row('Marital Status', card.maritalStatus.replaceAll('_', ' ')),
-              _row('Height', card.height),
-              _row('City', card.country != null ? '${card.city}, ${card.country}' : card.city),
+            _section(l10n.nikahBasicInfoTitle, [
+              _row(l10n.maritalStatusLabel, _maritalStatusLabels(l10n)[card.maritalStatus] ?? card.maritalStatus),
+              _row(l10n.heightLabel, card.height),
+              _row(l10n.cityLabel, card.country != null ? '${card.city}, ${card.country}' : card.city),
             ]),
-            _section('Deen & Lifestyle', [
-              _row('Sect', card.sect),
-              _row('Prayer', card.prayerFrequency),
-              _row('Hijab/Beard', card.hijabOrBeard),
-              _row('Diet', card.diet),
+            _section(l10n.nikahDeenLifestyleTitle, [
+              _row(l10n.sectLabel, card.sect),
+              _row(l10n.prayerLabel, card.prayerFrequency),
+              _row(l10n.hijabBeardLabel, card.hijabOrBeard),
+              _row(l10n.dietLabel, card.diet),
             ]),
-            _section('Background', [
-              _row('Education', card.education),
-              _row('Profession', card.profession),
-              _row('Family Type', card.familyType),
-              _row('Ethnicity', card.ethnicity),
-              _row('Language', card.language),
+            _section(l10n.nikahBackgroundTitle, [
+              _row(l10n.educationLabel, card.education),
+              _row(l10n.professionLabel, card.profession),
+              _row(l10n.familyTypeLabel, card.familyType),
+              _row(l10n.ethnicityLabel, card.ethnicity),
+              _row(l10n.languageLabel, card.language),
             ]),
             if ((card.about != null && card.about!.isNotEmpty) || (card.expectations != null && card.expectations!.isNotEmpty))
-              _section('About', [
-                if (card.about != null && card.about!.isNotEmpty) _longText('About', card.about!),
-                if (card.expectations != null && card.expectations!.isNotEmpty) _longText('Looking For', card.expectations!),
+              _section(l10n.aboutLabel, [
+                if (card.about != null && card.about!.isNotEmpty) _longText(l10n.aboutLabel, card.about!),
+                if (card.expectations != null && card.expectations!.isNotEmpty) _longText(l10n.lookingForLabel, card.expectations!),
               ]),
             const SizedBox(height: 8),
             if (detail.hasAcceptedInterest && detail.contact != null)
@@ -315,23 +327,24 @@ class _ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.green.shade50, border: Border.all(color: Colors.green.shade200), borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('✅ Contact Information', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.green.shade800)),
+          Text('✅ ${l10n.nikahContactInformationTitle}', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.green.shade800)),
           const SizedBox(height: 10),
-          if ((contact.guardianName ?? '').isNotEmpty) _contactRow('Guardian Name', contact.guardianName!),
-          if ((contact.guardianRelation ?? '').isNotEmpty) _contactRow('Guardian Relation', contact.guardianRelation!),
-          if ((contact.guardianContact ?? '').isNotEmpty) _contactRow('Guardian Contact', contact.guardianContact!, valueColor: Colors.green.shade700),
+          if ((contact.guardianName ?? '').isNotEmpty) _contactRow(l10n.guardianNameLabel, contact.guardianName!),
+          if ((contact.guardianRelation ?? '').isNotEmpty) _contactRow(l10n.guardianRelationLabel, contact.guardianRelation!),
+          if ((contact.guardianContact ?? '').isNotEmpty) _contactRow(l10n.guardianContactLabel, contact.guardianContact!, valueColor: Colors.green.shade700),
           if (interestId != null) ...[
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () => context.push('/nikah/interests/$interestId/messages'),
               icon: const Icon(Icons.chat_bubble_outline, size: 18),
-              label: const Text('Open Messages'),
+              label: Text(l10n.nikahOpenMessagesButton),
             ),
           ],
         ],
@@ -373,33 +386,34 @@ class _ReportDialogState extends State<_ReportDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Report this profile'),
+      title: Text(l10n.nikahReportThisProfileTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<String>(
             initialValue: _reason,
-            decoration: const InputDecoration(labelText: 'Reason'),
-            items: _reportReasons.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+            decoration: InputDecoration(labelText: l10n.reasonLabel),
+            items: _reportReasons(l10n).entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
             onChanged: (v) => setState(() => _reason = v),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _detailsController,
-            decoration: const InputDecoration(labelText: 'Details (optional)'),
+            decoration: InputDecoration(labelText: l10n.nikahDetailsOptionalLabel),
             maxLines: 3,
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
         FilledButton(
           onPressed: _reason == null
               ? null
               : () => Navigator.of(context).pop({'reason': _reason!, 'details': _detailsController.text.trim()}),
-          child: const Text('Submit'),
+          child: Text(l10n.submitLabel),
         ),
       ],
     );
