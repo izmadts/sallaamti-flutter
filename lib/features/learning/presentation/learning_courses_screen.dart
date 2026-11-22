@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/learning_repository.dart';
 import 'learning_widgets.dart';
@@ -46,6 +47,7 @@ class _LearningCoursesScreenState extends ConsumerState<LearningCoursesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule(_track.moduleKey),
       child: Scaffold(
@@ -54,12 +56,12 @@ class _LearningCoursesScreenState extends ConsumerState<LearningCoursesScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.workspace_premium_outlined),
-              tooltip: 'My Certificates',
+              tooltip: l10n.myCertificatesLabel,
               onPressed: () => context.push('/learning/certificates'),
             ),
             IconButton(
               icon: const Icon(Icons.school_outlined),
-              tooltip: 'My Learning',
+              tooltip: l10n.myLearningTitle,
               onPressed: () => context.push('/learning/my-courses'),
             ),
           ],
@@ -76,7 +78,7 @@ class _LearningCoursesScreenState extends ConsumerState<LearningCoursesScreen> {
                 return RetryErrorView(
                   message: snapshot.error is ApiException
                       ? (snapshot.error as ApiException).displayMessage
-                      : 'Something went wrong.',
+                      : l10n.errorGeneric,
                   onRetry: _reload,
                 );
               }
@@ -101,7 +103,7 @@ class _LearningCoursesScreenState extends ConsumerState<LearningCoursesScreen> {
                         child: Row(
                           children: [
                             _CategoryChip(
-                              label: 'All',
+                              label: l10n.categoryAllLabel,
                               selected: _category == null,
                               onTap: () => _selectCategory(null),
                             ),
@@ -122,10 +124,10 @@ class _LearningCoursesScreenState extends ConsumerState<LearningCoursesScreen> {
                     if (catalog.courses.isEmpty)
                       EmptyStateView(
                         emoji: _track.emoji,
-                        title: 'No courses yet',
+                        title: l10n.learningNoCoursesTitle,
                         subtitle: _category != null
-                            ? 'Nothing in this category right now — try another one.'
-                            : 'New courses are added regularly. Check back soon.',
+                            ? l10n.learningNoCoursesInCategoryMessage
+                            : l10n.learningNewCoursesSoonMessage,
                       )
                     else
                       for (final course in catalog.courses)

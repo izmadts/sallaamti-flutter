@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/html_text.dart';
@@ -37,20 +38,21 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
   void _reload() => setState(_load);
 
   Future<void> _enroll() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _busy = true;
       _error = null;
     });
 
     try {
-      final message = await ref.read(learningRepositoryProvider).enroll(widget.courseId);
+      await ref.read(learningRepositoryProvider).enroll(widget.courseId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.learningEnrolledMessage)));
       _reload();
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not enroll you just now. Please try again.');
+      if (mounted) setState(() => _error = l10n.learningEnrollError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -60,6 +62,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
   // (an admin has to approve it first), so this only reloads to show that
   // state rather than trying to download anything.
   Future<void> _requestCertificate() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _busy = true;
       _error = null;
@@ -69,19 +72,20 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
       await ref.read(learningRepositoryProvider).generateCertificate(widget.courseId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Certificate requested! You\'ll be notified once it\'s reviewed.')),
+        SnackBar(content: Text(l10n.learningCertRequestedMessage)),
       );
       _reload();
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not submit your request — please try again.');
+      if (mounted) setState(() => _error = l10n.learningCertRequestError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _downloadCertificate(LearningCertificate certificate) async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _busy = true;
       _error = null;
@@ -96,7 +100,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not prepare your certificate — please try again.');
+      if (mounted) setState(() => _error = l10n.learningCertPrepareError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -104,6 +108,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<LearningCourseDetail>(
       future: _future,
       builder: (context, snapshot) {
@@ -112,7 +117,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
         return Theme(
           data: ModuleThemes.forModule(track.moduleKey),
           child: Scaffold(
-            appBar: AppBar(title: Text(snapshot.data?.course.title ?? 'Course')),
+            appBar: AppBar(title: Text(snapshot.data?.course.title ?? l10n.courseFallbackTitle)),
             body: SafeArea(
               child: Builder(
                 builder: (context) {
@@ -124,7 +129,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
                     return RetryErrorView(
                       message: snapshot.error is ApiException
                           ? (snapshot.error as ApiException).displayMessage
-                          : 'Something went wrong.',
+                          : l10n.errorGeneric,
                       onRetry: _reload,
                     );
                   }
@@ -140,6 +145,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
   }
 
   Widget _body(BuildContext context, LearningCourseDetail detail) {
+    final l10n = AppLocalizations.of(context)!;
     final course = detail.course;
     final color = Theme.of(context).colorScheme.primary;
 
@@ -168,7 +174,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
             children: [
               if (course.category != null) _Pill(text: course.category!, color: color, filled: true),
               if (course.level != null) _Pill(text: course.level!, color: color),
-              _Pill(text: '📚 ${course.lessonsCount} lessons', color: color),
+              _Pill(text: '📚 ${l10n.lessonsCountLabel(course.lessonsCount)}', color: color),
               if (course.minAge != null || course.maxAge != null)
                 _Pill(
                   text: '🎂 ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}',
@@ -196,7 +202,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
               icon: _busy
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.play_circle_outline),
-              label: Text(_busy ? 'Enrolling…' : 'Enroll — it\'s free'),
+              label: Text(_busy ? l10n.learningEnrollingButton : l10n.learningEnrollFreeButton),
             )
           else ...[
             Container(
@@ -209,7 +215,7 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Your progress', style: TextStyle(fontWeight: FontWeight.w800)),
+                  Text(l10n.learningYourProgressTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 10),
                   LearningProgressBar(
                     progress: course.progress,
@@ -221,13 +227,13 @@ class _LearningCourseDetailScreenState extends ConsumerState<LearningCourseDetai
             ),
           ],
           const SizedBox(height: 22),
-          const Text('Lessons', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          Text(l10n.learningLessonsTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
           if (detail.lessons.isEmpty)
             EmptyStateView(
               emoji: '📝',
-              title: 'No lessons yet',
-              subtitle: 'This course is still being prepared. Check back soon.',
+              title: l10n.learningNoLessonsTitle,
+              subtitle: l10n.learningNoLessonsSubtitle,
             )
           else
             for (var i = 0; i < detail.lessons.length; i++)
@@ -309,6 +315,7 @@ class _LessonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = Theme.of(context).colorScheme.primary;
     final done = lesson.isCompleted;
 
@@ -352,9 +359,9 @@ class _LessonTile extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           [
-                            if (lesson.hasVideo) '🎬 Video',
-                            if (lesson.hasFile) '📎 File',
-                            if (lesson.quiz != null) lesson.quiz!.passed ? '✅ Quiz passed' : '📝 Quiz',
+                            if (lesson.hasVideo) l10n.learningVideoPill,
+                            if (lesson.hasFile) l10n.learningFilePill,
+                            if (lesson.quiz != null) lesson.quiz!.passed ? l10n.learningQuizPassedPill : l10n.learningQuizPill,
                           ].join('  ·  '),
                           style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
                         ),
@@ -381,6 +388,7 @@ class _FinalQuizCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = Theme.of(context).colorScheme.primary;
 
     return Material(
@@ -400,16 +408,16 @@ class _FinalQuizCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Final Quiz — ${quiz.title}',
+                      l10n.learningFinalQuizLabel(quiz.title),
                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       quiz.passed
-                          ? 'Passed — well done!'
+                          ? l10n.learningQuizPassedWellDone
                           : unlocked
-                              ? 'Pass with ${quiz.passingPercentage}% to earn your certificate.'
-                              : 'Finish every lesson (and its quiz) to unlock this.',
+                              ? l10n.learningPassWithPercentMessage(quiz.passingPercentage)
+                              : l10n.learningFinishToUnlockMessage,
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
@@ -439,6 +447,7 @@ class _CertificateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final certificate = detail.certificate;
     final eligible = detail.certificateEligible;
     // Locked until the course is actually finished; from there a request
@@ -467,12 +476,12 @@ class _CertificateCard extends StatelessWidget {
           Text(emoji, style: const TextStyle(fontSize: 36)),
           const SizedBox(height: 8),
           Text(
-            _title(certificate),
+            _title(l10n, certificate),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: gold ? Colors.white : Colors.grey.shade700),
           ),
           const SizedBox(height: 4),
           Text(
-            _subtitle(certificate, eligible),
+            _subtitle(l10n, certificate, eligible),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.5, color: gold ? Colors.white70 : Colors.grey.shade600),
           ),
@@ -491,7 +500,7 @@ class _CertificateCard extends StatelessWidget {
                 icon: busy
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.send_outlined),
-                label: Text(busy ? 'Submitting…' : (certificate == null ? 'Request Certificate' : 'Request Again')),
+                label: Text(busy ? l10n.busySubmittingLabel : (certificate == null ? l10n.learningRequestCertificateButton : l10n.learningRequestAgainButton)),
               ),
             ),
           ] else if (certificate != null && certificate.isApproved) ...[
@@ -509,7 +518,7 @@ class _CertificateCard extends StatelessWidget {
                 icon: busy
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.download_outlined),
-                label: Text(busy ? 'Preparing…' : 'Download Certificate'),
+                label: Text(busy ? l10n.preparingLabel : l10n.learningDownloadCertificateButton),
               ),
             ),
           ],
@@ -518,18 +527,18 @@ class _CertificateCard extends StatelessWidget {
     );
   }
 
-  String _title(LearningCertificate? certificate) {
-    if (certificate == null) return 'Course Certificate';
-    if (certificate.isPending) return 'Request submitted';
-    if (certificate.isRejected) return 'Not approved';
-    return 'Your certificate is ready';
+  String _title(AppLocalizations l10n, LearningCertificate? certificate) {
+    if (certificate == null) return l10n.learningCourseCertificateTitle;
+    if (certificate.isPending) return l10n.learningRequestSubmittedTitle;
+    if (certificate.isRejected) return l10n.notApprovedLabel;
+    return l10n.learningCertReadyTitle;
   }
 
-  String _subtitle(LearningCertificate? certificate, bool eligible) {
-    if (!eligible) return 'Complete every lesson and pass the quizzes to unlock this.';
-    if (certificate == null) return 'You\'ve finished everything — request your certificate.';
-    if (certificate.isPending) return 'Awaiting admin review — you\'ll be notified once it\'s decided.';
-    if (certificate.isRejected) return certificate.rejectionReason?.isNotEmpty == true ? certificate.rejectionReason! : 'You can submit another request.';
+  String _subtitle(AppLocalizations l10n, LearningCertificate? certificate, bool eligible) {
+    if (!eligible) return l10n.learningCompleteToUnlockMessage;
+    if (certificate == null) return l10n.learningFinishedEverythingMessage;
+    if (certificate.isPending) return l10n.learningAwaitingReviewLongMessage;
+    if (certificate.isRejected) return certificate.rejectionReason?.isNotEmpty == true ? certificate.rejectionReason! : l10n.learningSubmitAnotherRequestMessage;
     return certificate.certificateNumber ?? '';
   }
 }

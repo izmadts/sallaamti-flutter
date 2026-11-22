@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../data/learning_repository.dart';
@@ -36,6 +37,7 @@ class _LearningCertificatesScreenState extends ConsumerState<LearningCertificate
       });
 
   Future<void> _download(LearningCertificate certificate) async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _downloadingId = certificate.id;
       _error = null;
@@ -50,7 +52,7 @@ class _LearningCertificatesScreenState extends ConsumerState<LearningCertificate
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not download that certificate — please try again.');
+      if (mounted) setState(() => _error = l10n.learningCertDownloadError);
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -58,10 +60,11 @@ class _LearningCertificatesScreenState extends ConsumerState<LearningCertificate
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Certificates')),
+        appBar: AppBar(title: Text(l10n.myCertificatesLabel)),
         body: SafeArea(
           child: FutureBuilder<List<LearningCertificate>>(
             future: _future,
@@ -74,7 +77,7 @@ class _LearningCertificatesScreenState extends ConsumerState<LearningCertificate
                 return RetryErrorView(
                   message: snapshot.error is ApiException
                       ? (snapshot.error as ApiException).displayMessage
-                      : 'Something went wrong.',
+                      : l10n.errorGeneric,
                   onRetry: _reload,
                 );
               }
@@ -93,8 +96,8 @@ class _LearningCertificatesScreenState extends ConsumerState<LearningCertificate
                     if (certificates.isEmpty)
                       EmptyStateView(
                         emoji: '🏅',
-                        title: 'No certificates yet',
-                        subtitle: 'Finish a course — every lesson and its quizzes — and your certificate appears here.',
+                        title: l10n.learningNoCertificatesTitle,
+                        subtitle: l10n.learningNoCertificatesSubtitle,
                       )
                     else
                       for (final certificate in certificates)
@@ -130,6 +133,7 @@ class _CertificateTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isIdCard = certificate.type == 'volunteer_id' || certificate.type == 'nikah_counselor_id';
     // Volunteer/Nikah Counselor ID cards and admin-issued certificates are
     // always already approved by the time they exist at all — only a
@@ -182,7 +186,7 @@ class _CertificateTile extends StatelessWidget {
                       )
                     else
                       Text(
-                        certificate.isPending ? 'Awaiting admin review' : 'Not approved',
+                        certificate.isPending ? l10n.learningAwaitingAdminReviewChip : l10n.notApprovedLabel,
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -191,7 +195,7 @@ class _CertificateTile extends StatelessWidget {
                       ),
                     if (certificate.isApproved && certificate.issuedAt != null)
                       Text(
-                        'Issued ${DateFormat('d MMM yyyy').format(certificate.issuedAt!)}',
+                        l10n.learningCertificateIssuedLabel(DateFormat('d MMM yyyy').format(certificate.issuedAt!)),
                         style: const TextStyle(fontSize: 11.5, color: Colors.white70),
                       ),
                   ],
@@ -218,7 +222,7 @@ class _CertificateTile extends StatelessWidget {
                 icon: downloading
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.download_outlined, size: 18),
-                label: Text(downloading ? 'Preparing…' : 'Download PDF'),
+                label: Text(downloading ? l10n.preparingLabel : l10n.learningDownloadPdfButton),
               ),
             ),
           ],

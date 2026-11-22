@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/learning_repository.dart';
 import 'learning_widgets.dart';
@@ -30,15 +31,16 @@ class _LearningMyCoursesScreenState extends ConsumerState<LearningMyCoursesScree
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('My Learning'),
+          title: Text(l10n.myLearningTitle),
           actions: [
             IconButton(
               icon: const Icon(Icons.workspace_premium_outlined),
-              tooltip: 'My Certificates',
+              tooltip: l10n.myCertificatesLabel,
               onPressed: () => context.push('/learning/certificates'),
             ),
           ],
@@ -55,7 +57,7 @@ class _LearningMyCoursesScreenState extends ConsumerState<LearningMyCoursesScree
                 return RetryErrorView(
                   message: snapshot.error is ApiException
                       ? (snapshot.error as ApiException).displayMessage
-                      : 'Something went wrong.',
+                      : l10n.errorGeneric,
                   onRetry: _reload,
                 );
               }
@@ -70,8 +72,8 @@ class _LearningMyCoursesScreenState extends ConsumerState<LearningMyCoursesScree
                     if (courses.isEmpty)
                       EmptyStateView(
                         emoji: '🎓',
-                        title: 'You haven\'t enrolled yet',
-                        subtitle: 'Browse the course catalog and enroll in anything that interests you — it\'s free.',
+                        title: l10n.learningNotEnrolledTitle,
+                        subtitle: l10n.learningNotEnrolledSubtitle,
                       )
                     else
                       for (final course in courses)

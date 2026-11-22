@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/info_pill.dart';
 import '../data/learning_repository.dart';
@@ -60,6 +61,7 @@ class LearningCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = Theme.of(context).colorScheme.primary;
 
     return Material(
@@ -101,7 +103,7 @@ class LearningCourseCard extends StatelessWidget {
                     children: [
                       if (course.category != null) InfoPill(text: course.category!, color: color, filled: true),
                       if (course.level != null) InfoPill(text: course.level!, color: color),
-                      if (course.isEnrolled) InfoPill(text: '✓ Enrolled', color: Colors.green.shade700),
+                      if (course.isEnrolled) InfoPill(text: l10n.enrolledBadge, color: Colors.green.shade700),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -137,11 +139,11 @@ class LearningCourseCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '📚 ${course.lessonsCount} ${course.lessonsCount == 1 ? 'lesson' : 'lessons'}',
+                          '📚 ${l10n.lessonsCountLabel(course.lessonsCount)}',
                           style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          'View Course →',
+                          l10n.viewCourseButton,
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
                         ),
                       ],

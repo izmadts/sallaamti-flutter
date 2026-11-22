@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../data/learning_repository.dart';
@@ -33,7 +34,6 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
   bool _submitting = false;
   String? _error;
   LearningQuizAttempt? _result;
-  String? _resultMessage;
 
   @override
   void initState() {
@@ -49,16 +49,15 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
   void _reload() => setState(() {
         _answers.clear();
         _result = null;
-        _resultMessage = null;
         _error = null;
         _load();
       });
 
   Future<void> _submit(LearningQuizDetail quiz) async {
+    final l10n = AppLocalizations.of(context)!;
     final unanswered = quiz.questions.where((q) => !_answers.containsKey(q.id)).length;
     if (unanswered > 0) {
-      setState(() => _error = 'Please answer all $unanswered remaining '
-          '${unanswered == 1 ? 'question' : 'questions'} before submitting.');
+      setState(() => _error = l10n.learningAnswerRemainingError(unanswered));
       return;
     }
 
@@ -69,19 +68,16 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
 
     try {
       final repository = ref.read(learningRepositoryProvider);
-      final (attempt, message) = widget.isFinal
+      final (attempt, _) = widget.isFinal
           ? await repository.submitCourseQuiz(widget.ownerId, _answers)
           : await repository.submitLessonQuiz(widget.ownerId, _answers);
 
       if (!mounted) return;
-      setState(() {
-        _result = attempt;
-        _resultMessage = message;
-      });
+      setState(() => _result = attempt);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not submit your answers. Please try again.');
+      if (mounted) setState(() => _error = l10n.learningSubmitAnswersError);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -89,12 +85,13 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final track = LearningTrack.fromKey(widget.trackKey);
 
     return Theme(
       data: ModuleThemes.forModule(track.moduleKey),
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.isFinal ? 'Final Quiz' : 'Lesson Quiz')),
+        appBar: AppBar(title: Text(widget.isFinal ? l10n.learningFinalQuizTitle : l10n.learningLessonQuizTitle)),
         body: SafeArea(
           child: FutureBuilder<LearningQuizDetail>(
             future: _future,
@@ -107,7 +104,7 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
                 return RetryErrorView(
                   message: snapshot.error is ApiException
                       ? (snapshot.error as ApiException).displayMessage
-                      : 'Something went wrong.',
+                      : l10n.errorGeneric,
                   onRetry: _reload,
                 );
               }
@@ -121,10 +118,10 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
   }
 
   Widget _body(BuildContext context, LearningQuizDetail quiz) {
+    final l10n = AppLocalizations.of(context)!;
     if (_result != null) {
       return _ResultView(
         attempt: _result!,
-        message: _resultMessage ?? '',
         passingPercentage: quiz.passingPercentage,
         onRetry: _reload,
         onDone: () => Navigator.of(context).pop(),
@@ -137,8 +134,7 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
         Text(quiz.title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
         const SizedBox(height: 4),
         Text(
-          'Pass mark: ${quiz.passingPercentage}%  ·  ${quiz.questions.length} '
-          '${quiz.questions.length == 1 ? 'question' : 'questions'}',
+          l10n.learningPassMarkLabel(quiz.passingPercentage, quiz.questions.length),
           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
         if (quiz.bestAttempt != null) ...[
@@ -155,8 +151,9 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Your best so far: ${quiz.bestAttempt!.scorePercentage}%'
-                    '${quiz.bestAttempt!.passed ? ' — passed' : ''}',
+                    quiz.bestAttempt!.passed
+                        ? l10n.learningBestScorePassedLabel(quiz.bestAttempt!.scorePercentage)
+                        : l10n.learningBestScoreLabel(quiz.bestAttempt!.scorePercentage),
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -172,8 +169,8 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
         if (quiz.questions.isEmpty)
           EmptyStateView(
             emoji: '📋',
-            title: 'No questions yet',
-            subtitle: 'This quiz is still being prepared.',
+            title: l10n.learningNoQuestionsTitle,
+            subtitle: l10n.learningNoQuestionsSubtitle,
           )
         else
           for (var i = 0; i < quiz.questions.length; i++)
@@ -199,7 +196,7 @@ class _LearningQuizScreenState extends ConsumerState<LearningQuizScreen> {
             icon: _submitting
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.send_outlined),
-            label: Text(_submitting ? 'Submitting…' : 'Submit Answers'),
+            label: Text(_submitting ? l10n.busySubmittingLabel : l10n.learningSubmitAnswersButton),
           ),
       ],
     );
@@ -295,14 +292,12 @@ class _QuestionCard extends StatelessWidget {
 
 class _ResultView extends StatelessWidget {
   final LearningQuizAttempt attempt;
-  final String message;
   final int passingPercentage;
   final VoidCallback onRetry;
   final VoidCallback onDone;
 
   const _ResultView({
     required this.attempt,
-    required this.message,
     required this.passingPercentage,
     required this.onRetry,
     required this.onDone,
@@ -310,6 +305,7 @@ class _ResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final passed = attempt.passed;
 
     return Center(
@@ -330,27 +326,27 @@ class _ResultView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              passed ? 'Passed!' : 'Not quite yet',
+              passed ? l10n.learningQuizPassedTitle : l10n.learningQuizNotYetTitle,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
-              message.isNotEmpty
-                  ? message
-                  : 'You need $passingPercentage% to pass.',
+              passed
+                  ? l10n.quizPassedMessage(attempt.scorePercentage)
+                  : l10n.quizFailedMessage(attempt.scorePercentage, passingPercentage),
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600, height: 1.4),
             ),
             const SizedBox(height: 28),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(onPressed: onDone, child: Text(passed ? 'Continue' : 'Back to lesson')),
+              child: ElevatedButton(onPressed: onDone, child: Text(passed ? l10n.continueLabel : l10n.learningBackToLessonButton)),
             ),
             if (!passed) ...[
               const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton(onPressed: onRetry, child: const Text('Try Again')),
+                child: OutlinedButton(onPressed: onRetry, child: Text(l10n.nikahTryAgain)),
               ),
             ],
           ],

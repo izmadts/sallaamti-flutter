@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/html_text.dart';
@@ -82,20 +83,20 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
   }
 
   Future<void> _markComplete() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _completing = true;
       _error = null;
     });
 
     try {
-      final message = await ref.read(learningRepositoryProvider).completeLesson(widget.lessonId);
+      await ref.read(learningRepositoryProvider).completeLesson(widget.lessonId);
       if (!mounted) return;
       setState(() => _isCompleted = true);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not mark the lesson complete. Please try again.');
+      if (mounted) setState(() => _error = l10n.learningMarkCompleteError);
     } finally {
       if (mounted) setState(() => _completing = false);
     }
@@ -103,6 +104,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<LearningLessonDetail>(
       future: _future,
       builder: (context, snapshot) {
@@ -111,7 +113,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
         return Theme(
           data: ModuleThemes.forModule(track.moduleKey),
           child: Scaffold(
-            appBar: AppBar(title: Text(snapshot.data?.courseTitle ?? 'Lesson')),
+            appBar: AppBar(title: Text(snapshot.data?.courseTitle ?? l10n.lessonFallbackTitle)),
             body: SafeArea(
               child: Builder(
                 builder: (context) {
@@ -123,7 +125,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
                     return RetryErrorView(
                       message: snapshot.error is ApiException
                           ? (snapshot.error as ApiException).displayMessage
-                          : 'Something went wrong.',
+                          : l10n.errorGeneric,
                       onRetry: _reload,
                     );
                   }
@@ -139,6 +141,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
   }
 
   Widget _body(BuildContext context, LearningLessonDetail lesson) {
+    final l10n = AppLocalizations.of(context)!;
     final color = Theme.of(context).colorScheme.primary;
 
     return ListView(
@@ -152,26 +155,26 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
           // gets full-screen, casting and playback controls for free.
           _ActionTile(
             emoji: '🎬',
-            title: 'Watch the lesson video',
-            subtitle: 'Opens in your video player',
+            title: l10n.learningWatchVideoTitle,
+            subtitle: l10n.learningOpensInVideoPlayer,
             color: color,
-            onTap: () => _openUrl(lesson.videoUrl!, 'Could not open the video.'),
+            onTap: () => _openUrl(lesson.videoUrl!, l10n.learningOpenVideoError),
           ),
           const SizedBox(height: 14),
         ],
         if ((lesson.content ?? '').isNotEmpty)
           HtmlText(
             html: lesson.content!,
-            onLinkTap: (url) => _openUrl(url, 'Could not open that link.'),
+            onLinkTap: (url) => _openUrl(url, l10n.learningOpenLinkError),
           ),
         if (lesson.fileUrl != null) ...[
           const SizedBox(height: 16),
           _ActionTile(
             emoji: '📎',
-            title: lesson.fileName ?? 'Download lesson file',
-            subtitle: 'Opens in your browser',
+            title: lesson.fileName ?? l10n.learningDownloadFileFallback,
+            subtitle: l10n.learningOpensInBrowser,
             color: color,
-            onTap: () => _openUrl(lesson.fileUrl!, 'Could not open the file.'),
+            onTap: () => _openUrl(lesson.fileUrl!, l10n.learningOpenFileError),
           ),
         ],
         if (_error != null) ...[
@@ -193,7 +196,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Lesson complete — great job!',
+                    l10n.learningLessonCompleteMessage,
                     style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -208,16 +211,16 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
                 : const Icon(Icons.check_circle_outline),
             label: Text(
               _secondsRemaining > 0
-                  ? 'Mark Complete in ${_secondsRemaining}s'
+                  ? l10n.learningMarkCompleteInSeconds(_secondsRemaining)
                   : _completing
-                      ? 'Saving…'
-                      : 'Mark Complete',
+                      ? l10n.savingLabel
+                      : l10n.learningMarkCompleteButton,
             ),
           ),
         if (_secondsRemaining > 0) ...[
           const SizedBox(height: 8),
           Text(
-            'Take a moment to read through the lesson first.',
+            l10n.learningReadFirstMessage,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           ),
@@ -230,7 +233,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
               if (mounted) _reload();
             },
             icon: Text(lesson.quiz!.passed ? '✅' : '📝', style: const TextStyle(fontSize: 16)),
-            label: Text(lesson.quiz!.passed ? 'Quiz passed — review' : 'Take the lesson quiz'),
+            label: Text(lesson.quiz!.passed ? l10n.learningQuizPassedReviewButton : l10n.learningTakeQuizButton),
           ),
         ],
         const SizedBox(height: 20),
@@ -241,7 +244,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
                 child: TextButton.icon(
                   onPressed: () => context.replace('/learning/lesson/${lesson.previousLessonId}'),
                   icon: const Icon(Icons.arrow_back, size: 18),
-                  label: const Text('Previous'),
+                  label: Text(l10n.previousLabel),
                 ),
               ),
             if (lesson.nextLessonId != null)
@@ -250,7 +253,7 @@ class _LearningLessonScreenState extends ConsumerState<LearningLessonScreen> {
                   iconAlignment: IconAlignment.end,
                   onPressed: () => context.replace('/learning/lesson/${lesson.nextLessonId}'),
                   icon: const Icon(Icons.arrow_forward, size: 18),
-                  label: const Text('Next lesson'),
+                  label: Text(l10n.nextLessonButton),
                 ),
               ),
           ],
