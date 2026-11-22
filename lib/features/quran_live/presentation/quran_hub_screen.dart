@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 // The single "Quran" entry point from the dashboard — it fronts two
 // genuinely separate backend systems (QuranLiveCourse's admission/
@@ -13,41 +14,42 @@ class QuranHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Quran Learning')),
+        appBar: AppBar(title: Text(l10n.quranLearningTitle)),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('How would you like to learn?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                Text(l10n.quranHowToLearnTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
-                Text('Pick whichever fits you best — you can do both.', style: TextStyle(color: Colors.grey.shade600)),
+                Text(l10n.quranHowToLearnSubtitle, style: TextStyle(color: Colors.grey.shade600)),
                 const SizedBox(height: 24),
                 _HubOptionCard(
                   emoji: '🕌',
                   color: const Color(0xFF1D5FB8),
-                  title: 'Live Quran Classes',
-                  subtitle: 'Learn face-to-face with a qualified teacher over live video — small groups, monthly subscription.',
+                  title: l10n.quranLiveClassesTitle,
+                  subtitle: l10n.quranLiveClassesSubtitle,
                   onTap: () => context.push('/quran-live'),
                 ),
                 const SizedBox(height: 16),
                 _HubOptionCard(
                   emoji: '📖',
                   color: const Color(0xFF0D6B6B),
-                  title: 'Self-Paced Learning',
-                  subtitle: 'Go through recorded lessons at your own pace, whenever suits you.',
+                  title: l10n.quranSelfPacedTitle,
+                  subtitle: l10n.quranSelfPacedSubtitle,
                   onTap: () => context.push('/learning/track/quran'),
                 ),
                 const SizedBox(height: 16),
                 _HubOptionCard(
                   emoji: '🎓',
                   color: const Color(0xFFB8962E),
-                  title: 'My Learning',
-                  subtitle: 'Pick up where you left off, and collect the certificates you\'ve earned.',
+                  title: l10n.quranMyLearningTitle,
+                  subtitle: l10n.quranMyLearningSubtitle,
                   onTap: () => context.push('/learning/my-courses'),
                 ),
               ],

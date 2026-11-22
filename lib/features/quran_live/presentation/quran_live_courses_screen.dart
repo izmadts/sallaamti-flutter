@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/info_pill.dart';
 import '../data/quran_live_repository.dart';
 
@@ -36,15 +37,16 @@ class _QuranLiveCoursesScreenState extends ConsumerState<QuranLiveCoursesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Live Quran Classes'),
+          title: Text(l10n.quranLiveClassesTitle),
           actions: [
             IconButton(
               icon: const Icon(Icons.school_outlined),
-              tooltip: 'My Class',
+              tooltip: l10n.quranLiveMyClassTooltip,
               onPressed: () => context.push('/quran-live/my-class'),
             ),
           ],
@@ -58,7 +60,7 @@ class _QuranLiveCoursesScreenState extends ConsumerState<QuranLiveCoursesScreen>
               }
 
               if (snapshot.hasError) {
-                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : 'Something went wrong.';
+                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : l10n.quranLiveSomethingWentWrong;
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -67,7 +69,7 @@ class _QuranLiveCoursesScreenState extends ConsumerState<QuranLiveCoursesScreen>
                       children: [
                         Text(message, textAlign: TextAlign.center),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _reload, child: const Text('Retry')),
+                        ElevatedButton(onPressed: _reload, child: Text(l10n.retryLabel)),
                       ],
                     ),
                   ),
@@ -85,9 +87,9 @@ class _QuranLiveCoursesScreenState extends ConsumerState<QuranLiveCoursesScreen>
                       children: [
                         const Text('🎥', style: TextStyle(fontSize: 48)),
                         const SizedBox(height: 12),
-                        const Text('No Live Classes Available', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                        Text(l10n.quranLiveNoClassesTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 6),
-                        Text('Check back soon — new batches open regularly.', style: TextStyle(color: Colors.grey.shade600)),
+                        Text(l10n.quranLiveNoClassesSubtitle, style: TextStyle(color: Colors.grey.shade600)),
                       ],
                     ),
                   ),
@@ -117,6 +119,7 @@ class _CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = _categoryColors[course.category] ?? const Color(0xFF0D6B6B);
 
     return Material(
@@ -136,13 +139,13 @@ class _CourseCard extends StatelessWidget {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  InfoPill(text: course.category ?? 'Live Class', color: color, filled: true),
+                  InfoPill(text: course.category ?? l10n.quranLiveClassFallback, color: color, filled: true),
                   if (course.minAge != null || course.maxAge != null)
                     InfoPill(text: '🎂 ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}', color: color),
                   // 'both' is "no restriction" — a badge for it would imply
                   // one exists where it doesn't.
-                  if (course.genderPreference == 'male') InfoPill(text: '♂ Boys only', color: color),
-                  if (course.genderPreference == 'female') InfoPill(text: '♀ Girls only', color: color),
+                  if (course.genderPreference == 'male') InfoPill(text: l10n.quranLiveBoysOnlyBadge, color: color),
+                  if (course.genderPreference == 'female') InfoPill(text: l10n.quranLiveGirlsOnlyBadge, color: color),
                 ],
               ),
               const SizedBox(height: 10),
@@ -152,7 +155,7 @@ class _CourseCard extends StatelessWidget {
                 Text(course.description!, style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600), maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
               const SizedBox(height: 10),
-              Text('👤 Teacher: ${course.teacher?.name ?? 'TBA'}', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              Text('👤 ${l10n.quranLiveTeacherLabel(course.teacher?.name ?? l10n.quranLiveTeacherTba)}', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
               if (course.classDays.isNotEmpty || course.classTime != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
@@ -166,12 +169,12 @@ class _CourseCard extends StatelessWidget {
                     text: TextSpan(
                       style: const TextStyle(color: Color(0xFFB8962E), fontSize: 15, fontWeight: FontWeight.w800),
                       children: [
-                        TextSpan(text: 'Rs. ${_formatFee(course.monthlyFee)}'),
-                        TextSpan(text: '/month', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade500)),
+                        TextSpan(text: l10n.nikahFeeAmount(_formatFee(course.monthlyFee))),
+                        TextSpan(text: l10n.perMonthSuffix, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade500)),
                       ],
                     ),
                   ),
-                  const Text('View Details →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0D6B6B))),
+                  Text(l10n.viewDetailsArrow, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0D6B6B))),
                 ],
               ),
             ],
