@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/message_tick.dart';
 import '../data/support_repository.dart';
 
@@ -59,7 +60,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       if (showLoading && mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
       // A silent background poll failing is fine — it'll just retry in 7s.
-      if (showLoading && mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (showLoading && mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (showLoading && mounted) setState(() => _loading = false);
     }
@@ -83,7 +84,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not send. Please try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.supportSendError)));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -91,10 +92,11 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Message Sallaamti Support')),
+      appBar: AppBar(title: Text(l10n.messageSallaamtiSupportTitle)),
       body: Column(
         children: [
           Expanded(child: _buildBody(context, primary)),
@@ -107,7 +109,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _textController,
-                      decoration: const InputDecoration(hintText: 'Type a message…', isDense: true),
+                      decoration: InputDecoration(hintText: l10n.typeAMessageHint, isDense: true),
                       minLines: 1,
                       maxLines: 4,
                       textInputAction: TextInputAction.send,
@@ -131,6 +133,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   }
 
   Widget _buildBody(BuildContext context, Color primary) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading && _messages.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -144,7 +147,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'Assalamu Alaikum! Ask us anything — our team usually replies within a day.',
+            l10n.supportWelcomeMessage,
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600),
           ),
@@ -173,7 +176,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!m.isMine) ...[
-                  const Text('Sallaamti Support', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.black54)),
+                  Text(l10n.sallaamtiSupportLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.black54)),
                   const SizedBox(height: 2),
                 ],
                 Text(m.body, style: TextStyle(color: m.isMine ? Colors.white : Colors.black87)),

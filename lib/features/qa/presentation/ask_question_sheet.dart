@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/qa_repository.dart';
 
 class AskQuestionSheet extends ConsumerStatefulWidget {
@@ -23,9 +24,10 @@ class _AskQuestionSheetState extends ConsumerState<AskQuestionSheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     final question = _questionController.text.trim();
     if (question.isEmpty) {
-      setState(() => _error = 'Please write your question.');
+      setState(() => _error = l10n.qaQuestionRequiredError);
       return;
     }
 
@@ -35,15 +37,15 @@ class _AskQuestionSheetState extends ConsumerState<AskQuestionSheet> {
     });
 
     try {
-      final (_, message) = await ref.read(qaRepositoryProvider).ask(question);
+      await ref.read(qaRepositoryProvider).ask(question);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.qaQuestionSubmittedMessage)));
         Navigator.of(context).pop(true);
       }
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -51,6 +53,7 @@ class _AskQuestionSheetState extends ConsumerState<AskQuestionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -66,12 +69,12 @@ class _AskQuestionSheetState extends ConsumerState<AskQuestionSheet> {
             children: [
               const Text('❓', style: TextStyle(fontSize: 28)),
               const SizedBox(width: 8),
-              const Text('Ask a Question', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(l10n.askAQuestionLabel, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Our team will answer it — if someone else already asked the same thing, we\'ll link you to that answer.',
+            l10n.qaAskIntroMessage,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
           ),
           const SizedBox(height: 16),
@@ -85,7 +88,7 @@ class _AskQuestionSheetState extends ConsumerState<AskQuestionSheet> {
           ],
           TextFormField(
             controller: _questionController,
-            decoration: const InputDecoration(hintText: 'What would you like to ask?'),
+            decoration: InputDecoration(hintText: l10n.qaAskHint),
             minLines: 3,
             maxLines: 6,
             maxLength: 500,
@@ -96,7 +99,7 @@ class _AskQuestionSheetState extends ConsumerState<AskQuestionSheet> {
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Submit'),
+                : Text(l10n.submitButton),
           ),
         ],
       ),

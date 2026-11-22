@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/qa_repository.dart';
 import '../domain/question.dart';
@@ -56,23 +57,24 @@ class _QaScreenState extends ConsumerState<QaScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('qa'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Ask from Alim/Mufti'),
+          title: Text(l10n.askFromAlimMuftiTitle),
           bottom: TabBar(
             controller: _tabs,
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
-            tabs: const [Tab(text: 'Answered'), Tab(text: 'My Questions')],
+            tabs: [Tab(text: l10n.answeredTabLabel), Tab(text: l10n.myQuestionsTabLabel)],
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _ask,
           icon: const Icon(Icons.help_outline),
-          label: const Text('Ask a Question'),
+          label: Text(l10n.askAQuestionLabel),
         ),
         body: SafeArea(
           child: TabBarView(
@@ -82,8 +84,8 @@ class _QaScreenState extends ConsumerState<QaScreen> with SingleTickerProviderSt
                 future: _answeredFuture,
                 onRetry: _reload,
                 emptyEmoji: '❓',
-                emptyTitle: 'No questions answered yet',
-                emptySubtitle: 'Be the first to ask something — we\'ll notify you once it\'s answered.',
+                emptyTitle: l10n.qaNoAnsweredYetTitle,
+                emptySubtitle: l10n.qaNoAnsweredYetSubtitle,
                 expandedId: _expandedId,
                 onToggle: (id) => setState(() => _expandedId = _expandedId == id ? null : id),
               ),
@@ -91,8 +93,8 @@ class _QaScreenState extends ConsumerState<QaScreen> with SingleTickerProviderSt
                 future: _mineFuture,
                 onRetry: _reload,
                 emptyEmoji: '🙋',
-                emptyTitle: 'You haven\'t asked anything yet',
-                emptySubtitle: 'Tap "Ask a Question" and we\'ll notify you once it\'s answered.',
+                emptyTitle: l10n.qaNoOwnQuestionsTitle,
+                emptySubtitle: l10n.qaNoOwnQuestionsSubtitle,
                 expandedId: _expandedId,
                 onToggle: (id) => setState(() => _expandedId = _expandedId == id ? null : id),
                 showStatus: true,
@@ -128,6 +130,7 @@ class _QuestionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<List<Question>>(
       future: future,
       builder: (context, snapshot) {
@@ -139,7 +142,7 @@ class _QuestionList extends StatelessWidget {
           return RetryErrorView(
             message: snapshot.error is ApiException
                 ? (snapshot.error as ApiException).displayMessage
-                : 'Something went wrong.',
+                : l10n.errorGeneric,
             onRetry: onRetry,
           );
         }
@@ -185,7 +188,7 @@ class _QuestionList extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
-                                  'Awaiting answer',
+                                  l10n.awaitingAnswerLabel,
                                   style: TextStyle(color: Colors.amber.shade800, fontSize: 11, fontWeight: FontWeight.w700),
                                 ),
                               )
