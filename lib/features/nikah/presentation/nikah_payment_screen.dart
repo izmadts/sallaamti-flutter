@@ -56,14 +56,15 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
   }
 
   Future<void> _release() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Go back to self-service?'),
-        content: const Text('This does not undo any payment already sent.'),
+        title: Text(l10n.nikahReleaseDialogTitle),
+        content: Text(l10n.nikahReleaseDialogContent),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Go Back')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.nikahGoBack)),
         ],
       ),
     );
@@ -76,16 +77,17 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Something went wrong. Please try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     } finally {
       if (mounted) setState(() => _releasing = false);
     }
   }
 
   Future<void> _copy(String value) async {
+    final l10n = AppLocalizations.of(context)!;
     await Clipboard.setData(ClipboardData(text: value));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 2)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nikahCopiedToClipboard), duration: const Duration(seconds: 2)));
     }
   }
 
@@ -167,7 +169,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 Text(l10n.nikahPaymentSubmittedTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
                 const SizedBox(height: 8),
                 Text(
-                  'Our team will confirm it shortly, then your profile can go live once it\'s also verified.',
+                  l10n.nikahPaymentSubmittedMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
@@ -205,7 +207,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
       return Theme(
         data: ModuleThemes.forModule('nikah'),
         child: Scaffold(
-          appBar: AppBar(title: const Text('Verification Fee')),
+          appBar: AppBar(title: Text(l10n.nikahVerificationFeeTitle)),
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -214,13 +216,13 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 children: [
                   const Text('✅', style: TextStyle(fontSize: 56)),
                   const SizedBox(height: 16),
-                  const Text(
-                    'No verification fee is required right now — your profile is ready.',
+                  Text(
+                    l10n.nikahNoFeeRequiredMessage,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(onPressed: () => context.go('/nikah'), child: const Text('Back to Nikah')),
+                  ElevatedButton(onPressed: () => context.go('/nikah'), child: Text(l10n.nikahBackToNikah)),
                 ],
               ),
             ),
@@ -232,7 +234,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-      appBar: AppBar(title: const Text('Verification Fee')),
+      appBar: AppBar(title: Text(l10n.nikahVerificationFeeTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -249,15 +251,15 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('One-time verification fee', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Text(l10n.nikahOneTimeFeeLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       Text(
-                        'Rs. ${profile?.paymentAmount ?? '—'}',
+                        l10n.nikahFeeAmount(profile?.paymentAmount ?? '—'),
                         style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Pay via JazzCash or bank transfer, then upload a screenshot as proof. Our team confirms it manually.',
+                        l10n.nikahPaymentInstructionsMessage,
                         style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                       ),
                     ],
@@ -272,10 +274,10 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Send payment to', style: TextStyle(fontWeight: FontWeight.w700)),
+        Text(l10n.nikahSendPaymentTo, style: const TextStyle(fontWeight: FontWeight.w700)),
                         const SizedBox(height: 12),
                         if (profile.paymentInstructions.hasJazzcash) ...[
-                          const Text('📱 JazzCash', style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(l10n.nikahJazzcashLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 2),
                           _copyableRow(profile.paymentInstructions.jazzcashNumber!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                           if ((profile.paymentInstructions.jazzcashAccountTitle ?? '').isNotEmpty)
@@ -283,22 +285,22 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                         ],
                         if (profile.paymentInstructions.hasJazzcash && profile.paymentInstructions.hasBankTransfer) const SizedBox(height: 16),
                         if (profile.paymentInstructions.hasBankTransfer) ...[
-                          const Text('🏦 Bank Transfer', style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(l10n.nikahBankTransferLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 2),
-                          Text('Bank: ${profile.paymentInstructions.bankName}', style: TextStyle(color: Colors.grey.shade700)),
+                          Text(l10n.nikahBankLabel(profile.paymentInstructions.bankName ?? ''), style: TextStyle(color: Colors.grey.shade700)),
                           if ((profile.paymentInstructions.bankAccountTitle ?? '').isNotEmpty)
-                            Text('Account Title: ${profile.paymentInstructions.bankAccountTitle}', style: TextStyle(color: Colors.grey.shade700)),
+                            Text(l10n.nikahAccountTitleLabel(profile.paymentInstructions.bankAccountTitle!), style: TextStyle(color: Colors.grey.shade700)),
                           if ((profile.paymentInstructions.bankAccountNumber ?? '').isNotEmpty)
                             Row(
                               children: [
-                                Text('Account No: ', style: TextStyle(color: Colors.grey.shade700)),
+                                Text(l10n.nikahAccountNoLabel, style: TextStyle(color: Colors.grey.shade700)),
                                 Expanded(child: _copyableRow(profile.paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700))),
                               ],
                             ),
                           if ((profile.paymentInstructions.bankAccountIban ?? '').isNotEmpty)
                             Row(
                               children: [
-                                Text('IBAN: ', style: TextStyle(color: Colors.grey.shade700)),
+                                Text(l10n.nikahIbanLabel, style: TextStyle(color: Colors.grey.shade700)),
                                 Expanded(child: _copyableRow(profile.paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700))),
                               ],
                             ),
@@ -311,9 +313,9 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
-                  child: const Text(
-                    'Payment details have not been configured yet. Please contact support before sending any payment.',
-                    style: TextStyle(color: Colors.deepOrange),
+                  child: Text(
+                    l10n.nikahPaymentNotConfiguredMessage,
+                    style: const TextStyle(color: Colors.deepOrange),
                   ),
                 ),
               const SizedBox(height: 20),
@@ -326,14 +328,14 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
               if (profile?.paymentStatus == 'submitted')
                 _statusBanner('⏳ ${l10n.nikahPaymentUnderReviewMessage}', Colors.orange)
               else if (profile?.paymentStatus == 'confirmed')
-                _statusBanner('✅ Payment confirmed. Your profile is now awaiting admin verification.', Colors.green)
+                _statusBanner('✅ ${l10n.nikahPaymentConfirmedMessage}', Colors.green)
               else ...[
                 DropdownButtonFormField<String>(
                   initialValue: _method,
                   decoration: InputDecoration(label: requiredLabel('Payment Method')),
-                  items: const [
-                    DropdownMenuItem(value: 'jazzcash', child: Text('JazzCash')),
-                    DropdownMenuItem(value: 'bank_transfer', child: Text('Bank Transfer')),
+                  items: [
+                    DropdownMenuItem(value: 'jazzcash', child: Text(l10n.jazzcashMethodLabel)),
+                    DropdownMenuItem(value: 'bank_transfer', child: Text(l10n.bankTransferMethodLabel)),
                   ],
                   onChanged: (v) => setState(() => _method = v!),
                 ),
@@ -341,7 +343,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 SizedBox(
                   width: 160,
                   child: ImagePickField(
-                    label: 'Payment Screenshot',
+                    label: l10n.nikahPaymentScreenshotLabel,
                     file: _screenshot,
                     alreadyUploaded: false,
                     onTap: _pickScreenshot,
@@ -364,10 +366,10 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('🤝 Prefer a dedicated Nikah Counselor?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                      Text(l10n.nikahPreferCounselorTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                       const SizedBox(height: 6),
                       Text(
-                        'A consultant can search for matches, review proposals with you, and guide your family through the process instead.',
+                        l10n.nikahPreferCounselorMessage,
                         style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                       ),
                       const SizedBox(height: 12),
@@ -376,7 +378,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                           await context.push('/nikah/counselor/pick');
                           _loadLead();
                         },
-                        child: const Text('Browse Nikah Counselors'),
+                        child: Text(l10n.nikahBrowseCounselorsButton),
                       ),
                     ],
                   ),
@@ -391,6 +393,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
   }
 
   Widget _buildHiredState(BuildContext context, HiredLead lead) {
+    final l10n = AppLocalizations.of(context)!;
     final status = lead.packagePaymentStatus;
     final canRelease = status != 'submitted' && status != 'confirmed';
 
@@ -398,7 +401,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Nikah Counselor'),
+          title: Text(l10n.nikahCounselorAppBarTitle),
           actions: [
             if (canRelease)
               TextButton(
@@ -411,7 +414,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 onPressed: _releasing ? null : _release,
                 child: _releasing
                     ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Go Back'),
+                    : Text(l10n.nikahGoBack),
               ),
           ],
         ),
@@ -432,7 +435,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Your Nikah Counselor', style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                              Text(l10n.nikahYourCounselorFallback, style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
                               Text(lead.counselor?.name ?? '—', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                             ],
                           ),
@@ -443,15 +446,15 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                 ),
                 const SizedBox(height: 16),
                 if (status == 'submitted')
-                  _statusBanner('⏳ Your package payment has been submitted and is awaiting confirmation by our team.', Colors.orange)
+                  _statusBanner('⏳ ${l10n.nikahPackagePaymentSubmittedMessage}', Colors.orange)
                 else if (status == 'confirmed')
-                  _statusBanner('✅ Your package is active.', Colors.green)
+                  _statusBanner('✅ ${l10n.nikahPackageActiveMessage}', Colors.green)
                 else ...[
                   if (status == 'rejected')
-                    _statusBanner('❌ Your previous package payment was rejected. Reason: ${lead.packagePaymentRejectionReason ?? ''}', Colors.red),
+                    _statusBanner('❌ ${l10n.nikahPackageRejectedMessage(lead.packagePaymentRejectionReason ?? '')}', Colors.red),
                   if (status == 'rejected') const SizedBox(height: 12),
                   Text(
-                    'Choose a package to get started with your counselor.',
+                    l10n.nikahChoosePackageWithCounselorMessage,
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
@@ -460,7 +463,7 @@ class _NikahPaymentScreenState extends ConsumerState<NikahPaymentScreen> {
                       await context.push('/nikah/counselor/package');
                       _loadLead();
                     },
-                    child: const Text('Choose a Package'),
+                    child: Text(l10n.nikahChoosePackageButton),
                   ),
                 ],
               ],
