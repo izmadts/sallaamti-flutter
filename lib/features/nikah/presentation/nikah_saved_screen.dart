@@ -63,7 +63,7 @@ class _NikahSavedScreenState extends ConsumerState<NikahSavedScreen> {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Saved Profiles')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.nikahSavedProfilesTitle)),
         body: RefreshIndicator(
           onRefresh: _load,
           child: _buildBody(context),
@@ -73,6 +73,7 @@ class _NikahSavedScreenState extends ConsumerState<NikahSavedScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading && _profiles.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -106,7 +107,7 @@ class _NikahSavedScreenState extends ConsumerState<NikahSavedScreen> {
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    'No saved profiles yet — tap the star on a profile in Browse to save it here.',
+                    l10n.nikahNoSavedProfilesMessage,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
@@ -151,7 +152,7 @@ class _NikahSavedScreenState extends ConsumerState<NikahSavedScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.star, color: Colors.amber),
-                    tooltip: 'Remove from saved',
+                    tooltip: l10n.nikahRemoveFromSavedTooltip,
                     onPressed: () => _unsave(card.id),
                   ),
                 ],

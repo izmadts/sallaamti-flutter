@@ -60,13 +60,14 @@ class _NikahBlockedScreenState extends ConsumerState<NikahBlockedScreen> {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Blocked Profiles')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.nikahBlockedProfilesTitle)),
         body: RefreshIndicator(onRefresh: _load, child: _buildBody(context)),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading && _blocked.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -87,7 +88,7 @@ class _NikahBlockedScreenState extends ConsumerState<NikahBlockedScreen> {
                 const SizedBox(height: 40),
                 Icon(Icons.block, size: 56, color: Colors.grey.shade300),
                 const SizedBox(height: 12),
-                Text('No blocked profiles.', style: TextStyle(color: Colors.grey.shade600)),
+                Text(l10n.nikahNoBlockedProfilesMessage, style: TextStyle(color: Colors.grey.shade600)),
               ],
             ),
           ),
@@ -104,11 +105,11 @@ class _NikahBlockedScreenState extends ConsumerState<NikahBlockedScreen> {
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
             leading: const CircleAvatar(child: Icon(Icons.person)),
-            title: Text(b.name ?? 'Profile #${b.profileId ?? ''}'),
+            title: Text(b.name ?? l10n.nikahProfileNumberLabel(b.profileId?.toString() ?? '')),
             subtitle: Text([if (b.age != null) '${b.age} yrs', if (b.city != null) b.city!].join(' · ')),
             trailing: OutlinedButton(
               onPressed: () => _unblock(b.blockId),
-              child: const Text('Unblock'),
+              child: Text(l10n.unblockLabel),
             ),
           ),
         );
