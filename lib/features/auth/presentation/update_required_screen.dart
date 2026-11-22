@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 // Reached only from SplashScreen, when appUpdateProvider says the installed
 // build is below the admin-set minimum — deliberately has no back button
@@ -15,11 +16,12 @@ class UpdateRequiredScreen extends StatelessWidget {
 
   Future<void> _openStore(BuildContext context) async {
     if (updateUrl == null) return;
+    final l10n = AppLocalizations.of(context)!;
     final uri = Uri.tryParse(updateUrl!);
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open the Play Store — please update manually from there.')),
+          SnackBar(content: Text(l10n.couldNotOpenPlayStoreMessage)),
         );
       }
     }
@@ -27,6 +29,7 @@ class UpdateRequiredScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -40,14 +43,14 @@ class UpdateRequiredScreen extends StatelessWidget {
                 children: [
                   const Text('⬆️', style: TextStyle(fontSize: 64)),
                   const SizedBox(height: 24),
-                  const Text(
-                    'A New Version is Available',
+                  Text(
+                    l10n.newVersionAvailableTitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Please update Sallaamti to keep using the app — this version is no longer supported.',
+                    l10n.pleaseUpdateMessage,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14, height: 1.4),
                   ),
@@ -61,7 +64,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                         foregroundColor: AppTheme.logoBackground,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Update Now', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      child: Text(l10n.updateNowButton, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                     ),
                   ),
                 ],

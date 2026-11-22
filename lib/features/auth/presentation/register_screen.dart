@@ -43,7 +43,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (_passwordController.text != _confirmController.text) {
       setState(
         () => _fieldErrors = {
-          'password': ['Passwords do not match.'],
+          'password': [l10n.passwordsDoNotMatch],
         },
       );
       return;
