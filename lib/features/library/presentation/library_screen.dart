@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/library_repository.dart';
 import '../domain/library_item.dart';
@@ -116,62 +117,62 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
     final list = ref.watch(libraryListProvider);
     final categories = ref.watch(libraryCategoriesProvider);
     final selectedCategory = ref.watch(libraryCategoryFilterProvider);
 
     return Theme(
       data: ModuleThemes.forModule('library'),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          appBar: AppBar(title: const Text('کتب خانہ')),
-          body: Column(
-            children: [
-              categories.when(
-                data: (cats) => cats.isEmpty
-                    ? const SizedBox.shrink()
-                    : SizedBox(
-                        height: 48,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          children: [
-                            _CategoryChip(label: 'سب', selected: selectedCategory == null, onTap: () => ref.read(libraryCategoryFilterProvider.notifier).state = null),
-                            for (final cat in cats)
-                              _CategoryChip(
-                                label: '${cat.icon} ${cat.labelUr}',
-                                selected: selectedCategory == cat.key,
-                                onTap: () => ref.read(libraryCategoryFilterProvider.notifier).state = cat.key,
-                              ),
-                          ],
-                        ),
+      child: Scaffold(
+        appBar: AppBar(title: Text(l10n.libraryTitle)),
+        body: Column(
+          children: [
+            categories.when(
+              data: (cats) => cats.isEmpty
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      height: 48,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        children: [
+                          _CategoryChip(label: l10n.categoryAllLabel, selected: selectedCategory == null, onTap: () => ref.read(libraryCategoryFilterProvider.notifier).state = null),
+                          for (final cat in cats)
+                            _CategoryChip(
+                              label: '${cat.icon} ${isUrdu ? cat.labelUr : cat.labelEn}',
+                              selected: selectedCategory == cat.key,
+                              onTap: () => ref.read(libraryCategoryFilterProvider.notifier).state = cat.key,
+                            ),
+                        ],
                       ),
-                loading: () => const SizedBox(height: 48),
-                error: (_, _) => const SizedBox(height: 48),
-              ),
-              Expanded(child: _buildBody(context, list)),
-            ],
-          ),
+                    ),
+              loading: () => const SizedBox(height: 48),
+              error: (_, _) => const SizedBox(height: 48),
+            ),
+            Expanded(child: _buildBody(context, list)),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context, LibraryListState list) {
+    final l10n = AppLocalizations.of(context)!;
     if (list.loading && list.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (list.error != null && list.items.isEmpty) {
       return RetryErrorView(
-        message: list.error is ApiException ? (list.error as ApiException).displayMessage : 'کچھ غلط ہو گیا۔',
+        message: list.error is ApiException ? (list.error as ApiException).displayMessage : l10n.errorGeneric,
         onRetry: () => ref.read(libraryListProvider.notifier).refresh(),
       );
     }
 
     if (list.items.isEmpty) {
-      return const EmptyStateView(emoji: '📚', title: 'ابھی کوئی کتاب نہیں', subtitle: 'جلد نئی کتابیں شامل کی جائیں گی۔');
+      return EmptyStateView(emoji: '📚', title: l10n.libraryEmptyTitle, subtitle: l10n.libraryEmptySubtitle);
     }
 
     return RefreshIndicator(
@@ -244,7 +245,7 @@ class _LibraryCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(999)),
-                        child: const Text('نئی ✨', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                        child: Text(AppLocalizations.of(context)!.newBadge, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                       ),
                     ),
                 ],
@@ -258,7 +259,7 @@ class _LibraryCard extends StatelessWidget {
                   Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                   const SizedBox(height: 4),
                   Text(
-                    [if (item.pages != null) '${item.pages} صفحات', if (item.fileSizeHuman != null) item.fileSizeHuman!].join(' · '),
+                    [if (item.pages != null) AppLocalizations.of(context)!.pagesCountLabel(item.pages!), if (item.fileSizeHuman != null) item.fileSizeHuman!].join(' · '),
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
                 ],

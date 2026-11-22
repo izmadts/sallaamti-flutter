@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/library_download_manager.dart';
 import '../data/library_repository.dart';
@@ -31,6 +32,7 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
   }
 
   Future<void> _download(LibraryItem item) async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _downloadProgress = 0);
     try {
       await ref.read(libraryDownloadManagerProvider).download(
@@ -40,9 +42,9 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
             },
           );
       ref.read(libraryRepositoryProvider).event(item.slug, 'download').catchError((_) {});
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ڈاؤن لوڈ مکمل ✅')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.libraryDownloadCompleteMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ڈاؤن لوڈ ناکام — دوبارہ کوشش کریں۔')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.libraryDownloadFailedMessage)));
     } finally {
       if (mounted) setState(() => _downloadProgress = null);
     }
@@ -57,8 +59,9 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
   // web page's own WhatsApp-share button — the file-attachment option
   // below is the deliberate exception for when WhatsApp itself is the goal.
   Future<void> _shareLink(LibraryItem item) async {
+    final l10n = AppLocalizations.of(context)!;
     final url = item.shareUrl ?? 'https://sallaamti.com/library/${item.slug}';
-    await SharePlus.instance.share(ShareParams(text: '${item.title} — مفت پڑھیں: $url'));
+    await SharePlus.instance.share(ShareParams(text: l10n.libraryShareTextMessage(item.title, url)));
     ref.read(libraryRepositoryProvider).event(item.slug, 'share').catchError((_) {});
   }
 
@@ -74,31 +77,30 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final async = ref.watch(libraryItemProvider(widget.slug));
 
     return Theme(
       data: ModuleThemes.forModule('library'),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          appBar: AppBar(title: const Text('')),
-          body: async.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => RetryErrorView(
-              message: e is ApiException ? e.displayMessage : 'کچھ غلط ہو گیا۔',
-              onRetry: () => ref.invalidate(libraryItemProvider(widget.slug)),
-            ),
-            data: (item) {
-              _countViewOnce(item);
-              return _buildBody(context, item);
-            },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('')),
+        body: async.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => RetryErrorView(
+            message: e is ApiException ? e.displayMessage : l10n.errorGeneric,
+            onRetry: () => ref.invalidate(libraryItemProvider(widget.slug)),
           ),
+          data: (item) {
+            _countViewOnce(item);
+            return _buildBody(context, item);
+          },
         ),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context, LibraryItem item) {
+    final l10n = AppLocalizations.of(context)!;
     final seed = ModuleThemes.seedFor('library');
 
     return FutureBuilder<bool>(
@@ -126,7 +128,7 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
               const SizedBox(height: 10),
             ],
             Text(
-              [if (item.pages != null) '${item.pages} صفحات', 'PDF', if (item.fileSizeHuman != null) item.fileSizeHuman!, 'مفت'].join(' · '),
+              [if (item.pages != null) l10n.pagesCountLabel(item.pages!), 'PDF', if (item.fileSizeHuman != null) item.fileSizeHuman!, l10n.freeLabel].join(' · '),
               style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
             ),
             if (item.reviewNote != null) ...[
@@ -137,7 +139,7 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
             FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: seed, minimumSize: const Size.fromHeight(50)),
               icon: const Icon(Icons.menu_book),
-              label: const Text('پڑھیں'),
+              label: Text(l10n.libraryReadButton),
               onPressed: () => context.push('/library/${item.slug}/read', extra: item),
             ),
             const SizedBox(height: 10),
@@ -152,13 +154,13 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.check_circle, color: Colors.green),
-                      label: const Text('ڈاؤن لوڈ ہو چکا ✓'),
+                      label: Text(l10n.libraryDownloadedLabel),
                       onPressed: null,
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    tooltip: 'ڈاؤن لوڈ حذف کریں',
+                    tooltip: l10n.libraryDeleteDownloadTooltip,
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => _deleteDownload(item),
                   ),
@@ -168,7 +170,7 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50), side: BorderSide(color: seed)),
                 icon: const Icon(Icons.download_outlined),
-                label: const Text('ڈاؤن لوڈ'),
+                label: Text(l10n.libraryDownloadButton),
                 onPressed: () => _download(item),
               ),
             const SizedBox(height: 10),
@@ -177,7 +179,7 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.share_outlined),
-                    label: const Text('شیئر'),
+                    label: Text(l10n.shareButton),
                     onPressed: () => _shareLink(item),
                   ),
                 ),
@@ -186,7 +188,7 @@ class _LibraryDetailScreenState extends ConsumerState<LibraryDetailScreen> {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF25D366), side: const BorderSide(color: Color(0xFF25D366))),
                     icon: const Icon(Icons.chat_outlined),
-                    label: const Text('PDF واٹس ایپ'),
+                    label: Text(l10n.libraryPdfWhatsappButton),
                     onPressed: () => _sharePdfFile(item),
                   ),
                 ),

@@ -4,6 +4,7 @@ import 'package:pdfx/pdfx.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/library_download_manager.dart';
 import '../domain/library_item.dart';
 
@@ -57,7 +58,7 @@ class _LibraryReaderScreenState extends ConsumerState<LibraryReaderScreen> {
         _currentPage = lastPage;
       });
     } catch (e) {
-      if (mounted) setState(() => _error = 'کتاب کھل نہیں سکی — دوبارہ کوشش کریں۔');
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.libraryOpenFailedMessage);
     }
   }
 
