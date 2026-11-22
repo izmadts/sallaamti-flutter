@@ -41,7 +41,11 @@ const _dietOptions = {
   'halal_mostly': 'Mostly halal',
   'no_restriction': 'No restriction',
 };
-const _familyTypeOptions = ['Joint Family', 'Nuclear Family', 'Other'];
+// Social-class terms, not household structure (owner, 21 Nov 2026):
+// "joint/nuclear logo ko samajh nahi aati" — members didn't understand the
+// old Joint Family/Nuclear Family wording, so this field now describes
+// family social standing instead. Same change on the web wizard.
+const _familyTypeOptions = ['Elite', 'High Class', 'Middle', 'Lower Middle', 'Other'];
 const _commonLanguages = [
   'Urdu',
   'English',

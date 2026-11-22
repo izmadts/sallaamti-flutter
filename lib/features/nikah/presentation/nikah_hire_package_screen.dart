@@ -35,6 +35,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
   bool _loading = true;
   bool _submitting = false;
   bool _submitted = false;
+  bool _releasing = false;
   String? _error;
 
   @override
@@ -96,6 +97,41 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
       setState(() => _error = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  // Owner (21 Nov 2026): a member who hits "Choose [counselor]" by mistake
+  // landed here (pushReplacement from the picker, so there's no back-stack
+  // to the picker either) with no way to undo it — release() already
+  // existed and worked fine on nikah_payment_screen.dart's "Go Back", but
+  // this screen (the one a mistaken hire actually lands on) never exposed
+  // it. No payment-status check needed here, unlike that screen's
+  // canRelease — reaching this screen at all means nothing's been
+  // submitted yet for this lead.
+  Future<void> _release() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choose a different counselor?'),
+        content: const Text('This removes the counselor you just chose — nothing has been paid yet, so there\'s nothing to undo there.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Go Back')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _releasing = true);
+    try {
+      await ref.read(nikahHireRepositoryProvider).release();
+      if (mounted) context.go('/nikah');
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Something went wrong. Please try again.')));
+    } finally {
+      if (mounted) setState(() => _releasing = false);
     }
   }
 
@@ -168,7 +204,21 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Choose a Package')),
+        appBar: AppBar(
+          title: const Text('Choose a Package'),
+          actions: [
+            TextButton(
+              // Same AppBarTheme.foregroundColor fix as nikah_payment_screen.dart's
+              // own "Go Back" — without it this resolves to ColorScheme.primary,
+              // same rose as the bar background, making the button invisible.
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              onPressed: _releasing ? null : _release,
+              child: _releasing
+                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Go Back'),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator())
