@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/counseling_repository.dart';
 import 'counseling_booking_detail_screen.dart';
+import 'counseling_screen.dart' show counselingCategoryLabel, counselingStatusLabel;
 
 class CounselingBookingsScreen extends ConsumerStatefulWidget {
   const CounselingBookingsScreen({super.key});
@@ -36,32 +38,39 @@ class _CounselingBookingsScreenState extends ConsumerState<CounselingBookingsScr
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      // Called from initState() — looked up after the await above rather
+      // than hoisted, since Localizations isn't registered yet that early.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  (String, Color) _statusDisplay(String status) => switch (status) {
-        'confirmed' => ('Confirmed', Colors.green),
-        'completed' => ('Completed', Colors.blue),
-        'cancelled' => ('Cancelled', Colors.red),
-        'no_show' => ('No Show', Colors.grey),
-        _ => ('Requested', Colors.amber),
-      };
+  (String, Color) _statusDisplay(AppLocalizations l10n, String status) => (
+        counselingStatusLabel(l10n, status),
+        switch (status) {
+          'confirmed' => Colors.green,
+          'completed' => Colors.blue,
+          'cancelled' => Colors.red,
+          'no_show' => Colors.grey,
+          _ => Colors.amber,
+        },
+      );
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('counseling'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Sessions')),
+        appBar: AppBar(title: Text(l10n.mySessionsLabel)),
         body: SafeArea(child: RefreshIndicator(onRefresh: _load, child: _buildBody(context))),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -77,7 +86,7 @@ class _CounselingBookingsScreenState extends ConsumerState<CounselingBookingsScr
         children: [
           Padding(
             padding: const EdgeInsets.all(48),
-            child: Center(child: Text('No sessions booked yet.', style: TextStyle(color: Colors.grey.shade600))),
+            child: Center(child: Text(l10n.noSessionsBookedMessage, style: TextStyle(color: Colors.grey.shade600))),
           ),
         ],
       );
@@ -88,7 +97,7 @@ class _CounselingBookingsScreenState extends ConsumerState<CounselingBookingsScr
       itemCount: _bookings.length,
       itemBuilder: (context, index) {
         final booking = _bookings[index];
-        final (statusLabel, statusColor) = _statusDisplay(booking.status);
+        final (statusLabel, statusColor) = _statusDisplay(l10n, booking.status);
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -97,7 +106,7 @@ class _CounselingBookingsScreenState extends ConsumerState<CounselingBookingsScr
               await Navigator.of(context).push(MaterialPageRoute(builder: (_) => CounselingBookingDetailScreen(bookingId: booking.id)));
               _load();
             },
-            title: Text(booking.subject ?? counselingCategories[booking.category] ?? 'Session', style: const TextStyle(fontWeight: FontWeight.w700)),
+            title: Text(booking.subject ?? (booking.category != null ? counselingCategoryLabel(l10n, booking.category) : l10n.sessionFallbackLabel), style: const TextStyle(fontWeight: FontWeight.w700)),
             subtitle: Text(DateFormat('d MMM yyyy, h:mm a').format(booking.scheduledAt.toLocal())),
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

@@ -4,8 +4,32 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/counseling_repository.dart';
 import 'counseling_bookings_screen.dart';
+
+String counselingCategoryLabel(AppLocalizations l10n, String? value) => {
+      'marital': l10n.counselingCategoryMarital,
+      'parenting': l10n.counselingCategoryParenting,
+      'financial': l10n.counselingCategoryFinancial,
+      'legal': l10n.counselingCategoryLegal,
+      'spiritual': l10n.counselingCategorySpiritual,
+      'other': l10n.counselingCategoryOther,
+    }[value] ?? (value ?? '');
+
+String counselingContactMethodLabel(AppLocalizations l10n, String? value) => {
+      'phone': l10n.counselingContactPhone,
+      'video': l10n.counselingContactVideo,
+      'in_person': l10n.counselingContactInPerson,
+      'chat': l10n.counselingContactChat,
+    }[value] ?? (value ?? '');
+
+String counselingStatusLabel(AppLocalizations l10n, String status) => {
+      'confirmed': l10n.counselingStatusConfirmed,
+      'completed': l10n.counselingStatusCompleted,
+      'cancelled': l10n.counselingStatusCancelled,
+      'no_show': l10n.counselingStatusNoShow,
+    }[status] ?? l10n.counselingStatusRequested;
 
 class CounselingScreen extends ConsumerStatefulWidget {
   const CounselingScreen({super.key});
@@ -73,7 +97,9 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
     } on ApiException catch (e) {
       setState(() => _metaError = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _metaError = 'Something went wrong. Please try again.');
+      // Called from initState() — looked up after the await above rather
+      // than hoisted, since Localizations isn't registered yet that early.
+      if (mounted) setState(() => _metaError = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loadingMeta = false);
     }
@@ -85,6 +111,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
   // the member just states a preferred date/time and a counselor follows
   // up to confirm, same as the "fully booked" fallback below.
   Future<void> _loadSlots() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _loadingSlots = true;
       _selectedSlot = null;
@@ -113,7 +140,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
       setState(() {
         _slots = [];
         _noAvailability = true;
-        _slotsError = 'Could not load times. Please try again.';
+        _slotsError = l10n.counselingLoadSlotsError;
       });
     } finally {
       if (mounted) setState(() => _loadingSlots = false);
@@ -144,31 +171,33 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
     );
     if (date == null || !mounted) return;
     final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-    if (time == null) return;
+    if (time == null || !mounted) return;
 
+    final l10n = AppLocalizations.of(context)!;
     final combined = DateTime(date.year, date.month, date.day, time.hour, time.minute);
     setState(() {
       _preferredAt = combined;
-      _preferredTimeController.text = '${combined.day}/${combined.month}/${combined.year} at ${time.format(context)}';
+      _preferredTimeController.text = l10n.dateAtTimeLabel('${combined.day}/${combined.month}/${combined.year}', time.format(context));
     });
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_category == null || _contactMethod == null) return;
     if (_subjectController.text.trim().isEmpty) {
-      setState(() => _submitError = 'Please enter a subject.');
+      setState(() => _submitError = l10n.counselingSubjectRequiredError);
       return;
     }
     if (_descriptionController.text.trim().length < 20) {
-      setState(() => _submitError = 'Please describe your situation in at least 20 characters.');
+      setState(() => _submitError = l10n.counselingDescriptionTooShortError);
       return;
     }
     if (!_hasOpenSlot && _preferredAt == null) {
-      setState(() => _submitError = 'Please choose a preferred date and time.');
+      setState(() => _submitError = l10n.counselingChoosePreferredTimeError);
       return;
     }
     if (_hasOpenSlot && _selectedSlot == null) {
-      setState(() => _submitError = 'Please choose a time slot.');
+      setState(() => _submitError = l10n.counselingChooseSlotError);
       return;
     }
 
@@ -193,7 +222,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
     } on ApiException catch (e) {
       setState(() => _submitError = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _submitError = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _submitError = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -201,15 +230,16 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('counseling'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Family Counseling'),
+          title: Text(l10n.familyCounselingTitle),
           actions: [
             IconButton(
               icon: const Icon(Icons.history),
-              tooltip: 'My Sessions',
+              tooltip: l10n.mySessionsLabel,
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CounselingBookingsScreen())),
             ),
           ],
@@ -220,6 +250,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loadingMeta) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -233,7 +264,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
             children: [
               Text(_metaError!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _loadMeta, child: const Text('Retry')),
+              ElevatedButton(onPressed: _loadMeta, child: Text(l10n.retry)),
             ],
           ),
         ),
@@ -249,19 +280,19 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
             children: [
               const Text('🤝', style: TextStyle(fontSize: 56)),
               const SizedBox(height: 16),
-              const Text('Session Requested!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
+              Text(l10n.counselingSessionRequestedTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
               const SizedBox(height: 8),
               Text(
-                'Your counselor will confirm shortly, in sha Allah. You can track it under My Sessions.',
+                l10n.counselingSessionRequestedMessage,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const CounselingBookingsScreen())),
-                child: const Text('View My Sessions'),
+                child: Text(l10n.viewMySessionsButton),
               ),
-              TextButton(onPressed: () => context.go('/dashboard'), child: const Text('Back to Dashboard')),
+              TextButton(onPressed: () => context.go('/dashboard'), child: Text(l10n.backToDashboardButton)),
             ],
           ),
         ),
@@ -277,9 +308,9 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
         children: [
           const Text('🤝', style: TextStyle(fontSize: 40)),
           const SizedBox(height: 8),
-          const Text('Book a Counseling Session', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(l10n.bookCounselingSessionTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
           Text(
-            'A free, confidential session with one of our counselors.',
+            l10n.counselingFreeConfidentialMessage,
             style: TextStyle(color: Colors.grey.shade600),
           ),
           const SizedBox(height: 20),
@@ -293,48 +324,48 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
           ],
           DropdownButtonFormField<String>(
             initialValue: _category,
-            decoration: const InputDecoration(labelText: 'What is this about?'),
-            items: meta.categories.map((c) => DropdownMenuItem(value: c, child: Text(counselingCategories[c] ?? c))).toList(),
+            decoration: InputDecoration(labelText: l10n.whatIsThisAboutLabel),
+            items: meta.categories.map((c) => DropdownMenuItem(value: c, child: Text(counselingCategoryLabel(l10n, c)))).toList(),
             onChanged: (v) => setState(() => _category = v),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _subjectController,
-            decoration: const InputDecoration(labelText: 'Subject'),
+            decoration: InputDecoration(labelText: l10n.subjectLabel),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _descriptionController,
-            decoration: const InputDecoration(labelText: 'Tell us a bit more about your situation'),
+            decoration: InputDecoration(labelText: l10n.tellUsMoreHint),
             minLines: 3,
             maxLines: 6,
           ),
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Keep this anonymous from the counselor'),
+            title: Text(l10n.keepAnonymousFromCounselorLabel),
             value: _isAnonymous,
             onChanged: (v) => setState(() => _isAnonymous = v),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('This is urgent'),
+            title: Text(l10n.thisIsUrgentLabel),
             value: _isUrgent,
             onChanged: (v) => setState(() => _isUrgent = v),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             initialValue: _contactMethod,
-            decoration: const InputDecoration(labelText: 'Preferred Contact Method'),
-            items: meta.contactMethods.map((c) => DropdownMenuItem(value: c, child: Text(counselingContactMethods[c] ?? c))).toList(),
+            decoration: InputDecoration(labelText: l10n.preferredContactMethodLabel),
+            items: meta.contactMethods.map((c) => DropdownMenuItem(value: c, child: Text(counselingContactMethodLabel(l10n, c)))).toList(),
             onChanged: (v) => setState(() => _contactMethod = v),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<int?>(
             initialValue: _counselorId,
-            decoration: const InputDecoration(labelText: 'Counselor'),
+            decoration: InputDecoration(labelText: l10n.counselorLabel),
             items: [
-              const DropdownMenuItem(value: null, child: Text('Any Available')),
+              DropdownMenuItem(value: null, child: Text(l10n.anyAvailableLabel)),
               ...meta.counselors.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))),
             ],
             onChanged: (v) {
@@ -349,22 +380,22 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
             },
           ),
           const SizedBox(height: 20),
-          const Text('Choose a Time', style: TextStyle(fontWeight: FontWeight.w700)),
+          Text(l10n.chooseATimeLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           if (_counselorId == null) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.teal.shade50, borderRadius: BorderRadius.circular(12)),
-              child: const Text(
-                'Since any counselor can take this, just tell us what time works for you and a counselor will confirm.',
-                style: TextStyle(color: Colors.teal),
+              child: Text(
+                l10n.counselingAnyCounselorMessage,
+                style: const TextStyle(color: Colors.teal),
               ),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _pickPreferredDateTime,
               icon: const Icon(Icons.access_time, size: 16),
-              label: Text(_preferredTimeController.text.isEmpty ? 'Pick a preferred date & time' : _preferredTimeController.text),
+              label: Text(_preferredTimeController.text.isEmpty ? l10n.pickPreferredDateTimeButton : _preferredTimeController.text),
             ),
           ] else ...[
           OutlinedButton.icon(
@@ -388,7 +419,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
                 OutlinedButton.icon(
                   onPressed: _loadSlots,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Retry'),
+                  label: Text(l10n.retry),
                 ),
               ],
             )
@@ -399,16 +430,16 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
-                  child: const Text(
-                    'No open slots right now — let us know your preferred date and time and a counselor will follow up to confirm.',
-                    style: TextStyle(color: Colors.deepOrange),
+                  child: Text(
+                    l10n.counselingNoOpenSlotsMessage,
+                    style: const TextStyle(color: Colors.deepOrange),
                   ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: _pickPreferredDateTime,
                   icon: const Icon(Icons.access_time, size: 16),
-                  label: Text(_preferredTimeController.text.isEmpty ? 'Pick a preferred date & time' : _preferredTimeController.text),
+                  label: Text(_preferredTimeController.text.isEmpty ? l10n.pickPreferredDateTimeButton : _preferredTimeController.text),
                 ),
               ],
             )
@@ -437,23 +468,23 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
             ),
             if (_slots.any((s) => s.booked)) ...[
               const SizedBox(height: 8),
-              Text('Greyed-out times are already booked.', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              Text(l10n.counselingGreyedOutBookedMessage, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             ],
             if (!_hasOpenSlot) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
-                child: const Text(
-                  'This counselor is fully booked on this day — pick another date, or tell us your preferred date and time and a counselor will follow up to confirm.',
-                  style: TextStyle(color: Colors.deepOrange),
+                child: Text(
+                  l10n.counselingFullyBookedMessage,
+                  style: const TextStyle(color: Colors.deepOrange),
                 ),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: _pickPreferredDateTime,
                 icon: const Icon(Icons.access_time, size: 16),
-                label: Text(_preferredTimeController.text.isEmpty ? 'Pick a preferred date & time' : _preferredTimeController.text),
+                label: Text(_preferredTimeController.text.isEmpty ? l10n.pickPreferredDateTimeButton : _preferredTimeController.text),
               ),
             ],
           ],
@@ -463,7 +494,7 @@ class _CounselingScreenState extends ConsumerState<CounselingScreen> {
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Request Session'),
+                : Text(l10n.requestSessionButton),
           ),
         ],
       ),

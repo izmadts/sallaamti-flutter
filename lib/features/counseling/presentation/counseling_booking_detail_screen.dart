@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/counseling_repository.dart';
+import 'counseling_screen.dart' show counselingCategoryLabel, counselingContactMethodLabel, counselingStatusLabel;
 
 class CounselingBookingDetailScreen extends ConsumerStatefulWidget {
   final int bookingId;
@@ -51,13 +53,16 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      // Called from initState() — looked up after the await above rather
+      // than hoisted, since Localizations isn't registered yet that early.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _sendReply() async {
+    final l10n = AppLocalizations.of(context)!;
     final message = _replyController.text.trim();
     if (message.isEmpty || _sendingReply) return;
 
@@ -67,21 +72,22 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
       _replyController.clear();
       await _load();
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not send — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.counselingSendReplyError)));
     } finally {
       if (mounted) setState(() => _sendingReply = false);
     }
   }
 
   Future<void> _cancel() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel Session?'),
-        content: const Text('Are you sure you want to cancel this counseling session?'),
+        title: Text(l10n.cancelSessionTitle),
+        content: Text(l10n.cancelSessionConfirmMessage),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Yes, Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.noLabel)),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.yesCancelLabel)),
         ],
       ),
     );
@@ -92,13 +98,14 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
       final updated = await ref.read(counselingRepositoryProvider).cancel(widget.bookingId);
       setState(() => _booking = updated);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not cancel — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.counselingCancelError)));
     } finally {
       if (mounted) setState(() => _cancelling = false);
     }
   }
 
   Future<void> _submitRating() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _rating = true);
     try {
       final updated = await ref.read(counselingRepositoryProvider).rate(
@@ -108,7 +115,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
           );
       setState(() => _booking = updated);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not submit rating — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.counselingRatingError)));
     } finally {
       if (mounted) setState(() => _rating = false);
     }
@@ -116,22 +123,24 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('counseling'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Session Details')),
+        appBar: AppBar(title: Text(l10n.sessionDetailsTitle)),
         body: SafeArea(child: _buildBody(context)),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null || _booking == null) {
-      return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error ?? 'Not found', textAlign: TextAlign.center)));
+      return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error ?? l10n.notFoundLabel, textAlign: TextAlign.center)));
     }
 
     final booking = _booking!;
@@ -154,20 +163,20 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _row('Category', counselingCategories[booking.category] ?? booking.category ?? '—'),
-                _row('When', DateFormat('d MMM yyyy, h:mm a').format(booking.scheduledAt.toLocal())),
-                _row('Contact', counselingContactMethods[booking.contactMethod] ?? booking.contactMethod ?? '—'),
-                _row('Counselor', booking.counselor?.name ?? 'Not yet assigned'),
-                if ((booking.meetingLink ?? '').isNotEmpty) _row('Meeting Link', booking.meetingLink!),
-                if (booking.isUrgent) _row('Urgent', 'Yes'),
-                if (booking.isAnonymous) _row('Anonymous', 'Yes'),
+                _row(l10n.categoryLabel, booking.category != null ? counselingCategoryLabel(l10n, booking.category) : '—'),
+                _row(l10n.whenLabel, DateFormat('d MMM yyyy, h:mm a').format(booking.scheduledAt.toLocal())),
+                _row(l10n.contactLabel, booking.contactMethod != null ? counselingContactMethodLabel(l10n, booking.contactMethod) : '—'),
+                _row(l10n.counselorLabel, booking.counselor?.name ?? l10n.notYetAssignedLabel),
+                if ((booking.meetingLink ?? '').isNotEmpty) _row(l10n.meetingLinkLabel, booking.meetingLink!),
+                if (booking.isUrgent) _row(l10n.urgentLabel, l10n.yesLabel),
+                if (booking.isAnonymous) _row(l10n.anonymousLabel, l10n.yesLabel),
               ],
             ),
           ),
         ),
         const SizedBox(height: 12),
         if ((booking.description ?? '').isNotEmpty) ...[
-          const Text('Description', style: TextStyle(fontWeight: FontWeight.w700)),
+          Text(l10n.descriptionLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Text(booking.description!),
           const SizedBox(height: 16),
@@ -176,7 +185,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
-            child: Text('Cancelled: ${booking.cancellationReason}', style: TextStyle(color: Colors.red.shade700)),
+            child: Text(l10n.cancelledReasonLabel(booking.cancellationReason ?? ''), style: TextStyle(color: Colors.red.shade700)),
           ),
           const SizedBox(height: 16),
         ],
@@ -186,7 +195,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
             style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
             child: _cancelling
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Cancel Session'),
+                : Text(l10n.cancelSessionButton),
           ),
           const SizedBox(height: 20),
         ],
@@ -197,7 +206,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('How was your session?', style: TextStyle(fontWeight: FontWeight.w700)),
+                  Text(l10n.howWasYourSessionLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -214,7 +223,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
                   ),
                   TextFormField(
                     controller: _feedbackController,
-                    decoration: const InputDecoration(hintText: 'Any feedback? (optional)'),
+                    decoration: InputDecoration(hintText: l10n.anyFeedbackHint),
                     minLines: 2,
                     maxLines: 4,
                   ),
@@ -223,7 +232,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
                     onPressed: _rating ? null : _submitRating,
                     child: _rating
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Submit Rating'),
+                        : Text(l10n.submitRatingButton),
                   ),
                 ],
               ),
@@ -233,7 +242,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
         ] else if (booking.memberRating != null) ...[
           Row(
             children: [
-              const Text('Your rating: ', style: TextStyle(fontWeight: FontWeight.w600)),
+              Text(l10n.yourRatingLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
               ...List.generate(5, (i) => Icon(i < booking.memberRating! ? Icons.star : Icons.star_border, size: 18, color: Colors.amber.shade600)),
             ],
           ),
@@ -241,12 +250,12 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
         ],
         const Divider(),
         const SizedBox(height: 8),
-        const Text('Messages', style: TextStyle(fontWeight: FontWeight.w700)),
+        Text(l10n.messagesLabel, style: const TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: 10),
         if (booking.responses.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text('No messages yet.', style: TextStyle(color: Colors.grey.shade600)),
+            child: Text(l10n.noMessagesYetMessage, style: TextStyle(color: Colors.grey.shade600)),
           )
         else
           for (final response in booking.responses)
@@ -261,7 +270,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(response.responder?.name ?? 'Someone', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                      Text(response.responder?.name ?? l10n.someoneFallback, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
                       const SizedBox(height: 4),
                       Text(response.message),
                       const SizedBox(height: 4),
@@ -279,7 +288,7 @@ class _CounselingBookingDetailScreenState extends ConsumerState<CounselingBookin
             Expanded(
               child: TextField(
                 controller: _replyController,
-                decoration: const InputDecoration(hintText: 'Write a message…', isDense: true),
+                decoration: InputDecoration(hintText: l10n.writeAMessageHint, isDense: true),
                 minLines: 1,
                 maxLines: 4,
               ),
@@ -317,12 +326,14 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      'confirmed' => ('Confirmed', Colors.green),
-      'completed' => ('Completed', Colors.blue),
-      'cancelled' => ('Cancelled', Colors.red),
-      'no_show' => ('No Show', Colors.grey),
-      _ => ('Requested', Colors.amber),
+    final l10n = AppLocalizations.of(context)!;
+    final label = counselingStatusLabel(l10n, status);
+    final color = switch (status) {
+      'confirmed' => Colors.green,
+      'completed' => Colors.blue,
+      'cancelled' => Colors.red,
+      'no_show' => Colors.grey,
+      _ => Colors.amber,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
