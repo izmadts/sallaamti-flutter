@@ -163,7 +163,7 @@ class _QuranLiveSubscribeScreenState extends ConsumerState<QuranLiveSubscribeScr
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => setState(() => _future = ref.read(quranLiveRepositoryProvider).subscription(widget.admissionId)),
-                    child: Text(l10n.retryLabel),
+                    child: Text(l10n.retry),
                   ),
                 ],
               ),

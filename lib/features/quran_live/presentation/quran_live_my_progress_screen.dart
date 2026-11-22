@@ -3,7 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/quran_live_repository.dart';
+
+String _assessmentTypeLabel(AppLocalizations l10n, String type) => {
+      'weekly_quiz': l10n.assessmentTypeWeeklyQuiz,
+      'monthly_test': l10n.assessmentTypeMonthlyTest,
+      'quarterly_exam': l10n.assessmentTypeQuarterlyExam,
+      'annual_exam': l10n.assessmentTypeAnnualExam,
+    }[type] ?? type;
+
+String _ratingLabel(AppLocalizations l10n, String rating) => {
+      'excellent': l10n.ratingExcellent,
+      'good': l10n.ratingGood,
+      'average': l10n.ratingAverage,
+      'needs_improvement': l10n.ratingNeedsImprovement,
+    }[rating] ?? rating;
 
 class QuranLiveMyProgressScreen extends ConsumerStatefulWidget {
   final int? childId;
@@ -37,10 +52,11 @@ class _QuranLiveMyProgressScreenState extends ConsumerState<QuranLiveMyProgressS
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Progress')),
+        appBar: AppBar(title: Text(l10n.quranLiveMyProgressTitle)),
         body: SafeArea(
           child: FutureBuilder<QuranLiveProgress>(
             future: _future,
@@ -49,7 +65,7 @@ class _QuranLiveMyProgressScreenState extends ConsumerState<QuranLiveMyProgressS
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : 'Something went wrong.';
+                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : l10n.quranLiveSomethingWentWrong;
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -58,7 +74,7 @@ class _QuranLiveMyProgressScreenState extends ConsumerState<QuranLiveMyProgressS
                       children: [
                         Text(message, textAlign: TextAlign.center),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _reload, child: const Text('Retry')),
+                        ElevatedButton(onPressed: _reload, child: Text(l10n.retry)),
                       ],
                     ),
                   ),
@@ -89,10 +105,10 @@ class _QuranLiveMyProgressScreenState extends ConsumerState<QuranLiveMyProgressS
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Assessment Results', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                            Text(l10n.quranLiveAssessmentResultsTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                             const SizedBox(height: 10),
                             if (data.assessments.isEmpty)
-                              Text('No assessments recorded yet.', style: TextStyle(color: Colors.grey.shade400))
+                              Text(l10n.quranLiveNoAssessmentsMessage, style: TextStyle(color: Colors.grey.shade400))
                             else
                               ...data.assessments.map((a) => Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 6),
@@ -104,7 +120,7 @@ class _QuranLiveMyProgressScreenState extends ConsumerState<QuranLiveMyProgressS
                                           children: [
                                             Expanded(
                                               child: Text.rich(TextSpan(children: [
-                                                TextSpan(text: _titleCase(a.type.replaceAll('_', ' ')), style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                TextSpan(text: _assessmentTypeLabel(l10n, a.type), style: const TextStyle(fontWeight: FontWeight.w600)),
                                                 TextSpan(text: '  ${a.assessmentDate}', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
                                               ])),
                                             ),
@@ -144,10 +160,10 @@ class _QuranLiveMyProgressScreenState extends ConsumerState<QuranLiveMyProgressS
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Monthly Progress Reports', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                            Text(l10n.quranLiveMonthlyProgressReportsTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                             const SizedBox(height: 10),
                             if (data.progressReports.isEmpty)
-                              Text('No progress reports yet.', style: TextStyle(color: Colors.grey.shade400))
+                              Text(l10n.quranLiveNoProgressReportsMessage, style: TextStyle(color: Colors.grey.shade400))
                             else
                               ...data.progressReports.map((r) => _ProgressReportCard(report: r)),
                           ],
@@ -163,8 +179,6 @@ class _QuranLiveMyProgressScreenState extends ConsumerState<QuranLiveMyProgressS
       ),
     );
   }
-
-  String _titleCase(String s) => s.isEmpty ? s : s.split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
 }
 
 const _ratingColors = {
@@ -185,6 +199,7 @@ class _ProgressReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = _ratingColors[report.overallRating] ?? Colors.red.shade700;
     final bg = _ratingBg[report.overallRating] ?? Colors.red.shade50;
 
@@ -198,19 +213,19 @@ class _ProgressReportCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_monthLabel(report.month), style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(_monthLabel(l10n, report.month), style: const TextStyle(fontWeight: FontWeight.w700)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-                child: Text(report.overallRating.replaceAll('_', ' '), style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+                child: Text(_ratingLabel(l10n, report.overallRating), style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text('Attendance: ${report.classesAttended}/${report.classesTotal} classes', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-          if ((report.quranProgress ?? '').isNotEmpty) Text('Quran Progress: ${report.quranProgress}', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-          if ((report.behavior ?? '').isNotEmpty) Text('Behavior: ${report.behavior}', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-          if ((report.homeworkCompletion ?? '').isNotEmpty) Text('Homework: ${report.homeworkCompletion}', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          Text(l10n.quranLiveAttendanceLabel(report.classesAttended, report.classesTotal), style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          if ((report.quranProgress ?? '').isNotEmpty) Text(l10n.quranLiveProgressLabel(report.quranProgress!), style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          if ((report.behavior ?? '').isNotEmpty) Text(l10n.quranLiveBehaviorLabel(report.behavior!), style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+          if ((report.homeworkCompletion ?? '').isNotEmpty) Text(l10n.quranLiveHomeworkLabel(report.homeworkCompletion!), style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
           if ((report.teacherComments ?? '').isNotEmpty) ...[
             const SizedBox(height: 6),
             Text('"${report.teacherComments}"', style: TextStyle(color: Colors.grey.shade500, fontStyle: FontStyle.italic, fontSize: 12.5)),
@@ -220,10 +235,14 @@ class _ProgressReportCard extends StatelessWidget {
     );
   }
 
-  String _monthLabel(String ym) {
+  String _monthLabel(AppLocalizations l10n, String ym) {
     final parts = ym.split('-');
     if (parts.length != 2) return ym;
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      l10n.monthAbbrevJan, l10n.monthAbbrevFeb, l10n.monthAbbrevMar, l10n.monthAbbrevApr,
+      l10n.monthAbbrevMay, l10n.monthAbbrevJun, l10n.monthAbbrevJul, l10n.monthAbbrevAug,
+      l10n.monthAbbrevSep, l10n.monthAbbrevOct, l10n.monthAbbrevNov, l10n.monthAbbrevDec,
+    ];
     final monthIndex = int.tryParse(parts[1]);
     if (monthIndex == null || monthIndex < 1 || monthIndex > 12) return ym;
     return '${months[monthIndex - 1]} ${parts[0]}';

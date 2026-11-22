@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/quran_live_repository.dart';
 
 class QuranLiveMyClassScreen extends ConsumerStatefulWidget {
@@ -44,6 +45,7 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
   }
 
   Future<void> _sendMessage(int admissionId) async {
+    final l10n = AppLocalizations.of(context)!;
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
@@ -55,25 +57,35 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not send your message. Please try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.quranLiveSendMessageError)));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
 
   Future<void> _joinClass(String url) async {
+    final l10n = AppLocalizations.of(context)!;
     final uri = Uri.tryParse(url);
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open the class link.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.quranLiveOpenClassLinkError)));
     }
   }
 
+  String _admissionStatusLabel(AppLocalizations l10n, String status) => {
+        'pending': l10n.quranAdmissionStatusPending,
+        'rejected': l10n.quranAdmissionStatusRejected,
+        'assigned': l10n.quranAdmissionStatusAssigned,
+        'completed': l10n.quranAdmissionStatusCompleted,
+        'dropped': l10n.quranAdmissionStatusDropped,
+      }[status] ?? status;
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Quran Class')),
+        appBar: AppBar(title: Text(l10n.quranLiveMyClassTitle)),
         body: SafeArea(
           child: FutureBuilder<QuranLiveMyClass>(
             future: _future,
@@ -82,7 +94,7 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : 'Something went wrong.';
+                final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : l10n.quranLiveSomethingWentWrong;
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -91,7 +103,7 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                       children: [
                         Text(message, textAlign: TextAlign.center),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _reload, child: const Text('Retry')),
+                        ElevatedButton(onPressed: _reload, child: Text(l10n.retry)),
                       ],
                     ),
                   ),
@@ -113,17 +125,17 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                data.admissions.isEmpty ? 'You haven\'t applied for a Quran Live Class yet.' : 'None of your applications have been assigned to a class group yet.',
+                                data.admissions.isEmpty ? l10n.quranLiveNoAdmissionYetMessage : l10n.quranLiveNoGroupAssignedMessage,
                                 style: const TextStyle(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Our admin will review your admission and assign you to a suitable group shortly. You\'ll receive a notification once assigned.',
+                                l10n.quranLiveAdmissionReviewMessage,
                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                               ),
                               if (data.admissions.isNotEmpty) ...[
                                 const SizedBox(height: 14),
-                                const Text('Your Applications:', style: TextStyle(fontWeight: FontWeight.w700)),
+                                Text(l10n.quranLiveYourApplicationsTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 8),
                                 ...data.admissions.map((a) => Container(
                                       margin: const EdgeInsets.only(bottom: 8),
@@ -132,7 +144,7 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text('${a.studentName} — ${a.courseTitle} — ${_titleCase(a.status)}', style: const TextStyle(fontSize: 13)),
+                                          Text('${a.studentName} — ${a.courseTitle} — ${_admissionStatusLabel(l10n, a.status)}', style: const TextStyle(fontSize: 13)),
                                           if (a.status == 'rejected' && (a.adminNotes ?? '').isNotEmpty) ...[
                                             const SizedBox(height: 4),
                                             Text(a.adminNotes!, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
@@ -142,7 +154,7 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                                     )),
                               ],
                               const SizedBox(height: 8),
-                              ElevatedButton(onPressed: () => context.push('/quran-live'), child: const Text('Apply for a Course')),
+                              ElevatedButton(onPressed: () => context.push('/quran-live'), child: Text(l10n.quranLiveApplyForCourseButton)),
                             ],
                           ),
                         ),
@@ -176,13 +188,13 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('${current.studentName}\'s Class Details', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                            Text(l10n.quranLiveStudentClassDetailsTitle(current.studentName), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                             const SizedBox(height: 10),
-                            _detailRow('Course', current.courseTitle),
-                            _detailRow('Group', current.groupName),
-                            _detailRow('Teacher', current.teacher?.name ?? 'TBA'),
-                            _detailRow('Schedule', '${current.classDays.join(', ')} — ${current.classTime ?? ''}'),
-                            if (current.timezone != null) _detailRow('Timezone', current.timezone!),
+                            _detailRow(l10n.courseLabel, current.courseTitle),
+                            _detailRow(l10n.groupLabel, current.groupName),
+                            _detailRow(l10n.teacherLabel, current.teacher?.name ?? l10n.quranLiveTeacherTba),
+                            _detailRow(l10n.scheduleLabel, '${current.classDays.join(', ')} — ${current.classTime ?? ''}'),
+                            if (current.timezone != null) _detailRow(l10n.timezoneLabel, current.timezone!),
                           ],
                         ),
                       ),
@@ -194,9 +206,9 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Monthly Fee', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                            Text(l10n.quranLiveMonthlyFeeTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                             const SizedBox(height: 10),
-                            _buildSubscriptionStatus(current),
+                            _buildSubscriptionStatus(l10n, current),
                           ],
                         ),
                       ),
@@ -208,12 +220,12 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('💬 Messages with ${current.teacher?.name ?? 'your teacher'}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                            Text(l10n.quranLiveMessagesWithLabel(current.teacher?.name ?? l10n.quranLiveYourTeacherFallback), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                             const SizedBox(height: 12),
                             if (data.messages.isEmpty)
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12),
-                                child: Center(child: Text('No messages yet — say hello!', style: TextStyle(color: Colors.grey.shade400))),
+                                child: Center(child: Text(l10n.quranLiveNoMessagesYetMessage, style: TextStyle(color: Colors.grey.shade400))),
                               )
                             else
                               Column(
@@ -225,7 +237,7 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                                 Expanded(
                                   child: TextField(
                                     controller: _messageController,
-                                    decoration: const InputDecoration(hintText: 'Message the teacher...'),
+                                    decoration: InputDecoration(hintText: l10n.quranLiveMessageHint),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -245,7 +257,7 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
                     Center(
                       child: TextButton(
                         onPressed: () => context.push('/quran-live/my-progress?child=${current.id}'),
-                        child: const Text('📊 View My Progress & Assessments →'),
+                        child: Text(l10n.quranLiveViewProgressButton),
                       ),
                     ),
                   ],
@@ -258,22 +270,22 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
     );
   }
 
-  Widget _buildSubscriptionStatus(QuranLiveGroupStudentInfo current) {
+  Widget _buildSubscriptionStatus(AppLocalizations l10n, QuranLiveGroupStudentInfo current) {
     final subscription = current.subscription;
     if (subscription == null) {
-      return Text('No payment submitted for this month.', style: TextStyle(color: Colors.red.shade600));
+      return Text(l10n.quranLiveNoPaymentSubmittedMessage, style: TextStyle(color: Colors.red.shade600));
     }
     if (subscription.paymentStatus == 'submitted') {
-      return const Text('⏳ Payment under review.', style: TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600));
+      return Text(l10n.quranLivePaymentUnderReviewBadge, style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600));
     }
     if (subscription.paymentStatus == 'rejected') {
-      return Text('❌ Rejected: ${subscription.paymentRejectionReason ?? ''}', style: const TextStyle(color: Colors.red));
+      return Text(l10n.quranLivePaymentRejectedLabel(subscription.paymentRejectionReason ?? ''), style: const TextStyle(color: Colors.red));
     }
     if (subscription.paymentStatus == 'confirmed') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('✅ Paid & Confirmed', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
+          Text(l10n.quranLivePaidConfirmedMessage, style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           if (current.todaysLink != null)
             Container(
@@ -282,23 +294,26 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('📡 Today\'s Class is Live!', style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w700)),
+                  Text(l10n.quranLiveClassLiveNowTitle, style: const TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w700)),
                   const SizedBox(height: 10),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
                     onPressed: () => _joinClass(current.todaysLink!.joinUrl),
                     icon: const Icon(Icons.videocam),
-                    label: const Text('Join Class Now'),
+                    label: Text(l10n.quranLiveJoinClassButton),
                   ),
                   if (current.todaysLink!.passcode != null) ...[
                     const SizedBox(height: 8),
-                    Text('Passcode: ${current.todaysLink!.passcode}', style: TextStyle(color: Colors.grey.shade600)),
+                    Text(l10n.quranLivePasscodeLabel(current.todaysLink!.passcode!), style: TextStyle(color: Colors.grey.shade600)),
                   ],
                 ],
               ),
             )
           else
-            Text('Today\'s link hasn\'t been posted yet. Check back closer to class time${current.classTime != null ? ' (${current.classTime})' : ''}.', style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5)),
+            Text(
+              current.classTime != null ? l10n.quranLiveLinkNotPostedWithTimeMessage(current.classTime!) : l10n.quranLiveLinkNotPostedNoTimeMessage,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5),
+            ),
         ],
       );
     }
@@ -317,8 +332,6 @@ class _QuranLiveMyClassScreenState extends ConsumerState<QuranLiveMyClassScreen>
       ),
     );
   }
-
-  String _titleCase(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }
 
 class _MessageBubble extends StatelessWidget {
@@ -327,6 +340,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Align(
       alignment: message.isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -341,7 +355,7 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              message.isMine ? 'You' : (message.senderName ?? 'Teacher'),
+              message.isMine ? l10n.youLabel : (message.senderName ?? l10n.teacherLabel),
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: message.isMine ? Colors.white70 : Colors.grey.shade500),
             ),
             const SizedBox(height: 2),

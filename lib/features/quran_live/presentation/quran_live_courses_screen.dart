@@ -69,7 +69,7 @@ class _QuranLiveCoursesScreenState extends ConsumerState<QuranLiveCoursesScreen>
                       children: [
                         Text(message, textAlign: TextAlign.center),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _reload, child: Text(l10n.retryLabel)),
+                        ElevatedButton(onPressed: _reload, child: Text(l10n.retry)),
                       ],
                     ),
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+
 // The two states every list/detail screen needs besides its content: a
 // failure the member can retry from, and a friendly "nothing here yet".
 // Shared rather than per-feature so the app doesn't accumulate a slightly
@@ -21,7 +23,7 @@ class RetryErrorView extends StatelessWidget {
           children: [
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+            ElevatedButton(onPressed: onRetry, child: Text(AppLocalizations.of(context)!.retry)),
           ],
         ),
       ),
