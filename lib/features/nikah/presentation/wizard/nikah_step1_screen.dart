@@ -12,11 +12,15 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/async_searchable_picker.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
+import '../../domain/nikah_labels.dart';
 import '../../domain/nikah_profile.dart';
 import '../../state/nikah_controller.dart';
 
 // Heights 4'0" to 7'0", matching the height-range filter the browse
-// endpoint already supports on the backend.
+// endpoint already supports on the backend. The stored value is the raw
+// measurement string itself (or the literal "Other") — translating only
+// ever happens at display time (see the 'Other' DropdownMenuItem below),
+// never to this list, since these values round-trip straight to the API.
 List<String> _heightOptions() {
   final options = <String>[];
   for (var ft = 4; ft <= 7; ft++) {
@@ -29,14 +33,6 @@ List<String> _heightOptions() {
   return options;
 }
 
-const maritalStatusOptions = {
-  'never_married': 'Never Married',
-  'divorced': 'Divorced',
-  'widowed': 'Widowed',
-  'married': 'Married',
-  'separated': 'Separated',
-};
-
 // Matches ValidatesNikahProfile's required_if list on the backend — these
 // three fields were missing from the mobile wizard entirely (never shown,
 // never sent), so a divorced/widowed/separated/married member could finish
@@ -44,31 +40,6 @@ const maritalStatusOptions = {
 // underscore) — nikah_home_screen.dart reuses it to decide whether these
 // fields count toward "is this profile actually finished".
 const needsFamilyDetailsStatuses = ['divorced', 'widowed', 'separated', 'married'];
-
-const _livingSituationOptions = {
-  'alone': 'Alone',
-  'with_mother': 'With Mother',
-  'with_father': 'With Father',
-  'with_maternal_grandparents': 'With Maternal Grandparents',
-  'with_paternal_grandparents': 'With Paternal Grandparents',
-  'with_children': 'With My Children',
-  'other': 'Other',
-};
-
-// Matches web's nikah/edit.blade.php $guardianRelOptions exactly, plus
-// "Other" as an app-only escape hatch for anything not in that list.
-const _guardianRelationOptions = [
-  'Self',
-  'Father',
-  'Mother',
-  'Brother',
-  'Sister',
-  'Uncle',
-  'Aunt',
-  'Grandfather',
-  'Grandmother',
-  'Other',
-];
 
 class NikahStep1Screen extends ConsumerStatefulWidget {
   const NikahStep1Screen({super.key});
@@ -144,7 +115,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     }
 
     if (profile.guardianRelation != null && profile.guardianRelation!.isNotEmpty) {
-      if (_guardianRelationOptions.contains(profile.guardianRelation)) {
+      if (guardianRelationValues.contains(profile.guardianRelation)) {
         _guardianRelation = profile.guardianRelation;
       } else {
         _guardianRelation = 'Other';
@@ -165,13 +136,14 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   }
 
   Future<void> _pickDateOfBirth() async {
+    final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _dateOfBirth ?? DateTime(now.year - 25, now.month, now.day),
       firstDate: DateTime(now.year - 100),
       lastDate: DateTime(now.year - 18, now.month, now.day),
-      helpText: 'Date of Birth',
+      helpText: l10n.dateOfBirthLabel,
     );
     if (picked != null) setState(() => _dateOfBirth = picked);
   }
@@ -184,11 +156,11 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
       return;
     }
     if (_dateOfBirth == null) {
-      setState(() => _error = 'Please select your date of birth');
+      setState(() => _error = l10n.nikahPleaseSelectDob);
       return;
     }
     if (_height == null || _height!.trim().isEmpty) {
-      setState(() => _error = 'Please select your height');
+      setState(() => _error = l10n.nikahPleaseSelectHeight);
       return;
     }
     // State is only genuinely optional when the picked country has no
@@ -196,20 +168,20 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     // "required unless the field can't apply" treatment.
     final hasStates = (ref.read(countryStatesProvider).valueOrNull?.statesFor(_country) ?? []).isNotEmpty;
     if (hasStates && (_state == null || _state!.trim().isEmpty)) {
-      setState(() => _error = 'Please select your state / province');
+      setState(() => _error = l10n.nikahPleaseSelectState);
       return;
     }
     if (_city == null || _city!.trim().isEmpty) {
-      setState(() => _error = 'Please select your city');
+      setState(() => _error = l10n.nikahPleaseSelectCity);
       return;
     }
     final needsFamilyDetails = needsFamilyDetailsStatuses.contains(_maritalStatus);
     if (needsFamilyDetails && _hasChildren == null) {
-      setState(() => _error = 'Please let us know if you have children');
+      setState(() => _error = l10n.nikahPleaseAnswerChildren);
       return;
     }
     if (needsFamilyDetails && (_livingSituation == null || _livingSituation!.isEmpty)) {
-      setState(() => _error = 'Please let us know who you currently live with');
+      setState(() => _error = l10n.nikahPleaseAnswerLivingSituation);
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -254,11 +226,12 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   }
 
   Future<void> _pickCountry(List<String> allCountries) async {
+    final l10n = AppLocalizations.of(context)!;
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (context) => _SearchablePicker(
-        title: 'Select Country',
+        title: l10n.nikahSelectCountryTitle,
         options: allCountries,
         initialValue: _country,
       ),
@@ -277,11 +250,12 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
   // AsyncSearchablePicker (shared/widgets, also used by Account > Edit
   // Profile's own City field).
   Future<void> _pickCity() async {
+    final l10n = AppLocalizations.of(context)!;
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (context) => AsyncSearchablePicker(
-        title: 'Select City',
+        title: l10n.nikahSelectCityTitle,
         search: (query) => ref
             .read(citySearchRepositoryProvider)
             .search(query: query, country: _country, state: _state),
@@ -309,10 +283,10 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
     }
 
     return StepWizardScaffold(
-      title: 'Basic Info',
+      title: l10n.nikahBasicInfoTitle,
       stepIndex: 0,
       totalSteps: 5,
-      nextLabel: 'Next: Deen & Lifestyle',
+      nextLabel: l10n.nikahNextDeenLifestyle,
       onNext: _next,
       busy: _busy,
       errorText: _error,
@@ -322,9 +296,9 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Tell us about yourself',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            Text(
+              l10n.nikahTellUsAboutYourself,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 16),
             _GenderPicker(
@@ -336,11 +310,11 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
               onTap: _pickDateOfBirth,
               child: InputDecorator(
                 decoration: InputDecoration(
-                  label: requiredLabel('Date of Birth'),
+                  label: requiredLabel(l10n.dateOfBirthLabel),
                 ),
                 child: Text(
                   _dateOfBirth == null
-                      ? 'Select date'
+                      ? l10n.nikahSelectDateLabel
                       : '${_dateOfBirth!.year.toString().padLeft(4, '0')}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}',
                 ),
               ),
@@ -348,9 +322,9 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _height,
-              decoration: InputDecoration(label: requiredLabel('Height')),
+              decoration: InputDecoration(label: requiredLabel(l10n.heightLabel)),
               items: _heightOptions()
-                  .map((h) => DropdownMenuItem(value: h, child: Text(h)))
+                  .map((h) => DropdownMenuItem(value: h, child: Text(h == 'Other' ? l10n.otherLabel : h)))
                   .toList(),
               onChanged: (v) => setState(() => _height = v),
             ),
@@ -358,16 +332,16 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _heightOtherController,
-                decoration: const InputDecoration(labelText: 'Enter height'),
+                decoration: InputDecoration(labelText: l10n.nikahEnterHeightLabel),
               ),
             ],
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _maritalStatus,
               decoration: InputDecoration(
-                label: requiredLabel('Marital Status'),
+                label: requiredLabel(l10n.maritalStatusLabel),
               ),
-              items: maritalStatusOptions.entries
+              items: maritalStatusOptions(l10n).entries
                   .map(
                     (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
                   )
@@ -385,10 +359,10 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<bool>(
                 initialValue: _hasChildren,
-                decoration: InputDecoration(label: requiredLabel('Do You Have Children?')),
-                items: const [
-                  DropdownMenuItem(value: true, child: Text('Yes')),
-                  DropdownMenuItem(value: false, child: Text('No')),
+                decoration: InputDecoration(label: requiredLabel(l10n.nikahHaveChildrenLabel)),
+                items: [
+                  DropdownMenuItem(value: true, child: Text(l10n.yesLabel)),
+                  DropdownMenuItem(value: false, child: Text(l10n.noLabel)),
                 ],
                 onChanged: (v) => setState(() => _hasChildren = v),
               ),
@@ -396,25 +370,25 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _childrenCountController,
-                  decoration: const InputDecoration(labelText: 'Number of Children'),
+                  decoration: InputDecoration(labelText: l10n.nikahNumberOfChildrenLabel),
                   keyboardType: TextInputType.number,
                 ),
               ],
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _livingSituation,
-                decoration: InputDecoration(label: requiredLabel('Who Do You Currently Live With?')),
+                decoration: InputDecoration(label: requiredLabel(l10n.nikahLivingSituationLabel)),
                 isExpanded: true,
-                items: _livingSituationOptions.entries
+                items: livingSituationOptions(l10n).entries
                     .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
                     .toList(),
                 onChanged: (v) => setState(() => _livingSituation = v),
               ),
             ],
             const SizedBox(height: 24),
-            const Text(
-              'Location',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Text(
+              l10n.nikahLocationSectionTitle,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             countryStatesAsync.when(
@@ -425,7 +399,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
                     onTap: () => _pickCountry(cs.countries),
                     child: InputDecorator(
                       decoration: InputDecoration(
-                        label: requiredLabel('Country'),
+                        label: requiredLabel(l10n.countryLabel),
                       ),
                       child: Text(_country),
                     ),
@@ -435,7 +409,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
                     DropdownButtonFormField<String>(
                       initialValue: _state,
                       decoration: InputDecoration(
-                        label: requiredLabel('State / Province'),
+                        label: requiredLabel(l10n.stateProvinceLabel),
                       ),
                       items: cs
                           .statesFor(_country)
@@ -453,7 +427,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
               ),
               error: (error, stack) => TextFormField(
                 initialValue: _country,
-                decoration: InputDecoration(label: requiredLabel('Country')),
+                decoration: InputDecoration(label: requiredLabel(l10n.countryLabel)),
                 onChanged: (v) => _country = v,
               ),
             ),
@@ -461,32 +435,32 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
             InkWell(
               onTap: _pickCity,
               child: InputDecorator(
-                decoration: InputDecoration(label: requiredLabel('City')),
-                child: Text(_city ?? 'Select city'),
+                decoration: InputDecoration(label: requiredLabel(l10n.cityLabel)),
+                child: Text(_city ?? l10n.nikahSelectCityPlaceholder),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _addressController,
-              decoration: const InputDecoration(
-                labelText: 'Address (optional)',
+              decoration: InputDecoration(
+                labelText: l10n.nikahAddressOptionalLabel,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Guardian (Wali)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Text(
+              l10n.nikahGuardianWaliTitle,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
-              'Required for Nikah profiles — your guardian is your point of contact for serious matches.',
+              l10n.nikahGuardianRequiredMessage,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _guardianNameController,
               decoration: InputDecoration(
-                label: requiredLabel('Guardian Name (Sarparast Family)'),
+                label: requiredLabel(l10n.nikahGuardianNameLabel),
               ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? l10n.fieldRequired : null,
@@ -496,7 +470,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
               controller: _guardianContactController,
               decoration: InputDecoration(
                 label: requiredLabel(
-                  'Guardian Phone Number (Sarparast Family)',
+                  l10n.nikahGuardianPhoneLabel,
                 ),
               ),
               keyboardType: TextInputType.phone,
@@ -506,9 +480,9 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _guardianRelation,
-              decoration: const InputDecoration(labelText: 'Relation'),
-              items: _guardianRelationOptions
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+              decoration: InputDecoration(labelText: l10n.relationLabel),
+              items: guardianRelationValues
+                  .map((r) => DropdownMenuItem(value: r, child: Text(guardianRelationLabel(l10n, r))))
                   .toList(),
               onChanged: (v) => setState(() => _guardianRelation = v),
             ),
@@ -516,7 +490,7 @@ class _NikahStep1ScreenState extends ConsumerState<NikahStep1Screen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _guardianRelationOtherController,
-                decoration: const InputDecoration(labelText: 'Enter relation'),
+                decoration: InputDecoration(labelText: l10n.nikahEnterRelationLabel),
               ),
             ],
           ],
@@ -533,11 +507,12 @@ class _GenderPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: _GenderTile(
-            label: 'Male',
+            label: l10n.genderMale,
             emoji: '👨',
             selected: value == 'male',
             onTap: () => onChanged('male'),
@@ -546,7 +521,7 @@ class _GenderPicker extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _GenderTile(
-            label: 'Female',
+            label: l10n.genderFemale,
             emoji: '👩',
             selected: value == 'female',
             onTap: () => onChanged('female'),
@@ -665,9 +640,9 @@ class _SearchablePickerState extends State<_SearchablePicker> {
               child: TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
-                decoration: const InputDecoration(
-                  hintText: 'Search…',
-                  prefixIcon: Icon(Icons.search),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.searchEllipsisHint,
+                  prefixIcon: const Icon(Icons.search),
                 ),
                 autofocus: true,
               ),

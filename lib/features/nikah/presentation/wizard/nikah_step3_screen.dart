@@ -7,9 +7,9 @@ import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/required_label.dart';
 import '../../../../shared/widgets/step_wizard_scaffold.dart';
+import '../../domain/nikah_labels.dart';
 import '../../domain/nikah_profile.dart';
 import '../../state/nikah_controller.dart';
-import 'nikah_step1_screen.dart' show maritalStatusOptions;
 import 'nikah_step2_screen.dart' show sectOptions, educationLevels;
 
 class NikahStep3Screen extends ConsumerStatefulWidget {
@@ -81,7 +81,7 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
 
     if (_expectationsController.text.trim().isEmpty) {
       setState(
-        () => _error = 'Please tell us what you\'re looking for in a partner',
+        () => _error = l10n.nikahLookingForPartnerRequired,
       );
       return;
     }
@@ -116,6 +116,7 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (!_prefilled) {
       ref.listen(nikahControllerProvider, (previous, next) {
         if (next.profile != null && !_prefilled) {
@@ -125,10 +126,10 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
     }
 
     return StepWizardScaffold(
-      title: 'About & Preferences',
+      title: l10n.nikahAboutPreferencesTitle,
       stepIndex: 2,
       totalSteps: 5,
-      nextLabel: 'Next: Photos & Verification',
+      nextLabel: l10n.nikahNextPhotosVerification,
       onNext: _next,
       busy: _busy,
       theme: ModuleThemes.forModule('nikah'),
@@ -137,32 +138,32 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'In your own words',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            l10n.nikahInYourOwnWordsTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _aboutController,
-            decoration: const InputDecoration(labelText: 'About yourself'),
+            decoration: InputDecoration(labelText: l10n.nikahAboutYourselfLabel),
             maxLines: 4,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _expectationsController,
             decoration: InputDecoration(
-              label: requiredLabel('What are you looking for?'),
+              label: requiredLabel(l10n.nikahLookingForLabel),
             ),
             maxLines: 4,
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Partner Preferences',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            l10n.nikahPartnerPreferencesTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
-            'Used to show your match % with other profiles.',
+            l10n.nikahPartnerPreferencesSubtitle,
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 12),
@@ -171,7 +172,7 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
               Expanded(
                 child: TextFormField(
                   controller: _prefMinAgeController,
-                  decoration: const InputDecoration(labelText: 'Min age'),
+                  decoration: InputDecoration(labelText: l10n.prefMinAgeLabel),
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -179,7 +180,7 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
               Expanded(
                 child: TextFormField(
                   controller: _prefMaxAgeController,
-                  decoration: const InputDecoration(labelText: 'Max age'),
+                  decoration: InputDecoration(labelText: l10n.prefMaxAgeLabel),
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -188,14 +189,14 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _prefCityController,
-            decoration: const InputDecoration(labelText: 'Preferred city'),
+            decoration: InputDecoration(labelText: l10n.nikahPreferredCityLabel),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _prefSect,
-            decoration: const InputDecoration(labelText: 'Preferred sect'),
+            decoration: InputDecoration(labelText: l10n.nikahPreferredSectLabel),
             items: [
-              const DropdownMenuItem(value: null, child: Text('Any')),
+              DropdownMenuItem(value: null, child: Text(l10n.genderAny)),
               ...sectOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))),
             ],
             onChanged: (v) => setState(() => _prefSect = v),
@@ -203,10 +204,10 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _prefEducation,
-            decoration: const InputDecoration(labelText: 'Preferred education'),
+            decoration: InputDecoration(labelText: l10n.nikahPreferredEducationLabel),
             isExpanded: true,
             items: [
-              const DropdownMenuItem(value: null, child: Text('Any')),
+              DropdownMenuItem(value: null, child: Text(l10n.genderAny)),
               ...educationLevels.map((e) => DropdownMenuItem(value: e, child: Text(e))),
             ],
             onChanged: (v) => setState(() => _prefEducation = v),
@@ -214,12 +215,12 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _prefMaritalStatus,
-            decoration: const InputDecoration(
-              labelText: 'Preferred marital status',
+            decoration: InputDecoration(
+              labelText: l10n.nikahPreferredMaritalStatusLabel,
             ),
             items: [
-              const DropdownMenuItem(value: null, child: Text('Any')),
-              ...maritalStatusOptions.entries.map(
+              DropdownMenuItem(value: null, child: Text(l10n.genderAny)),
+              ...maritalStatusOptions(l10n).entries.map(
                 (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
               ),
             ],
@@ -228,14 +229,14 @@ class _NikahStep3ScreenState extends ConsumerState<NikahStep3Screen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _prefIncomeController,
-            decoration: const InputDecoration(
-              labelText: 'Preferred income / business worth',
+            decoration: InputDecoration(
+              labelText: l10n.nikahPreferredIncomeLabel,
             ),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _prefOtherController,
-            decoration: const InputDecoration(labelText: 'Other preferences'),
+            decoration: InputDecoration(labelText: l10n.nikahOtherPreferencesLabel),
             maxLines: 3,
           ),
         ],
