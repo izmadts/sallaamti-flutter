@@ -15,6 +15,15 @@ const _tierBadges = {
   'regional_nikah_coordinator': '⭐',
 };
 
+// Tier names used to just be the raw enum key with underscores swapped for
+// spaces (e.g. "certified nikah counselor") — never actually translated.
+Map<String, String> _tierLabels(AppLocalizations l10n) => {
+      'nikah_counselor': l10n.nikahTierNikahCounselor,
+      'certified_nikah_counselor': l10n.nikahTierCertifiedNikahCounselor,
+      'senior_nikah_counselor': l10n.nikahTierSeniorNikahCounselor,
+      'regional_nikah_coordinator': l10n.nikahTierRegionalNikahCoordinator,
+    };
+
 // Entry point is nikah_home_screen.dart's optional "Bring in a Nikah
 // Counselor" tile — never forced. Picking someone here creates (or
 // reassigns) a Lead behind the scenes; from that point on this member is
@@ -75,7 +84,7 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
       final repo = ref.read(nikahHireRepositoryProvider);
       await repo.hire(counselor.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${counselor.name} has been notified and will take it from here.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nikahCounselorHiredMessage(counselor.name))));
         context.pushReplacement('/nikah/counselor/package');
       }
     } on ApiException catch (e) {
@@ -89,16 +98,17 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Choose a Nikah Counselor'),
+          title: Text(l10n.nikahChooseCounselorAppBarTitle),
           actions: [
             Stack(
               alignment: Alignment.center,
               children: [
-                IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
+                IconButton(icon: const Icon(Icons.tune), tooltip: l10n.filterTooltip, onPressed: _openFilters),
                 if (_filters.isNotEmpty)
                   Positioned(
                     right: 8,
@@ -119,6 +129,7 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -138,8 +149,8 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
             padding: const EdgeInsets.all(32),
             child: Text(
               _filters.isNotEmpty
-                  ? 'No counselors match that filter — try widening your search.'
-                  : 'No counselors are available right now — please check back soon.',
+                  ? l10n.nikahNoCounselorsFilterMessage
+                  : l10n.nikahNoCounselorsAvailableMessage,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600),
             ),
@@ -152,7 +163,7 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'A Nikah Counselor will personally search for matches, review proposals with you, and guide you through the process.',
+          l10n.nikahCounselorIntroMessage,
           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
         const SizedBox(height: 16),
@@ -178,13 +189,13 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(counselor.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                            Text('${_tierBadges[counselor.tier] ?? '🥉'} ${(counselor.tier ?? 'nikah_counselor').replaceAll('_', ' ')}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                            Text('${_tierBadges[counselor.tier] ?? '🥉'} ${_tierLabels(l10n)[counselor.tier] ?? l10n.nikahTierNikahCounselor}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                             if ((counselor.city ?? '').isNotEmpty || (counselor.gender ?? '').isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
                                 [
                                   if ((counselor.city ?? '').isNotEmpty) '📍 ${counselor.city}',
-                                  if (counselor.gender == 'female') '♀ Female' else if (counselor.gender == 'male') '♂ Male',
+                                  if (counselor.gender == 'female') '♀ ${l10n.genderFemale}' else if (counselor.gender == 'male') '♂ ${l10n.genderMale}',
                                 ].join('   '),
                                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                               ),
@@ -201,7 +212,7 @@ class _NikahCounselorPickerScreenState extends ConsumerState<NikahCounselorPicke
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _hiring ? null : () => _hire(counselor),
-                    child: Text('Choose ${counselor.name}'),
+                    child: Text(l10n.nikahChooseCounselorButton(counselor.name)),
                   ),
                 ],
               ),
@@ -246,6 +257,7 @@ class _CounselorFilterSheetState extends State<_CounselorFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -257,20 +269,20 @@ class _CounselorFilterSheetState extends State<_CounselorFilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Filter Counselors', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(l10n.nikahFilterCounselorsTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           TextFormField(
             controller: _cityController,
-            decoration: const InputDecoration(labelText: 'City'),
+            decoration: InputDecoration(labelText: l10n.cityLabel),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _gender,
-            decoration: const InputDecoration(labelText: 'Gender'),
-            items: const [
-              DropdownMenuItem(value: null, child: Text('Any')),
-              DropdownMenuItem(value: 'male', child: Text('Male')),
-              DropdownMenuItem(value: 'female', child: Text('Female')),
+            decoration: InputDecoration(labelText: l10n.genderLabel),
+            items: [
+              DropdownMenuItem(value: null, child: Text(l10n.genderAny)),
+              DropdownMenuItem(value: 'male', child: Text(l10n.genderMale)),
+              DropdownMenuItem(value: 'female', child: Text(l10n.genderFemale)),
             ],
             onChanged: (v) => setState(() => _gender = v),
           ),
@@ -280,12 +292,12 @@ class _CounselorFilterSheetState extends State<_CounselorFilterSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(<String, String>{}),
-                  child: const Text('Clear'),
+                  child: Text(l10n.clearLabel),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(onPressed: _apply, child: const Text('Apply')),
+                child: ElevatedButton(onPressed: _apply, child: Text(l10n.applyLabel)),
               ),
             ],
           ),
