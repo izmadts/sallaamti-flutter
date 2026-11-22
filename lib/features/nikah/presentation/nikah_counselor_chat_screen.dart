@@ -107,7 +107,7 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
             reason: result['reason']!,
             details: result['details'],
           );
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted. Our team will review it shortly.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nikahReportSubmittedMessage)));
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
@@ -117,14 +117,15 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final primary = ModuleThemes.seedFor('nikah');
 
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Your Counselor'),
-          actions: [IconButton(icon: const Icon(Icons.flag_outlined), tooltip: 'Report', onPressed: _report)],
+          title: Text(l10n.nikahYourCounselorTitle),
+          actions: [IconButton(icon: const Icon(Icons.flag_outlined), tooltip: l10n.reportLabel, onPressed: _report)],
         ),
         body: Column(
           children: [
@@ -138,7 +139,7 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
                     Expanded(
                       child: TextField(
                         controller: _textController,
-                        decoration: const InputDecoration(hintText: 'Type a message…', isDense: true),
+                        decoration: InputDecoration(hintText: l10n.nikahTypeMessageHint, isDense: true),
                         minLines: 1,
                         maxLines: 4,
                         textInputAction: TextInputAction.send,
@@ -176,7 +177,7 @@ class _NikahCounselorChatScreenState extends ConsumerState<NikahCounselorChatScr
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'Say assalamu alaikum to your counselor 👋',
+            AppLocalizations.of(context)!.nikahSayAssalamuAlaikumToCounselor,
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600),
           ),
@@ -240,6 +241,8 @@ class _ReportConversationDialog extends StatefulWidget {
 }
 
 class _ReportConversationDialogState extends State<_ReportConversationDialog> {
+  // Stored value is the literal English string itself (no separate code) —
+  // only the DISPLAYED label is translated, via the map in build() below.
   static const _reasons = ['Inappropriate message', 'Fake matchmaker', 'Money request', 'Other'];
   String? _reason;
   final _detailsController = TextEditingController();
@@ -252,8 +255,15 @@ class _ReportConversationDialogState extends State<_ReportConversationDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final reasonLabels = {
+      'Inappropriate message': l10n.reportReasonInappropriateMessage,
+      'Fake matchmaker': l10n.reportReasonFakeMatchmaker,
+      'Money request': l10n.reportReasonMoneyRequest,
+      'Other': l10n.reportReasonOther,
+    };
     return AlertDialog(
-      title: const Text('Report this conversation'),
+      title: Text(l10n.nikahReportConversationTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -261,14 +271,14 @@ class _ReportConversationDialogState extends State<_ReportConversationDialog> {
           ..._reasons.map((r) => RadioListTile<String>(
                 value: r,
                 groupValue: _reason,
-                title: Text(r),
+                title: Text(reasonLabels[r]!),
                 dense: true,
                 onChanged: (v) => setState(() => _reason = v),
               )),
           const SizedBox(height: 8),
           TextField(
             controller: _detailsController,
-            decoration: const InputDecoration(labelText: 'Details (optional)'),
+            decoration: InputDecoration(labelText: l10n.nikahDetailsOptionalLabel),
             minLines: 2,
             maxLines: 4,
           ),
@@ -280,7 +290,7 @@ class _ReportConversationDialogState extends State<_ReportConversationDialog> {
           onPressed: _reason == null
               ? null
               : () => Navigator.of(context).pop({'reason': _reason!, 'details': _detailsController.text.trim()}),
-          child: const Text('Submit Report'),
+          child: Text(l10n.nikahSubmitReportButton),
         ),
       ],
     );
