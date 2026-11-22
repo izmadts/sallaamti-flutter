@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/state_views.dart';
@@ -35,16 +36,18 @@ class _BlogArticleDetailScreenState extends ConsumerState<BlogArticleDetailScree
   void _reload() => setState(_load);
 
   Future<void> _openUrl(String url) async {
+    final l10n = AppLocalizations.of(context)!;
     final uri = Uri.tryParse(url);
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open that link.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.learningOpenLinkError)));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: FutureBuilder<BlogArticle>(
@@ -54,12 +57,12 @@ class _BlogArticleDetailScreenState extends ConsumerState<BlogArticleDetailScree
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Sallaamti Blog'),
+              title: Text(l10n.sallaamtiBlogTitle),
               actions: [
                 if (article?.shareUrl != null)
                   IconButton(
                     icon: const Icon(Icons.share_outlined),
-                    tooltip: 'Share',
+                    tooltip: l10n.shareButton,
                     onPressed: () => SharePlus.instance.share(
                       ShareParams(text: '${article!.title}\n\n${article.shareUrl}'),
                     ),
@@ -77,7 +80,7 @@ class _BlogArticleDetailScreenState extends ConsumerState<BlogArticleDetailScree
                     return RetryErrorView(
                       message: snapshot.error is ApiException
                           ? (snapshot.error as ApiException).displayMessage
-                          : 'Something went wrong.',
+                          : l10n.errorGeneric,
                       onRetry: _reload,
                     );
                   }

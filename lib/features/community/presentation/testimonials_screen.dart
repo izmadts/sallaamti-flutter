@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/community_repository.dart';
@@ -52,17 +53,18 @@ class _TestimonialsScreenState extends ConsumerState<TestimonialsScreen>
   }
 
   Future<void> _confirmDelete(MemberTestimonial testimonial) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete this testimonial?'),
-        content: const Text('This can\'t be undone.'),
+        title: Text(l10n.deleteTestimonialTitle),
+        content: Text(l10n.actionCannotBeUndoneMessage),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancelButton)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.deleteButton),
           ),
         ],
       ),
@@ -73,36 +75,37 @@ class _TestimonialsScreenState extends ConsumerState<TestimonialsScreen>
     try {
       await ref.read(communityRepositoryProvider).deleteTestimonial(testimonial.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Success story deleted.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.testimonialDeletedMessage)));
       _reload();
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not delete it. Please try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.communityDeleteTestimonialError)));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Success Stories'),
+          title: Text(l10n.successStoriesTitle),
           bottom: TabBar(
             controller: _tabs,
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
-            tabs: const [Tab(text: 'Community'), Tab(text: 'Mine')],
+            tabs: [Tab(text: l10n.communityTabLabel), Tab(text: l10n.mineTabLabel)],
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _compose(),
           icon: const Icon(Icons.rate_review_outlined),
-          label: const Text('Share Yours'),
+          label: Text(l10n.shareYoursButton),
         ),
         body: SafeArea(
           child: TabBarView(
@@ -111,15 +114,15 @@ class _TestimonialsScreenState extends ConsumerState<TestimonialsScreen>
               _TestimonialList(
                 future: _allFuture,
                 onRetry: _reload,
-                emptyTitle: 'No success stories yet',
-                emptySubtitle: 'Be the first to share how Sallaamti has helped you.',
+                emptyTitle: l10n.communityNoSuccessStoriesTitle,
+                emptySubtitle: l10n.communityNoSuccessStoriesSubtitle,
                 showStatus: false,
               ),
               _TestimonialList(
                 future: _mineFuture,
                 onRetry: _reload,
-                emptyTitle: 'You haven\'t shared one yet',
-                emptySubtitle: 'Tell us about your experience — it appears publicly once our team reviews it.',
+                emptyTitle: l10n.communityNoOwnSuccessStoryTitle,
+                emptySubtitle: l10n.communityNoOwnSuccessStorySubtitle,
                 showStatus: true,
                 onEdit: (t) => _compose(existing: t),
                 onDelete: _confirmDelete,
@@ -153,6 +156,7 @@ class _TestimonialList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<Paged<MemberTestimonial>>(
       future: future,
       builder: (context, snapshot) {
@@ -164,7 +168,7 @@ class _TestimonialList extends StatelessWidget {
           return RetryErrorView(
             message: snapshot.error is ApiException
                 ? (snapshot.error as ApiException).displayMessage
-                : 'Something went wrong.',
+                : l10n.errorGeneric,
             onRetry: onRetry,
           );
         }
@@ -252,6 +256,7 @@ class _TestimonialCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -307,13 +312,13 @@ class _TestimonialCard extends StatelessWidget {
                   IconButton(
                     icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade600),
                     onPressed: onEdit,
-                    tooltip: 'Edit',
+                    tooltip: l10n.editButton,
                   ),
                 if (onDelete != null)
                   IconButton(
                     icon: Icon(Icons.delete_outline, size: 18, color: Colors.red.shade400),
                     onPressed: onDelete,
-                    tooltip: 'Delete',
+                    tooltip: l10n.deleteButton,
                   ),
               ],
             ),

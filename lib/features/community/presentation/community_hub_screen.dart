@@ -3,43 +3,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 class CommunityHubScreen extends ConsumerWidget {
   const CommunityHubScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Community')),
+        appBar: AppBar(title: Text(l10n.communityTitle)),
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const Text(
-                'Share and be heard',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              Text(
+                l10n.communityShareAndBeHeardTitle,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
               Text(
-                'Stories from people we\'ve helped — share yours if Sallaamti has made a difference for you.',
+                l10n.communityShareAndBeHeardSubtitle,
                 style: TextStyle(color: Colors.grey.shade600, height: 1.4),
               ),
               const SizedBox(height: 22),
               _HubCard(
                 emoji: '✍️',
                 color: const Color(0xFF0D6B6B),
-                title: 'Sallaamti Blog',
-                subtitle: 'Read our official articles and community posts — or write and submit your own.',
+                title: l10n.sallaamtiBlogTitle,
+                subtitle: l10n.communityBlogCardSubtitle,
                 onTap: () => context.push('/community/posts'),
               ),
               const SizedBox(height: 14),
               _HubCard(
                 emoji: '💬',
                 color: const Color(0xFFB8962E),
-                title: 'Success Stories',
-                subtitle: 'Stories from the community. Share yours if Sallaamti has helped you.',
+                title: l10n.successStoriesTitle,
+                subtitle: l10n.successStoriesSubtitle,
                 onTap: () => context.push('/community/testimonials'),
               ),
             ],

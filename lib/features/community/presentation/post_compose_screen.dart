@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/state/locale_controller.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/image_pick_field.dart';
@@ -67,6 +68,7 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -79,7 +81,7 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
       // in — no separate picker, so there's nothing for them to get wrong.
       final language = ref.read(localeControllerProvider)?.languageCode ?? 'en';
 
-      final (_, message) = await ref.read(communityRepositoryProvider).savePost(
+      final (post, _) = await ref.read(communityRepositoryProvider).savePost(
             id: widget.existing?.id,
             title: _title.text.trim(),
             body: _body.text.trim(),
@@ -89,12 +91,15 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
           );
 
       if (!mounted) return;
+      final message = _isEditing
+          ? l10n.communityPostUpdatedMessage
+          : (post.isPublished ? l10n.communityPostLiveMessage : l10n.communityPostSubmittedMessage);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       context.pop(true);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not save your post. Please try again.');
+      if (mounted) setState(() => _error = l10n.communitySavePostError);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -102,10 +107,11 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
-        appBar: AppBar(title: Text(_isEditing ? 'Edit Post' : 'Write a Post')),
+        appBar: AppBar(title: Text(_isEditing ? l10n.editPostTitle : l10n.writeAPostButton)),
         body: SafeArea(
           child: Form(
             key: _formKey,
@@ -128,7 +134,7 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'This post is live. Editing it sends it back for review before it\'s public again.',
+                            l10n.postLiveEditNoticeMessage,
                             style: TextStyle(fontSize: 12.5, color: Colors.amber.shade900),
                           ),
                         ),
@@ -139,47 +145,47 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
                   ErrorBanner(message: _error!),
                   const SizedBox(height: 16),
                 ],
-                requiredLabel('Title'),
+                requiredLabel(l10n.titleLabel),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _title,
-                  decoration: const InputDecoration(hintText: 'What\'s your post about?'),
+                  decoration: InputDecoration(hintText: l10n.postAboutHint),
                   maxLength: 150,
                   textCapitalization: TextCapitalization.sentences,
-                  validator: (v) => (v ?? '').trim().isEmpty ? 'Give your post a title.' : null,
+                  validator: (v) => (v ?? '').trim().isEmpty ? l10n.giveYourPostATitleError : null,
                 ),
                 const SizedBox(height: 8),
-                requiredLabel('Your post'),
+                requiredLabel(l10n.yourPostLabel),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _body,
-                  decoration: const InputDecoration(
-                    hintText: 'Write freely — line breaks are kept as you type them.',
+                  decoration: InputDecoration(
+                    hintText: l10n.writeFreelyHint,
                     alignLabelWithHint: true,
                   ),
                   maxLines: 12,
                   minLines: 8,
                   maxLength: 20000,
                   textCapitalization: TextCapitalization.sentences,
-                  validator: (v) => (v ?? '').trim().isEmpty ? 'Write something before submitting.' : null,
+                  validator: (v) => (v ?? '').trim().isEmpty ? l10n.writeSomethingError : null,
                 ),
                 const SizedBox(height: 8),
-                Text('Short summary (optional)', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                Text(l10n.shortSummaryOptionalLabel, style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _excerpt,
-                  decoration: const InputDecoration(
-                    hintText: 'Shown in the list. Left blank, we\'ll use your opening lines.',
+                  decoration: InputDecoration(
+                    hintText: l10n.shortSummaryHint,
                   ),
                   maxLength: 300,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 8),
-                Text('Cover image (optional)', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                Text(l10n.coverImageOptionalLabel, style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
                 const SizedBox(height: 8),
                 ImagePickField(
-                  label: 'Add a cover image',
+                  label: l10n.addACoverImageLabel,
                   file: _coverImage,
                   alreadyUploaded: _isEditing && widget.existing!.coverImageUrl != null,
                   onTap: _pickCover,
@@ -189,11 +195,11 @@ class _PostComposeScreenState extends ConsumerState<PostComposeScreen> {
                   onPressed: _submitting ? null : _submit,
                   child: _submitting
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(_isEditing ? 'Save Changes' : 'Submit for Review'),
+                      : Text(_isEditing ? l10n.saveChangesButton : l10n.submitForReviewButton),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Posts appear publicly once our team has reviewed them.',
+                  l10n.postsReviewNoticeMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),

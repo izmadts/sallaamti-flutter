@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/community_repository.dart';
@@ -74,17 +75,18 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Sallaamti Blog'),
+          title: Text(l10n.sallaamtiBlogTitle),
           bottom: TabBar(
             controller: _tabs,
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
-            tabs: const [Tab(text: 'Sallaamti Blog'), Tab(text: 'Community'), Tab(text: 'My Posts')],
+            tabs: [Tab(text: l10n.sallaamtiBlogTitle), Tab(text: l10n.communityTabLabel), Tab(text: l10n.myPostsTabLabel)],
           ),
         ),
         // Writing only applies to the member-authored tabs (Community/Mine)
@@ -96,7 +98,7 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
               : FloatingActionButton.extended(
                   onPressed: () => _compose(),
                   icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Write a Post'),
+                  label: Text(l10n.writeAPostButton),
                 ),
         ),
         body: SafeArea(
@@ -108,7 +110,7 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Search articles by keyword…',
+                    hintText: l10n.searchArticlesHint,
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: Colors.grey.shade100,
@@ -133,8 +135,8 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
                       future: _allFuture,
                       onRetry: _reload,
                       emptyEmoji: '✍️',
-                      emptyTitle: 'No posts found',
-                      emptySubtitle: 'Try a different keyword, or be the first to share something with the community.',
+                      emptyTitle: l10n.communityNoPostsTitle,
+                      emptySubtitle: l10n.communityNoPostsSubtitle,
                       showStatus: false,
                       onTap: (post) => context.push('/community/posts/${post.id}'),
                     ),
@@ -142,8 +144,8 @@ class _PostsScreenState extends ConsumerState<PostsScreen> with SingleTickerProv
                       future: _mineFuture,
                       onRetry: _reload,
                       emptyEmoji: '📝',
-                      emptyTitle: 'You haven\'t written anything yet',
-                      emptySubtitle: 'Write a post and it\'ll appear publicly once our team reviews it.',
+                      emptyTitle: l10n.communityNoOwnPostsTitle,
+                      emptySubtitle: l10n.communityNoOwnPostsSubtitle,
                       showStatus: true,
                       onTap: (post) => context.push('/community/posts/${post.id}'),
                       onEdit: (post) => _compose(post: post),
@@ -167,6 +169,7 @@ class _BlogList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<Paged<BlogArticle>>(
       future: future,
       builder: (context, snapshot) {
@@ -178,7 +181,7 @@ class _BlogList extends StatelessWidget {
           return RetryErrorView(
             message: snapshot.error is ApiException
                 ? (snapshot.error as ApiException).displayMessage
-                : 'Something went wrong.',
+                : l10n.errorGeneric,
             onRetry: onRetry,
           );
         }
@@ -191,10 +194,10 @@ class _BlogList extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
             children: [
               if (articles.isEmpty)
-                const EmptyStateView(
+                EmptyStateView(
                   emoji: '📰',
-                  title: 'No articles found',
-                  subtitle: 'Try a different keyword, or check back soon for new articles.',
+                  title: l10n.communityNoArticlesTitle,
+                  subtitle: l10n.communityNoArticlesSubtitle,
                 )
               else
                 for (final article in articles)
@@ -328,6 +331,7 @@ class _PostList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<Paged<MemberPost>>(
       future: future,
       builder: (context, snapshot) {
@@ -339,7 +343,7 @@ class _PostList extends StatelessWidget {
           return RetryErrorView(
             message: snapshot.error is ApiException
                 ? (snapshot.error as ApiException).displayMessage
-                : 'Something went wrong.',
+                : l10n.errorGeneric,
             onRetry: onRetry,
           );
         }
@@ -378,10 +382,11 @@ class PostStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final (label, color) = switch (status) {
-      'published' => ('Live', Colors.green),
-      'rejected' => ('Not approved', Colors.red),
-      _ => ('Awaiting review', Colors.amber),
+      'published' => (l10n.postStatusLive, Colors.green),
+      'rejected' => (l10n.notApprovedLabel, Colors.red),
+      _ => (l10n.postStatusAwaitingReview, Colors.amber),
     };
 
     return Container(

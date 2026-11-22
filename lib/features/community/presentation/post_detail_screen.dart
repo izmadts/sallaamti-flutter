@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/state_views.dart';
@@ -37,26 +38,28 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   void _reload() => setState(_load);
 
   Future<void> _openUrl(String url) async {
+    final l10n = AppLocalizations.of(context)!;
     final uri = Uri.tryParse(url);
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open that link.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.learningOpenLinkError)));
       }
     }
   }
 
   Future<void> _confirmDelete(MemberPost post) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete this post?'),
-        content: const Text('This can\'t be undone — the post and its cover image are removed for good.'),
+        title: Text(l10n.deletePostTitle),
+        content: Text(l10n.deletePostMessage),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancelButton)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.deleteButton),
           ),
         ],
       ),
@@ -68,7 +71,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     try {
       await ref.read(communityRepositoryProvider).deletePost(post.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.postDeletedMessage)));
       context.pop();
     } on ApiException catch (e) {
       if (mounted) {
@@ -78,13 +81,14 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     } catch (_) {
       if (mounted) {
         setState(() => _deleting = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not delete the post.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.communityDeletePostError)));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final viewerId = ref.watch(authControllerProvider).user?.id;
 
     return Theme(
@@ -97,12 +101,12 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Blog Post'),
+              title: Text(l10n.blogPostTitle),
               actions: [
                 if (post?.shareUrl != null)
                   IconButton(
                     icon: const Icon(Icons.share_outlined),
-                    tooltip: 'Share',
+                    tooltip: l10n.shareButton,
                     onPressed: () => SharePlus.instance.share(
                       ShareParams(text: '${post!.title}\n\n${post.shareUrl}'),
                     ),
@@ -117,9 +121,9 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                         await _confirmDelete(post);
                       }
                     },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'edit', child: Text(l10n.editButton)),
+                      PopupMenuItem(value: 'delete', child: Text(l10n.deleteButton)),
                     ],
                   ),
               ],
@@ -135,7 +139,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                     return RetryErrorView(
                       message: snapshot.error is ApiException
                           ? (snapshot.error as ApiException).displayMessage
-                          : 'Something went wrong.',
+                          : l10n.errorGeneric,
                       onRetry: _reload,
                     );
                   }

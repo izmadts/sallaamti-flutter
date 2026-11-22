@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/image_pick_field.dart';
@@ -65,6 +66,7 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -73,7 +75,7 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
     });
 
     try {
-      final (_, message) = await ref.read(communityRepositoryProvider).saveTestimonial(
+      await ref.read(communityRepositoryProvider).saveTestimonial(
             id: widget.existing?.id,
             name: _name.text.trim(),
             location: _location.text.trim().isEmpty ? null : _location.text.trim(),
@@ -83,12 +85,14 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
           );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_isEditing ? l10n.communityTestimonialUpdatedMessage : l10n.communityTestimonialSubmittedMessage)),
+      );
       context.pop(true);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not save your testimonial. Please try again.');
+      if (mounted) setState(() => _error = l10n.communitySaveTestimonialError);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -96,10 +100,11 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('community'),
       child: Scaffold(
-        appBar: AppBar(title: Text(_isEditing ? 'Edit Success Story' : 'Share Your Story')),
+        appBar: AppBar(title: Text(_isEditing ? l10n.editSuccessStoryTitle : l10n.shareYourStoryTitle)),
         body: SafeArea(
           child: Form(
             key: _formKey,
@@ -122,7 +127,7 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'This is live on the website. Editing it sends it back for review first.',
+                            l10n.testimonialLiveEditNoticeMessage,
                             style: TextStyle(fontSize: 12.5, color: Colors.amber.shade900),
                           ),
                         ),
@@ -133,26 +138,26 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
                   ErrorBanner(message: _error!),
                   const SizedBox(height: 16),
                 ],
-                requiredLabel('Your name'),
+                requiredLabel(l10n.yourNameLabel),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _name,
-                  decoration: const InputDecoration(hintText: 'How you\'d like to be credited'),
+                  decoration: InputDecoration(hintText: l10n.howCreditedHint),
                   maxLength: 100,
                   textCapitalization: TextCapitalization.words,
-                  validator: (v) => (v ?? '').trim().isEmpty ? 'Your name is required.' : null,
+                  validator: (v) => (v ?? '').trim().isEmpty ? l10n.yourNameRequiredError : null,
                 ),
                 const SizedBox(height: 8),
-                Text('City / Country (optional)', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                Text(l10n.cityCountryOptionalLabel, style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _location,
-                  decoration: const InputDecoration(hintText: 'e.g. Lahore, Pakistan'),
+                  decoration: InputDecoration(hintText: l10n.cityCountryHint),
                   maxLength: 100,
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 8),
-                requiredLabel('How would you rate us?'),
+                requiredLabel(l10n.howWouldYouRateUsLabel),
                 const SizedBox(height: 8),
                 Row(
                   children: List.generate(
@@ -170,25 +175,25 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
                   ),
                 ),
                 const SizedBox(height: 12),
-                requiredLabel('Your story'),
+                requiredLabel(l10n.yourStoryLabel),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _content,
-                  decoration: const InputDecoration(
-                    hintText: 'What did Sallaamti help you with, and how did it go?',
+                  decoration: InputDecoration(
+                    hintText: l10n.yourStoryHint,
                     alignLabelWithHint: true,
                   ),
                   maxLines: 8,
                   minLines: 5,
                   maxLength: 2000,
                   textCapitalization: TextCapitalization.sentences,
-                  validator: (v) => (v ?? '').trim().isEmpty ? 'Please tell us about your experience.' : null,
+                  validator: (v) => (v ?? '').trim().isEmpty ? l10n.tellUsAboutExperienceError : null,
                 ),
                 const SizedBox(height: 8),
-                Text('Your photo (optional)', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                Text(l10n.yourPhotoOptionalLabel, style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
                 const SizedBox(height: 8),
                 ImagePickField(
-                  label: 'Add a photo',
+                  label: l10n.addAPhotoLabel,
                   file: _photo,
                   alreadyUploaded: _isEditing && widget.existing!.photoUrl != null,
                   onTap: _pickPhoto,
@@ -198,11 +203,11 @@ class _TestimonialComposeScreenState extends ConsumerState<TestimonialComposeScr
                   onPressed: _submitting ? null : _submit,
                   child: _submitting
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(_isEditing ? 'Save Changes' : 'Submit'),
+                      : Text(_isEditing ? l10n.saveChangesButton : l10n.submitButton),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Success stories appear on the website once our team has reviewed them.',
+                  l10n.successStoriesReviewNoticeMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
