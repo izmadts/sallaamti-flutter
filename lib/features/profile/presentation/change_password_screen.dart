@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/password_field.dart';
 import '../../auth/state/auth_controller.dart';
 import '../data/profile_repository.dart';
@@ -38,9 +39,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   bool get _hasRealPassword => ref.read(authControllerProvider).user?.hasRealPassword ?? true;
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
     if (_newController.text != _confirmController.text) {
-      setState(() => _error = 'The new passwords do not match.');
+      setState(() => _error = l10n.passwordsDoNotMatchError);
       return;
     }
 
@@ -56,13 +58,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           );
       ref.read(authControllerProvider.notifier).setUser(updated);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.passwordUpdatedMessage)));
         Navigator.of(context).pop();
       }
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -70,11 +72,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       canPop: !widget.isForced,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Change Password'),
+          title: Text(l10n.changePasswordLabel),
           automaticallyImplyLeading: !widget.isForced,
         ),
         body: SafeArea(
@@ -86,9 +89,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
                   child: Text(
-                    _hasRealPassword
-                        ? 'Your Nikah Counselor set up a temporary password for you. Choose your own password to keep your account secure.'
-                        : 'For your account\'s security, please set a password — you can then log in with it any time, using either your phone number or email.',
+                    _hasRealPassword ? l10n.tempPasswordNoticeMessage : l10n.setPasswordNoticeMessage,
                     style: const TextStyle(color: Colors.blueGrey),
                   ),
                 ),
@@ -110,36 +111,36 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     if (_hasRealPassword) ...[
                       PasswordField(
                         controller: _currentController,
-                        labelText: 'Current Password',
-                        validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password.' : null,
+                        labelText: l10n.currentPasswordLabel,
+                        validator: (v) => (v == null || v.isEmpty) ? l10n.enterCurrentPasswordError : null,
                       ),
                       const SizedBox(height: 12),
                     ] else ...[
-                      const Text(
-                        "You don't have a password yet — just choose one below.",
-                        style: TextStyle(color: Colors.black54),
+                      Text(
+                        l10n.noPasswordYetMessage,
+                        style: const TextStyle(color: Colors.black54),
                       ),
                       const SizedBox(height: 12),
                     ],
                     PasswordField(
                       controller: _newController,
-                      labelText: 'New Password',
+                      labelText: l10n.newPasswordLabel,
                       autofillHints: const [AutofillHints.newPassword],
-                      validator: (v) => (v == null || v.length < 8) ? 'At least 8 characters.' : null,
+                      validator: (v) => (v == null || v.length < 8) ? l10n.atLeast8CharsError : null,
                     ),
                     const SizedBox(height: 12),
                     PasswordField(
                       controller: _confirmController,
-                      labelText: 'Confirm New Password',
+                      labelText: l10n.confirmNewPasswordLabel,
                       autofillHints: const [AutofillHints.newPassword],
-                      validator: (v) => (v == null || v.isEmpty) ? 'Please confirm your new password.' : null,
+                      validator: (v) => (v == null || v.isEmpty) ? l10n.confirmNewPasswordError : null,
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _saving ? null : _submit,
                       child: _saving
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Update Password'),
+                          : Text(l10n.updatePasswordButton),
                     ),
                   ],
                 ),

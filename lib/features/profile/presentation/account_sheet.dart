@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../auth/state/auth_controller.dart';
 import '../../donation/presentation/donation_history_screen.dart';
@@ -13,6 +14,7 @@ class AccountSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final user = ref.watch(authControllerProvider).user;
 
     return SafeArea(
@@ -47,7 +49,7 @@ class AccountSheet extends ConsumerWidget {
             const Divider(height: 1),
             _MenuTile(
               icon: Icons.person_outline,
-              label: 'Edit Profile',
+              label: l10n.editProfileLabel,
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen()));
@@ -55,7 +57,7 @@ class AccountSheet extends ConsumerWidget {
             ),
             _MenuTile(
               icon: Icons.password,
-              label: 'Change Password',
+              label: l10n.changePasswordLabel,
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
@@ -63,7 +65,7 @@ class AccountSheet extends ConsumerWidget {
             ),
             _MenuTile(
               icon: Icons.volunteer_activism_outlined,
-              label: 'My Donations',
+              label: l10n.myDonationsLabel,
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DonationHistoryScreen()));
@@ -72,7 +74,7 @@ class AccountSheet extends ConsumerWidget {
             if (user?.hasNikahProfile ?? false) ...[
               _MenuTile(
                 icon: Icons.favorite_border,
-                label: 'My Interests',
+                label: l10n.myInterestsLabel,
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/nikah/interests');
@@ -80,7 +82,7 @@ class AccountSheet extends ConsumerWidget {
               ),
               _MenuTile(
                 icon: Icons.star_border,
-                label: 'Saved Profiles',
+                label: l10n.savedProfilesLabel,
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/nikah/saved');
@@ -90,7 +92,7 @@ class AccountSheet extends ConsumerWidget {
             const Divider(height: 1),
             _MenuTile(
               icon: Icons.logout,
-              label: 'Log Out',
+              label: l10n.logOutLabel,
               color: Colors.red.shade600,
               onTap: () {
                 Navigator.of(context).pop();

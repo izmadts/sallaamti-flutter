@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/data/city_search_repository.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/async_searchable_picker.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../auth/state/auth_controller.dart';
@@ -98,11 +99,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   // a Nikah-specific form) — replaces a bare free-text box that had no
   // validation or suggestions at all.
   Future<void> _pickCity() async {
+    final l10n = AppLocalizations.of(context)!;
     final selected = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (context) => AsyncSearchablePicker(
-        title: 'Select City',
+        title: l10n.selectCityTitle,
         search: (query) => ref.read(citySearchRepositoryProvider).search(query: query),
       ),
     );
@@ -115,8 +117,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_nameController.text.trim().isEmpty) {
-      setState(() => _profileError = 'Please enter your name.');
+      setState(() => _profileError = l10n.pleaseEnterYourNameError);
       return;
     }
 
@@ -137,18 +140,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ref.read(authControllerProvider.notifier).setUser(updated);
       if (mounted) {
         setState(() => _newAvatar = null);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.profileUpdatedMessage)));
       }
     } on ApiException catch (e) {
       setState(() => _profileError = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _profileError = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _profileError = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _savingProfile = false);
     }
   }
 
   Future<void> _saveModules() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _savingModules = true;
       _modulesError = null;
@@ -162,11 +166,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             skills: _skills,
           );
       ref.read(authControllerProvider.notifier).setUser(updated);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Modules updated.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.modulesUpdatedMessage)));
     } on ApiException catch (e) {
       setState(() => _modulesError = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _modulesError = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _modulesError = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _savingModules = false);
     }
@@ -174,10 +178,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = ref.watch(authControllerProvider).user;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: Text(l10n.editProfileLabel)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -217,7 +222,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Profile Information', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    Text(l10n.profileInformationTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                     const SizedBox(height: 16),
                     if (_profileError != null) ...[
                       Container(
@@ -227,25 +232,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                       const SizedBox(height: 12),
                     ],
-                    TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
+                    TextFormField(controller: _nameController, decoration: InputDecoration(labelText: l10n.nameLabel)),
                     const SizedBox(height: 12),
-                    TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress),
+                    TextFormField(controller: _emailController, decoration: InputDecoration(labelText: l10n.emailLabel), keyboardType: TextInputType.emailAddress),
                     const SizedBox(height: 12),
-                    TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Phone'), keyboardType: TextInputType.phone),
+                    TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phoneLabel), keyboardType: TextInputType.phone),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _gender,
-                      decoration: const InputDecoration(labelText: 'Gender'),
-                      items: const [
-                        DropdownMenuItem(value: 'male', child: Text('Male')),
-                        DropdownMenuItem(value: 'female', child: Text('Female')),
+                      decoration: InputDecoration(labelText: l10n.genderLabel),
+                      items: [
+                        DropdownMenuItem(value: 'male', child: Text(l10n.genderMale)),
+                        DropdownMenuItem(value: 'female', child: Text(l10n.genderFemale)),
                       ],
                       onChanged: _genderLocked ? null : (v) => setState(() => _gender = v),
                     ),
                     if (_genderLocked) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Gender can\'t be changed here — contact support if this needs correcting.',
+                        l10n.genderLockedMessage,
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                       ),
                     ],
@@ -254,14 +259,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       controller: _cityController,
                       readOnly: true,
                       onTap: _pickCity,
-                      decoration: const InputDecoration(labelText: 'City', suffixIcon: Icon(Icons.search)),
+                      decoration: InputDecoration(labelText: l10n.cityLabel, suffixIcon: const Icon(Icons.search)),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _savingProfile ? null : _saveProfile,
                       child: _savingProfile
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Save Profile'),
+                          : Text(l10n.saveProfileButton),
                     ),
                   ],
                 ),
@@ -274,9 +279,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Module Visibility', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    Text(l10n.moduleVisibilityTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                     Text(
-                      'Turn off anything you\'re not using — it disappears from your dashboard, your data stays safe either way.',
+                      l10n.moduleVisibilitySubtitle,
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                     ),
                     const SizedBox(height: 8),
@@ -290,25 +295,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ],
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('💍 Nikah Matchmaking'),
+                      title: Text(l10n.moduleNikahLabel),
                       value: _nikah,
                       onChanged: (v) => setState(() => _nikah = v),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('📖 Quran Learning'),
+                      title: Text(l10n.moduleQuranLabel),
                       value: _quran,
                       onChanged: (v) => setState(() => _quran = v),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('🤝 Family Counseling'),
+                      title: Text(l10n.moduleCounselingLabel),
                       value: _counseling,
                       onChanged: (v) => setState(() => _counseling = v),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('💻 Digital Skills'),
+                      title: Text(l10n.moduleSkillsLabel),
                       value: _skills,
                       onChanged: (v) => setState(() => _skills = v),
                     ),
@@ -317,7 +322,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       onPressed: _savingModules ? null : _saveModules,
                       child: _savingModules
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Save Modules'),
+                          : Text(l10n.saveModulesButton),
                     ),
                   ],
                 ),
