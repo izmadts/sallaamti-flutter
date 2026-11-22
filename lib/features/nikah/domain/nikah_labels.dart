@@ -117,6 +117,13 @@ String languageLabel(AppLocalizations l10n, String value) => {
       'Balochi': l10n.languageBalochi,
     }[value] ?? value;
 
+String interestStatusLabel(AppLocalizations l10n, String status) => {
+      'pending': l10n.interestStatusPending,
+      'accepted': l10n.interestStatusAccepted,
+      'declined': l10n.interestStatusDeclined,
+      'blocked': l10n.interestStatusBlocked,
+    }[status] ?? status;
+
 String counselorTierLabel(AppLocalizations l10n, String? tier) => {
       'nikah_counselor': l10n.nikahTierNikahCounselor,
       'certified_nikah_counselor': l10n.nikahTierCertifiedNikahCounselor,

@@ -7,6 +7,7 @@ import '../../../core/theme/module_themes.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/nikah_avatar.dart';
 import '../domain/nikah_interest.dart';
+import '../domain/nikah_labels.dart';
 import '../state/nikah_controller.dart';
 
 class NikahInterestsScreen extends ConsumerStatefulWidget {
@@ -60,16 +61,17 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
     // be counting on a quick tap. Declining shares nothing, so it skips
     // straight through.
     if (accept) {
+      final l10n = AppLocalizations.of(context)!;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Accept this interest?'),
-          content: const Text(
-            'Accepting will share your guardian\'s contact details with this person. Please check their verification badges on their full profile first.',
+          title: Text(l10n.nikahAcceptInterestDialogTitle),
+          content: Text(
+            l10n.nikahAcceptInterestDialogMessage,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Accept')),
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.acceptLabel)),
           ],
         ),
       );
@@ -92,13 +94,14 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
   }
 
   Future<void> _cancel(int interestId) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel this interest request?'),
+        title: Text(l10n.nikahCancelInterestDialogTitle),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Yes, Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.noLabel)),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.nikahYesCancelLabel)),
         ],
       ),
     );
@@ -116,6 +119,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: DefaultTabController(
@@ -123,8 +127,8 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
         initialIndex: widget.initialTabIndex,
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Interests'),
-            bottom: const TabBar(
+            title: Text(l10n.nikahInterestsTitle),
+            bottom: TabBar(
               // Explicit colors — the default TabBarTheme resolves both label
               // colors close to the module's own AppBar background, making
               // the selected tab's text disappear entirely and the
@@ -132,7 +136,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
               indicatorColor: Colors.white,
-              tabs: [Tab(text: 'Received'), Tab(text: 'Sent')],
+              tabs: [Tab(text: l10n.receivedLabel), Tab(text: l10n.sentLabel)],
             ),
           ),
           body: _loading
@@ -151,8 +155,9 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
   }
 
   Widget _list(List<NikahInterest> items, {required bool showActions, bool allowCancel = false}) {
+    final l10n = AppLocalizations.of(context)!;
     if (items.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.nikahNothingHereYet));
+      return Center(child: Text(l10n.nikahNothingHereYet));
     }
 
     return RefreshIndicator(
@@ -194,7 +199,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
                               children: [
                                 Text(
                                   interest.unavailable || interest.blocked
-                                      ? 'This profile is no longer available'
+                                      ? l10n.nikahProfileUnavailableMessage
                                       : (interest.name ?? '${interest.age ?? '?'} yrs • ${interest.city ?? ''}'),
                                   style: const TextStyle(fontWeight: FontWeight.w700),
                                 ),
@@ -215,7 +220,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
                               child: ElevatedButton.icon(
                                 onPressed: () => _respond(interest.interestId, true),
                                 icon: const Icon(Icons.check, size: 18),
-                                label: const Text('Accept'),
+                                label: Text(l10n.acceptLabel),
                                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600),
                               ),
                             ),
@@ -224,7 +229,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: () => _respond(interest.interestId, false),
                                 icon: const Icon(Icons.close, size: 18),
-                                label: const Text('Decline'),
+                                label: Text(l10n.declineLabel),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.red.shade700,
                                   side: BorderSide(color: Colors.red.shade200),
@@ -241,7 +246,7 @@ class _NikahInterestsScreenState extends ConsumerState<NikahInterestsScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () => _cancel(interest.interestId),
                             icon: const Icon(Icons.close, size: 18),
-                            label: const Text('Cancel Request'),
+                            label: Text(l10n.nikahCancelRequestButton),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.red.shade700,
                               side: BorderSide(color: Colors.red.shade200),
@@ -268,7 +273,7 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = blocked ? 'blocked' : status;
+    final label = interestStatusLabel(AppLocalizations.of(context)!, blocked ? 'blocked' : status);
     final color = blocked
         ? Colors.grey.shade700
         : switch (status) {
