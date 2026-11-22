@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/volunteer_repository.dart';
 
 const _areaOfInterestOptions = [
@@ -16,6 +17,22 @@ const _areaOfInterestOptions = [
   'Administration',
   'Other',
 ];
+
+String _areaOfInterestLabel(AppLocalizations l10n, String value) => {
+      'Teaching': l10n.volunteerAreaTeaching,
+      'Tech Support': l10n.volunteerAreaTechSupport,
+      'Counseling': l10n.volunteerAreaCounseling,
+      'Fundraising': l10n.volunteerAreaFundraising,
+      'Event Support': l10n.volunteerAreaEventSupport,
+      'Administration': l10n.volunteerAreaAdministration,
+      'Other': l10n.volunteerAreaOther,
+    }[value] ?? value;
+
+String _volunteerStatusLabel(AppLocalizations l10n, String status) => {
+      'pending': l10n.volunteerStatusPending,
+      'approved': l10n.volunteerStatusApproved,
+      'rejected': l10n.volunteerStatusRejected,
+    }[status] ?? status;
 
 class VolunteerScreen extends ConsumerStatefulWidget {
   const VolunteerScreen({super.key});
@@ -48,7 +65,9 @@ class _VolunteerScreenState extends ConsumerState<VolunteerScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      // Called from initState() — looked up after the await above rather
+      // than hoisted, since Localizations isn't registered yet that early.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -56,16 +75,18 @@ class _VolunteerScreenState extends ConsumerState<VolunteerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('volunteer'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Volunteer')),
+        appBar: AppBar(title: Text(l10n.volunteerTitle)),
         body: SafeArea(child: _buildBody(context)),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -79,7 +100,7 @@ class _VolunteerScreenState extends ConsumerState<VolunteerScreen> {
             children: [
               Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _load, child: const Text('Retry')),
+              ElevatedButton(onPressed: _load, child: Text(l10n.retry)),
             ],
           ),
         ),
@@ -127,6 +148,7 @@ class _VolunteerApplyFormState extends ConsumerState<_VolunteerApplyForm> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _submitting = true;
       _error = null;
@@ -142,7 +164,7 @@ class _VolunteerApplyFormState extends ConsumerState<_VolunteerApplyForm> {
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -150,6 +172,7 @@ class _VolunteerApplyFormState extends ConsumerState<_VolunteerApplyForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -157,10 +180,10 @@ class _VolunteerApplyFormState extends ConsumerState<_VolunteerApplyForm> {
         children: [
           const Text('🙌', style: TextStyle(fontSize: 48)),
           const SizedBox(height: 12),
-          const Text('Become a Volunteer', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          Text(l10n.becomeAVolunteerTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
           const SizedBox(height: 6),
           Text(
-            'Tell us a bit about yourself and how you\'d like to help — our team reviews every application personally.',
+            l10n.volunteerIntroMessage,
             style: TextStyle(color: Colors.grey.shade600),
           ),
           const SizedBox(height: 24),
@@ -174,19 +197,19 @@ class _VolunteerApplyFormState extends ConsumerState<_VolunteerApplyForm> {
           ],
           TextFormField(
             controller: _cityController,
-            decoration: const InputDecoration(labelText: 'City'),
+            decoration: InputDecoration(labelText: l10n.cityLabel),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _areaOfInterest,
-            decoration: const InputDecoration(labelText: 'Area of Interest'),
-            items: _areaOfInterestOptions.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+            decoration: InputDecoration(labelText: l10n.areaOfInterestLabel),
+            items: _areaOfInterestOptions.map((a) => DropdownMenuItem(value: a, child: Text(_areaOfInterestLabel(l10n, a)))).toList(),
             onChanged: (v) => setState(() => _areaOfInterest = v),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _messageController,
-            decoration: const InputDecoration(labelText: 'Anything else you\'d like us to know? (optional)'),
+            decoration: InputDecoration(labelText: l10n.volunteerAnythingElseHint),
             minLines: 3,
             maxLines: 6,
           ),
@@ -195,7 +218,7 @@ class _VolunteerApplyFormState extends ConsumerState<_VolunteerApplyForm> {
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Submit Application'),
+                : Text(l10n.submitApplicationButton),
           ),
         ],
       ),
@@ -225,7 +248,7 @@ class _VolunteerStatusViewState extends ConsumerState<_VolunteerStatusView> {
       final file = await ref.read(volunteerRepositoryProvider).downloadCertificate();
       await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: 'Sallaamti Volunteer ID'));
     } catch (_) {
-      if (mounted) setState(() => _downloadError = 'Could not download your ID card — try again.');
+      if (mounted) setState(() => _downloadError = AppLocalizations.of(context)!.volunteerIdCardDownloadError);
     } finally {
       if (mounted) setState(() => _downloading = false);
     }
@@ -233,11 +256,12 @@ class _VolunteerStatusViewState extends ConsumerState<_VolunteerStatusView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final application = widget.application;
     final (emoji, title, subtitle, color) = switch (application.status) {
-      'approved' => ('🎉', "You're an approved volunteer!", 'Thank you for stepping up to help — download your ID card below.', Colors.green),
-      'rejected' => ('🙏', 'Not approved this time', 'We\'re not able to move forward with this application right now. You\'re welcome to apply again.', Colors.orange),
-      _ => ('⏳', 'Application under review', 'Our team will get back to you soon. We\'ll notify you as soon as there\'s an update.', Colors.amber),
+      'approved' => ('🎉', l10n.volunteerApprovedTitle, l10n.volunteerApprovedSubtitle, Colors.green),
+      'rejected' => ('🙏', l10n.volunteerRejectedTitle, l10n.volunteerRejectedSubtitle, Colors.orange),
+      _ => ('⏳', l10n.volunteerPendingTitle, l10n.volunteerPendingSubtitle, Colors.amber),
     };
 
     return SingleChildScrollView(
@@ -260,7 +284,7 @@ class _VolunteerStatusViewState extends ConsumerState<_VolunteerStatusView> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
                     child: Text(
-                      application.status[0].toUpperCase() + application.status.substring(1),
+                      _volunteerStatusLabel(l10n, application.status),
                       style: TextStyle(color: color.shade700, fontWeight: FontWeight.w700, fontSize: 12),
                     ),
                   ),
@@ -275,11 +299,11 @@ class _VolunteerStatusViewState extends ConsumerState<_VolunteerStatusView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Application Details', style: TextStyle(fontWeight: FontWeight.w700)),
+                  Text(l10n.applicationDetailsTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 10),
-                  if ((application.city ?? '').isNotEmpty) _detailRow('City', application.city!),
-                  if ((application.areaOfInterest ?? '').isNotEmpty) _detailRow('Area of Interest', application.areaOfInterest!),
-                  _detailRow('Submitted', DateFormat('d MMM yyyy').format(application.createdAt.toLocal())),
+                  if ((application.city ?? '').isNotEmpty) _detailRow(l10n.cityLabel, application.city!),
+                  if ((application.areaOfInterest ?? '').isNotEmpty) _detailRow(l10n.areaOfInterestLabel, _areaOfInterestLabel(l10n, application.areaOfInterest!)),
+                  _detailRow(l10n.submittedLabel, DateFormat('d MMM yyyy').format(application.createdAt.toLocal())),
                 ],
               ),
             ),
@@ -299,12 +323,12 @@ class _VolunteerStatusViewState extends ConsumerState<_VolunteerStatusView> {
               icon: _downloading
                   ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.download_outlined),
-              label: const Text('Download Volunteer ID Card'),
+              label: Text(l10n.downloadVolunteerIdCardButton),
             ),
           ],
           if (application.status == 'rejected') ...[
             const SizedBox(height: 20),
-            OutlinedButton(onPressed: widget.onReapply, child: const Text('Apply Again')),
+            OutlinedButton(onPressed: widget.onReapply, child: Text(l10n.applyAgainButton)),
           ],
         ],
       ),
