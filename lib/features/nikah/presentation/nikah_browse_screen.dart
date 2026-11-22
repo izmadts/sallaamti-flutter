@@ -11,8 +11,8 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/trust_badges.dart';
 import '../../profile/presentation/edit_profile_screen.dart';
 import '../domain/nikah_card.dart';
+import '../domain/nikah_labels.dart';
 import '../state/nikah_controller.dart';
-import 'wizard/nikah_step1_screen.dart' show maritalStatusOptions;
 
 // Describes why a member can only teaser-browse right now — no profile at
 // all, or a profile that exists but is still unpaid/unverified. Built by
@@ -204,7 +204,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your gender to continue — update it here.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.nikahSelectGenderMessage)),
       );
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen()));
       if (mounted) _load(reset: true);
@@ -257,7 +257,7 @@ class _NikahBrowseScreenState extends ConsumerState<NikahBrowseScreen> {
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  IconButton(icon: const Icon(Icons.tune), tooltip: 'Filter', onPressed: _openFilters),
+                  IconButton(icon: const Icon(Icons.tune), tooltip: AppLocalizations.of(context)!.filterTooltip, onPressed: _openFilters),
                   if (_filters.isNotEmpty)
                     Positioned(
                       right: 8,
@@ -462,7 +462,7 @@ class _NikahCardTileState extends State<_NikahCardTile> {
       if (mounted) setState(() => _saved = saved);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not update saved status — try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nikahCouldNotUpdateSavedMessage)));
       }
     } finally {
       if (mounted) setState(() => _savingBusy = false);
@@ -483,27 +483,37 @@ class _NikahCardTileState extends State<_NikahCardTile> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not send interest — try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nikahCouldNotSendInterestMessage)));
       }
     } finally {
       if (mounted) setState(() => _sendingBusy = false);
     }
   }
 
-  String _memberSince(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return 'Member since ${months[date.month - 1]} ${date.year}';
+  // Month abbreviation comes from its own ARB key (not intl's DateFormat —
+  // this app never calls initializeDateFormatting(), so DateFormat.MMM()
+  // with a non-default locale like 'ur' throws LocaleDataException at
+  // runtime; exactly the kind of crash this localization pass must avoid
+  // introducing) — so the month name itself is translated too, not just
+  // the surrounding sentence.
+  String _memberSince(AppLocalizations l10n, DateTime date) {
+    final months = [
+      l10n.nikahMonthJan, l10n.nikahMonthFeb, l10n.nikahMonthMar, l10n.nikahMonthApr, l10n.nikahMonthMay, l10n.nikahMonthJun,
+      l10n.nikahMonthJul, l10n.nikahMonthAug, l10n.nikahMonthSep, l10n.nikahMonthOct, l10n.nikahMonthNov, l10n.nikahMonthDec,
+    ];
+    return l10n.nikahMemberSince(months[date.month - 1], date.year);
   }
 
-  String _activeAgo(DateTime date) {
+  String _activeAgo(AppLocalizations l10n, DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inMinutes < 60) return 'Active ${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return 'Active ${diff.inHours}h ago';
-    return 'Active ${diff.inDays}d ago';
+    if (diff.inMinutes < 60) return l10n.nikahActiveMinutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.nikahActiveHoursAgo(diff.inHours);
+    return l10n.nikahActiveDaysAgo(diff.inDays);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final card = widget.card;
     final tags = [
       if (card.profession != null && card.profession!.isNotEmpty) '💼 ${card.profession}',
@@ -552,7 +562,7 @@ class _NikahCardTileState extends State<_NikahCardTile> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20)),
-                          child: const Text('🔒 Photo hidden', style: TextStyle(color: Colors.white, fontSize: 11)),
+                          child: Text(l10n.nikahPhotoHiddenLabel, style: const TextStyle(color: Colors.white, fontSize: 11)),
                         ),
                       ),
                     ),
@@ -574,14 +584,14 @@ class _NikahCardTileState extends State<_NikahCardTile> {
                     Positioned(
                       bottom: 8,
                       left: 8,
-                      child: _Pill(text: '✨ New', color: const Color(0xFFCA8A04)),
+                      child: _Pill(text: l10n.nikahNewBadge, color: const Color(0xFFCA8A04)),
                     ),
                   if (card.matchPercentage > 0)
                     Positioned(
                       bottom: 8,
                       right: 8,
                       child: _Pill(
-                        text: '${card.matchPercentage}% match',
+                        text: l10n.nikahMatchPercentage(card.matchPercentage),
                         color: card.matchPercentage >= 80
                             ? Colors.green.shade600
                             : (card.matchPercentage >= 50 ? Colors.amber.shade700 : Colors.grey.shade600),
@@ -608,7 +618,7 @@ class _NikahCardTileState extends State<_NikahCardTile> {
                         if (card.gender != null) ...[
                           const SizedBox(width: 6),
                           _Pill(
-                            text: card.gender == 'female' ? '♀ Female' : '♂ Male',
+                            text: card.gender == 'female' ? '♀ ${l10n.genderFemale}' : '♂ ${l10n.genderMale}',
                             color: card.gender == 'female' ? Colors.pink.shade400 : Colors.blue.shade400,
                             small: true,
                           ),
@@ -632,13 +642,13 @@ class _NikahCardTileState extends State<_NikahCardTile> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(20)),
                           child: Text(
-                            card.maritalStatus.replaceAll('_', ' '),
+                            maritalStatusLabel(l10n, card.maritalStatus),
                             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                           ),
                         ),
                         Flexible(
                           child: Text(
-                            isRecentlyActive ? _activeAgo(card.lastActiveAt!) : (card.createdAt != null ? _memberSince(card.createdAt!) : ''),
+                            isRecentlyActive ? _activeAgo(l10n, card.lastActiveAt!) : (card.createdAt != null ? _memberSince(l10n, card.createdAt!) : ''),
                             style: TextStyle(
                               fontSize: 11,
                               color: isRecentlyActive ? Colors.green.shade700 : Colors.grey.shade500,
@@ -665,7 +675,7 @@ class _NikahCardTileState extends State<_NikahCardTile> {
                               child: _sendingBusy
                                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                                   : Text(
-                                      _sent ? 'Sent ✓' : '💌 Send Interest',
+                                      _sent ? l10n.nikahInterestSentShort : l10n.nikahSendInterestShort,
                                       style: const TextStyle(fontSize: 12),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -820,6 +830,7 @@ class _FilterSheetState extends State<_FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -831,14 +842,14 @@ class _FilterSheetState extends State<_FilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Filter Matches', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(l10n.nikahFilterMatchesTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: TextFormField(
                   controller: _minAgeController,
-                  decoration: const InputDecoration(labelText: 'Min Age'),
+                  decoration: InputDecoration(labelText: l10n.minAgeLabel),
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -846,7 +857,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               Expanded(
                 child: TextFormField(
                   controller: _maxAgeController,
-                  decoration: const InputDecoration(labelText: 'Max Age'),
+                  decoration: InputDecoration(labelText: l10n.maxAgeLabel),
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -855,20 +866,20 @@ class _FilterSheetState extends State<_FilterSheet> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _cityController,
-            decoration: const InputDecoration(labelText: 'City'),
+            decoration: InputDecoration(labelText: l10n.cityLabel),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _sectController,
-            decoration: const InputDecoration(labelText: 'Sect'),
+            decoration: InputDecoration(labelText: l10n.sectLabel),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _maritalStatus,
-            decoration: const InputDecoration(labelText: 'Marital Status'),
+            decoration: InputDecoration(labelText: l10n.maritalStatusLabel),
             items: [
-              const DropdownMenuItem(value: null, child: Text('Any')),
-              ...maritalStatusOptions.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))),
+              DropdownMenuItem(value: null, child: Text(l10n.genderAny)),
+              ...maritalStatusOptions(l10n).entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))),
             ],
             onChanged: (v) => setState(() => _maritalStatus = v),
           ),
@@ -878,12 +889,12 @@ class _FilterSheetState extends State<_FilterSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(<String, String>{}),
-                  child: const Text('Clear'),
+                  child: Text(l10n.clearLabel),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(onPressed: _apply, child: const Text('Apply')),
+                child: ElevatedButton(onPressed: _apply, child: Text(l10n.applyLabel)),
               ),
             ],
           ),
