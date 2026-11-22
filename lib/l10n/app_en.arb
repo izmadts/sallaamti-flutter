@@ -505,6 +505,9 @@
   "nikahNoOneViewedYetMessage": "Once a member opens your full profile, they'll show up here.",
   "nikahViewedCountLabel": "Viewed {count}×",
   "@nikahViewedCountLabel": { "placeholders": { "count": { "type": "int" } } },
+  "nikahMessagesTitle": "Messages",
+  "nikahTypeMessageHint": "Type a message…",
+  "nikahNoMessagesYetMessage": "No messages yet — say assalamu alaikum 👋",
 
   "emailVerificationDialogTitle": "Verify Your Email",
   "emailVerificationDialogMessage": "Enter the 6-digit code we sent to your email to continue.",

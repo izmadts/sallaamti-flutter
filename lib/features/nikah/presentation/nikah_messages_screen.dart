@@ -101,17 +101,18 @@ class _NikahMessagesScreenState extends ConsumerState<NikahMessagesScreen> {
   }
 
   Future<void> _block() async {
+    final l10n = AppLocalizations.of(context)!;
     final profileId = _otherProfileId;
     if (profileId == null || _blocking) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Block this profile?'),
-        content: const Text('You will no longer see each other in Browse or be able to message.'),
+        title: Text(l10n.nikahBlockDialogTitle),
+        content: Text(l10n.nikahBlockDialogMessage),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Block')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.block)),
         ],
       ),
     );
@@ -121,7 +122,7 @@ class _NikahMessagesScreenState extends ConsumerState<NikahMessagesScreen> {
     try {
       await ref.read(nikahRepositoryProvider).blockProfile(profileId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile blocked.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nikahProfileBlockedMessage)));
         Navigator.of(context).pop();
       }
     } on ApiException catch (e) {
@@ -135,18 +136,19 @@ class _NikahMessagesScreenState extends ConsumerState<NikahMessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final primary = ModuleThemes.seedFor('nikah');
 
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_otherProfileName ?? 'Messages'),
+          title: Text(_otherProfileName ?? l10n.nikahMessagesTitle),
           actions: [
             if (_otherProfileId != null)
               IconButton(
                 icon: const Icon(Icons.block),
-                tooltip: 'Block',
+                tooltip: l10n.block,
                 onPressed: _blocking ? null : _block,
               ),
           ],
@@ -163,7 +165,7 @@ class _NikahMessagesScreenState extends ConsumerState<NikahMessagesScreen> {
                     Expanded(
                       child: TextField(
                         controller: _textController,
-                        decoration: const InputDecoration(hintText: 'Type a message…', isDense: true),
+                        decoration: InputDecoration(hintText: l10n.nikahTypeMessageHint, isDense: true),
                         minLines: 1,
                         maxLines: 4,
                         textInputAction: TextInputAction.send,
@@ -201,7 +203,7 @@ class _NikahMessagesScreenState extends ConsumerState<NikahMessagesScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'No messages yet — say assalamu alaikum 👋',
+            AppLocalizations.of(context)!.nikahNoMessagesYetMessage,
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600),
           ),

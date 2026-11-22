@@ -482,6 +482,9 @@
   "nikahNoOneViewedYetTitle": "ابھی تک کسی نے آپ کی پروفائل نہیں دیکھی",
   "nikahNoOneViewedYetMessage": "جب کوئی ممبر آپ کی مکمل پروفائل کھولے گا، وہ یہاں نظر آئے گا۔",
   "nikahViewedCountLabel": "{count}× دیکھی گئی",
+  "nikahMessagesTitle": "پیغامات",
+  "nikahTypeMessageHint": "پیغام لکھیں…",
+  "nikahNoMessagesYetMessage": "ابھی تک کوئی پیغام نہیں — السلام علیکم کہہ کر شروع کریں 👋",
 
   "emailVerificationDialogTitle": "اپنی ای میل تصدیق کریں",
   "emailVerificationDialogMessage": "جاری رکھنے کے لیے اپنی ای میل پر بھیجا گیا 6 ہندسوں کا کوڈ درج کریں۔",
