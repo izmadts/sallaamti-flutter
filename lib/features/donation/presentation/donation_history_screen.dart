@@ -140,7 +140,7 @@ class _DonationHistoryScreenState extends ConsumerState<DonationHistoryScreen> {
                 ],
                 if (donation.paymentStatus == 'rejected' && (donation.paymentRejectionReason ?? '').isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text(l10n.reasonLabel(donation.paymentRejectionReason ?? ''), style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+                  Text(l10n.rejectionReasonLabel(donation.paymentRejectionReason ?? ''), style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
                 ],
                 const SizedBox(height: 8),
                 Text(
