@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../data/wall_repository.dart';
 
@@ -42,13 +43,16 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
       final comments = await ref.read(wallRepositoryProvider).comments(widget.item.type, widget.item.id);
       setState(() => _comments = comments);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Could not load comments. Please try again.');
+      // Called from initState() — looked up after the await above rather
+      // than hoisted, since Localizations isn't registered yet that early.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.wallLoadCommentsError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _send() async {
+    final l10n = AppLocalizations.of(context)!;
     final text = _textController.text.trim();
     if (text.isEmpty || _sending) return;
 
@@ -64,7 +68,7 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
       setState(() => _replyingTo = null);
       await _load();
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not post — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.wallPostCommentError)));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -72,10 +76,11 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('wall'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Comments')),
+        appBar: AppBar(title: Text(l10n.commentsTitle)),
         body: SafeArea(
           child: Column(
             children: [
@@ -87,7 +92,7 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
                   color: Colors.grey.shade100,
                   child: Row(
                     children: [
-                      Expanded(child: Text('Replying to ${_replyingTo!.author?.name ?? 'a member'}', style: const TextStyle(fontSize: 12))),
+                      Expanded(child: Text(l10n.replyingToLabel(_replyingTo!.author?.name ?? l10n.memberFallback), style: const TextStyle(fontSize: 12))),
                       IconButton(
                         icon: const Icon(Icons.close, size: 16),
                         onPressed: () => setState(() => _replyingTo = null),
@@ -106,7 +111,7 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
                       Expanded(
                         child: TextField(
                           controller: _textController,
-                          decoration: const InputDecoration(hintText: 'Write a comment…', isDense: true),
+                          decoration: InputDecoration(hintText: l10n.writeACommentHint, isDense: true),
                           minLines: 1,
                           maxLines: 4,
                         ),
@@ -130,6 +135,7 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -150,7 +156,7 @@ class _WallCommentsScreenState extends ConsumerState<WallCommentsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(32),
-            child: Text('No comments yet — be the first to reply.', style: TextStyle(color: Colors.grey.shade600), textAlign: TextAlign.center),
+            child: Text(l10n.wallNoCommentsYetMessage, style: TextStyle(color: Colors.grey.shade600), textAlign: TextAlign.center),
           ),
         ],
       );
@@ -187,6 +193,7 @@ class _CommentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,14 +208,14 @@ class _CommentTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(comment.author?.name ?? 'A community member', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+              Text(comment.author?.name ?? l10n.communityMemberFallback, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
               const SizedBox(height: 2),
               Text(comment.body, style: const TextStyle(fontSize: 13)),
               if (onReply != null) ...[
                 const SizedBox(height: 4),
                 InkWell(
                   onTap: onReply,
-                  child: Text('Reply', style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                  child: Text(l10n.replyLabel, style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
                 ),
               ],
             ],

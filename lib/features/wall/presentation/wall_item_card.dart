@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/authed_avatar.dart';
 import '../../../shared/widgets/html_text.dart';
 import '../../../shared/widgets/selectable_linkified_text.dart';
@@ -10,13 +11,17 @@ import 'wall_comments_screen.dart';
 import 'wall_media_carousel.dart';
 import 'wall_media_viewer_screen.dart';
 
-String _timeAgo(DateTime date) {
+String _timeAgo(AppLocalizations l10n, DateTime date) {
   final diff = DateTime.now().difference(date);
-  if (diff.inMinutes < 1) return 'Just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  if (diff.inDays < 7) return '${diff.inDays}d ago';
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  if (diff.inMinutes < 1) return l10n.justNowLabel;
+  if (diff.inMinutes < 60) return l10n.minutesAgoLabel(diff.inMinutes);
+  if (diff.inHours < 24) return l10n.hoursAgoLabel(diff.inHours);
+  if (diff.inDays < 7) return l10n.daysAgoLabel(diff.inDays);
+  final months = [
+    l10n.monthAbbrevJan, l10n.monthAbbrevFeb, l10n.monthAbbrevMar, l10n.monthAbbrevApr,
+    l10n.monthAbbrevMay, l10n.monthAbbrevJun, l10n.monthAbbrevJul, l10n.monthAbbrevAug,
+    l10n.monthAbbrevSep, l10n.monthAbbrevOct, l10n.monthAbbrevNov, l10n.monthAbbrevDec,
+  ];
   return '${date.day} ${months[date.month - 1]}';
 }
 
@@ -54,7 +59,7 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
       setState(() => _item = updated);
       widget.onChanged?.call(updated);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not react — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.wallReactError)));
     } finally {
       if (mounted) setState(() => _reacting = false);
     }
@@ -69,7 +74,7 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
       setState(() => _item = updated);
       widget.onChanged?.call(updated);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.wallSaveError)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -84,7 +89,7 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
       setState(() => _item = updated);
       widget.onChanged?.call(updated);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not vote — try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.wallVoteError)));
     } finally {
       if (mounted) setState(() => _voting = false);
     }
@@ -97,12 +102,14 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
   void _share() {
     final url = _item.shareUrl;
     if (url == null) return;
-    final caption = _item.type == 'dua' ? 'A dua from the Sallaamti community' : (_item.title ?? stripHtmlToText(_item.body));
+    final l10n = AppLocalizations.of(context)!;
+    final caption = _item.type == 'dua' ? l10n.wallDuaShareCaption : (_item.title ?? stripHtmlToText(_item.body));
     SharePlus.instance.share(ShareParams(text: '$caption\n\n$url'));
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDua = _item.type == 'dua';
 
     return Container(
@@ -124,7 +131,7 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
               width: double.infinity,
               color: const Color(0xFFB8962E),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              child: const Text('📌 Pinned', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
+              child: Text(l10n.pinnedLabel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
             ),
           if (_item.media.length > 1)
             WallMediaCarousel(media: _item.media)
@@ -169,11 +176,11 @@ class _WallItemCardState extends ConsumerState<WallItemCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _item.author?.name ?? 'A community member',
+                            _item.author?.name ?? l10n.communityMemberFallback,
                             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                           ),
                           Text(
-                            _timeAgo(_item.createdAt.toLocal()),
+                            _timeAgo(l10n, _item.createdAt.toLocal()),
                             style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                           ),
                         ],
@@ -301,6 +308,7 @@ class _PollWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasVoted = myVote != null;
     final total = options.fold<int>(0, (sum, o) => sum + o.votes);
 
@@ -352,7 +360,7 @@ class _PollWidget extends StatelessWidget {
             ),
           ),
         Text(
-          '$total ${total == 1 ? 'vote' : 'votes'}',
+          l10n.voteCountLabel(total),
           style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
         ),
       ],

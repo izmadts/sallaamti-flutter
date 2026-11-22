@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/wall_repository.dart';
 import 'wall_item_card.dart';
 
@@ -38,7 +39,9 @@ class _WallSavedScreenState extends ConsumerState<WallSavedScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      // Called from initState() — looked up after the await above rather
+      // than hoisted, since Localizations isn't registered yet that early.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -52,10 +55,11 @@ class _WallSavedScreenState extends ConsumerState<WallSavedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('wall'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Saved')),
+        appBar: AppBar(title: Text(l10n.savedLabel)),
         body: SafeArea(
           child: RefreshIndicator(onRefresh: _load, child: _buildBody(context)),
         ),
@@ -64,6 +68,7 @@ class _WallSavedScreenState extends ConsumerState<WallSavedScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -82,7 +87,7 @@ class _WallSavedScreenState extends ConsumerState<WallSavedScreen> {
           Padding(
             padding: const EdgeInsets.all(48),
             child: Center(
-              child: Text('Nothing saved yet — tap the bookmark icon on anything you want to find again.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
+              child: Text(l10n.wallNothingSavedMessage, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
             ),
           ),
         ],

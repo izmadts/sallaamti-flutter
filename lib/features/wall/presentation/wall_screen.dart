@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/wall_repository.dart';
 import 'wall_item_card.dart';
 import 'wall_saved_screen.dart';
@@ -69,7 +70,9 @@ class _WallScreenState extends ConsumerState<WallScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      // Called from initState() — looked up after the await above rather
+      // than hoisted, since Localizations isn't registered yet that early.
+      if (mounted) setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -102,6 +105,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   }
 
   Future<void> _openSubmitDua() async {
+    final l10n = AppLocalizations.of(context)!;
     final submitted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -109,22 +113,23 @@ class _WallScreenState extends ConsumerState<WallScreen> {
     );
     if (submitted == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your dua has been submitted and will appear once reviewed.')),
+        SnackBar(content: Text(l10n.wallDuaSubmittedMessage)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('wall'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Sallaamti Wall'),
+          title: Text(l10n.sallaamtiWallTitle),
           actions: [
             IconButton(
               icon: const Icon(Icons.bookmark_outline),
-              tooltip: 'Saved',
+              tooltip: l10n.savedLabel,
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const WallSavedScreen())),
             ),
           ],
@@ -132,7 +137,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _openSubmitDua,
           icon: const Text('📣'),
-          label: const Text('Post to Wall'),
+          label: Text(l10n.postToWallButton),
         ),
         body: SafeArea(
           child: Column(
@@ -152,6 +157,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   }
 
   Widget _buildTagBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // 'Proposal'/'Announcement' are hardcoded in (not just left to
     // _availableTags) so the tabs always appear even before any such post
     // exists yet — same reasoning as 'dua'. De-duplicated since the
@@ -170,10 +176,10 @@ class _WallScreenState extends ConsumerState<WallScreen> {
           final tag = tags[index];
           final selected = tag == _activeTag;
           final label = switch (tag) {
-            'all' => 'All',
-            'dua' => '🤲 Duas',
-            'Proposal' => '💍 Proposals',
-            'Announcement' => '📢 Announcements',
+            'all' => l10n.wallTagAll,
+            'dua' => l10n.wallTagDuas,
+            'Proposal' => l10n.wallTagProposals,
+            'Announcement' => l10n.wallTagAnnouncements,
             _ => tag,
           };
           return ChoiceChip(
@@ -191,6 +197,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loading && _items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -204,7 +211,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
               children: [
                 Text(_error!, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: () => _load(reset: true), child: const Text('Retry')),
+                ElevatedButton(onPressed: () => _load(reset: true), child: Text(l10n.retry)),
               ],
             ),
           ),
@@ -221,7 +228,7 @@ class _WallScreenState extends ConsumerState<WallScreen> {
               children: [
                 const Text('📣', style: TextStyle(fontSize: 48)),
                 const SizedBox(height: 12),
-                Text('Nothing here yet.', style: TextStyle(color: Colors.grey.shade600)),
+                Text(l10n.wallNothingHereYetMessage, style: TextStyle(color: Colors.grey.shade600)),
               ],
             ),
           ),

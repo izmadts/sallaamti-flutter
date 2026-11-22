@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/wall_repository.dart';
 import 'wall_media_viewer_screen.dart';
 
@@ -160,6 +161,7 @@ class _WallVideoPlayerState extends State<_WallVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_failed) {
       return Container(
         color: Colors.black87,
@@ -169,9 +171,9 @@ class _WallVideoPlayerState extends State<_WallVideoPlayer> {
             children: [
               const Icon(Icons.error_outline, color: Colors.white70, size: 36),
               const SizedBox(height: 8),
-              const Text('Could not load this video', style: TextStyle(color: Colors.white70, fontSize: 13)),
+              Text(l10n.wallVideoLoadError, style: const TextStyle(color: Colors.white70, fontSize: 13)),
               const SizedBox(height: 8),
-              TextButton(onPressed: _retry, child: const Text('Retry')),
+              TextButton(onPressed: _retry, child: Text(l10n.retry)),
             ],
           ),
         ),
@@ -208,7 +210,7 @@ class _WallVideoPlayerState extends State<_WallVideoPlayer> {
                 shape: const CircleBorder(),
                 child: IconButton(
                   icon: const Icon(Icons.fullscreen, color: Colors.white, size: 20),
-                  tooltip: 'Expand',
+                  tooltip: l10n.expandLabel,
                   onPressed: widget.onExpand,
                 ),
               ),

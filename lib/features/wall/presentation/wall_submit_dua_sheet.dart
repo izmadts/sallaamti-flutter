@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../data/wall_repository.dart';
 
 class WallSubmitDuaSheet extends ConsumerStatefulWidget {
@@ -39,9 +40,10 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
   void _removeImage(int index) => setState(() => _images.removeAt(index));
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     final body = _bodyController.text.trim();
     if (body.isEmpty) {
-      setState(() => _error = 'Please write your dua request.');
+      setState(() => _error = l10n.wallDuaBodyRequiredError);
       return;
     }
 
@@ -56,7 +58,7 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -64,6 +66,7 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -79,12 +82,12 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
             children: [
               const Text('📣', style: TextStyle(fontSize: 28)),
               const SizedBox(width: 8),
-              const Text('Post to the Wall', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(l10n.postToTheWallTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Right now you can share a dua request — our team reviews it before it appears on the Wall.',
+            l10n.wallDuaReviewNoticeMessage,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
           ),
           const SizedBox(height: 16),
@@ -98,7 +101,7 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
           ],
           TextFormField(
             controller: _bodyController,
-            decoration: const InputDecoration(hintText: 'What would you like the community to pray for?'),
+            decoration: InputDecoration(hintText: l10n.wallDuaPromptHint),
             minLines: 3,
             maxLines: 6,
             maxLength: 1000,
@@ -152,13 +155,13 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
             ),
           ),
           Text(
-            'Add up to 10 photos — they\'ll appear as a swipeable gallery, same as an Instagram/Facebook post.',
+            l10n.wallUpTo10PhotosMessage,
             style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Post anonymously'),
+            title: Text(l10n.postAnonymouslyLabel),
             value: _isAnonymous,
             onChanged: (v) => setState(() => _isAnonymous = v),
           ),
@@ -167,7 +170,7 @@ class _WallSubmitDuaSheetState extends ConsumerState<WallSubmitDuaSheet> {
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Submit'),
+                : Text(l10n.submitButton),
           ),
         ],
       ),
