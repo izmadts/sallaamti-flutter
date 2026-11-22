@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/data/country_states_repository.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/required_label.dart';
 import '../../../shared/widgets/step_wizard_scaffold.dart';
 import '../data/quran_live_repository.dart';
@@ -83,16 +84,17 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
   }
 
   void _advance() {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _error = null);
 
     if (_step == 0) {
       if (_guardianNameController.text.trim().isEmpty || _whatsappController.text.trim().isEmpty) {
-        setState(() => _error = 'Please fill in the guardian name and WhatsApp number.');
+        setState(() => _error = l10n.quranLiveFillGuardianContact);
         return;
       }
     } else if (_step == 1) {
       if (_studentNameController.text.trim().isEmpty || _studentGender == null || _studentAgeController.text.trim().isEmpty) {
-        setState(() => _error = 'Please fill in the student\'s name, gender, and age.');
+        setState(() => _error = l10n.quranLiveFillStudentDetails);
         return;
       }
 
@@ -103,15 +105,16 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
       final age = int.tryParse(_studentAgeController.text.trim());
       if (course != null && age != null) {
         if (course.minAge != null && age < course.minAge!) {
-          setState(() => _error = 'This class is for ages ${course.minAge}${course.maxAge != null ? '–${course.maxAge}' : '+'}.');
+          setState(() => _error = l10n.quranLiveAgeMinMessage('${course.minAge}', course.maxAge != null ? '–${course.maxAge}' : '+'));
           return;
         }
         if (course.maxAge != null && age > course.maxAge!) {
-          setState(() => _error = 'This class is for ages ${course.minAge ?? 1}–${course.maxAge}.');
+          setState(() => _error = l10n.quranLiveAgeMaxMessage('${course.minAge ?? 1}', '${course.maxAge}'));
           return;
         }
         if (course.genderPreference != null && course.genderPreference != 'both' && _studentGender != course.genderPreference) {
-          setState(() => _error = 'This class is for ${course.genderPreference} students only.');
+          final genderWord = course.genderPreference == 'female' ? l10n.quranLiveFemaleStudents : l10n.quranLiveMaleStudents;
+          setState(() => _error = l10n.quranLiveGenderOnlyMessage(genderWord));
           return;
         }
       }
@@ -129,8 +132,9 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_declarationAccepted) {
-      setState(() => _error = 'Please confirm the declaration to continue.');
+      setState(() => _error = l10n.quranLiveConfirmDeclaration);
       return;
     }
 
@@ -166,7 +170,7 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -174,6 +178,7 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Theme(
       data: ModuleThemes.forModule('quran_live'),
       child: FutureBuilder<(QuranLiveMeta, QuranLiveCourseInfo)>(
@@ -183,9 +188,9 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
           if (snapshot.hasError) {
-            final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : 'Something went wrong.';
+            final message = snapshot.error is ApiException ? (snapshot.error as ApiException).displayMessage : l10n.errorGeneric;
             return Scaffold(
-              appBar: AppBar(title: const Text('Admission')),
+              appBar: AppBar(title: Text(l10n.quranLiveAdmissionTitle)),
               body: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -194,7 +199,7 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
                     children: [
                       Text(message, textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      ElevatedButton(onPressed: () => setState(() => _initFuture = _loadInit()), child: const Text('Retry')),
+                      ElevatedButton(onPressed: () => setState(() => _initFuture = _loadInit()), child: Text(l10n.nikahTryAgain)),
                     ],
                   ),
                 ),
@@ -204,10 +209,10 @@ class _QuranLiveAdmissionScreenState extends ConsumerState<QuranLiveAdmissionScr
 
           final (meta, course) = snapshot.data!;
           return StepWizardScaffold(
-            title: 'Admission',
+            title: l10n.quranLiveAdmissionTitle,
             stepIndex: _step,
             totalSteps: 3,
-            nextLabel: _step < 2 ? 'Next' : 'Submit Admission',
+            nextLabel: _step < 2 ? l10n.nextLabel : l10n.quranLiveSubmitAdmission,
             onNext: _next,
             onBack: () => _step == 0 ? Navigator.of(context).pop() : setState(() => _step -= 1),
             busy: _busy,
@@ -277,31 +282,32 @@ class _ParentStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final countryStatesAsync = ref.watch(countryStatesProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Parent & Contact', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+        Text(l10n.quranLiveParentContactTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 4),
-        Text('Who should we reach out to about this admission?', style: TextStyle(color: Colors.grey.shade600)),
+        Text(l10n.quranLiveParentContactSubtitle, style: TextStyle(color: Colors.grey.shade600)),
         const SizedBox(height: 20),
         TextFormField(
           controller: guardianNameController,
-          decoration: InputDecoration(label: requiredLabel('Parent / Guardian Full Name')),
+          decoration: InputDecoration(label: requiredLabel(l10n.quranLiveGuardianFullNameLabel)),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: whatsappController,
           keyboardType: TextInputType.phone,
-          decoration: InputDecoration(label: requiredLabel('WhatsApp Number (with country code)'), hintText: '+92 3XX XXXXXXX'),
+          decoration: InputDecoration(label: requiredLabel(l10n.quranLiveWhatsappNumberLabel), hintText: '+92 3XX XXXXXXX'),
         ),
         const SizedBox(height: 16),
         countryStatesAsync.when(
           data: (cs) => DropdownButtonFormField<String>(
             initialValue: cs.countries.contains(country) ? country : null,
             isExpanded: true,
-            decoration: InputDecoration(label: requiredLabel('Country')),
+            decoration: InputDecoration(label: requiredLabel(l10n.countryLabel)),
             items: cs.countries.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
             onChanged: (v) {
               if (v != null) onCountryChanged(v);
@@ -310,14 +316,14 @@ class _ParentStep extends ConsumerWidget {
           loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: LinearProgressIndicator()),
           error: (error, stack) => TextFormField(
             initialValue: country,
-            decoration: InputDecoration(label: requiredLabel('Country')),
+            decoration: InputDecoration(label: requiredLabel(l10n.countryLabel)),
             onChanged: onCountryChanged,
           ),
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: cityStateController,
-          decoration: const InputDecoration(labelText: 'City / State'),
+          decoration: InputDecoration(labelText: l10n.cityStateLabel),
         ),
       ],
     );
@@ -354,13 +360,14 @@ class _StudentStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('About the Student', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+        Text(l10n.quranLiveAboutStudentTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 4),
         Text(
-          'Admitting more than one child? Use each child\'s own name — that\'s what tells them apart.',
+          l10n.quranLiveMultipleChildrenHint,
           style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
         ),
         // Shown up front so a family finds out before filling in every
@@ -379,9 +386,9 @@ class _StudentStep extends StatelessWidget {
                   child: Text(
                     [
                       if (course.minAge != null || course.maxAge != null)
-                        'Ages ${course.minAge ?? 0}${course.maxAge != null ? '–${course.maxAge}' : '+'}',
-                      if (course.genderPreference == 'male') 'boys only',
-                      if (course.genderPreference == 'female') 'girls only',
+                        l10n.quranLiveAgesRestrictionLabel('${course.minAge ?? 0}', course.maxAge != null ? '–${course.maxAge}' : '+'),
+                      if (course.genderPreference == 'male') l10n.quranLiveBoysOnly,
+                      if (course.genderPreference == 'female') l10n.quranLiveGirlsOnly,
                     ].join(', '),
                     style: const TextStyle(color: Color(0xFF0D6B6B), fontSize: 12.5, fontWeight: FontWeight.w700),
                   ),
@@ -393,7 +400,7 @@ class _StudentStep extends StatelessWidget {
         const SizedBox(height: 20),
         TextFormField(
           controller: studentNameController,
-          decoration: InputDecoration(label: requiredLabel('Student Full Name')),
+          decoration: InputDecoration(label: requiredLabel(l10n.quranLiveStudentFullNameLabel)),
         ),
         const SizedBox(height: 16),
         Row(
@@ -402,10 +409,10 @@ class _StudentStep extends StatelessWidget {
               child: DropdownButtonFormField<String>(
                 initialValue: studentGender,
                 isExpanded: true,
-                decoration: InputDecoration(label: requiredLabel('Gender')),
-                items: const [
-                  DropdownMenuItem(value: 'male', child: Text('Male')),
-                  DropdownMenuItem(value: 'female', child: Text('Female')),
+                decoration: InputDecoration(label: requiredLabel(l10n.genderLabel)),
+                items: [
+                  DropdownMenuItem(value: 'male', child: Text(l10n.genderMale)),
+                  DropdownMenuItem(value: 'female', child: Text(l10n.genderFemale)),
                 ],
                 onChanged: (v) {
                   if (v != null) onGenderChanged(v);
@@ -417,7 +424,7 @@ class _StudentStep extends StatelessWidget {
               child: TextFormField(
                 controller: studentAgeController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(label: requiredLabel('Age')),
+                decoration: InputDecoration(label: requiredLabel(l10n.ageLabel)),
               ),
             ),
           ],
@@ -426,14 +433,14 @@ class _StudentStep extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: educationGrade,
           isExpanded: true,
-          decoration: const InputDecoration(labelText: 'Current Education Grade (optional)'),
+          decoration: InputDecoration(labelText: l10n.quranLiveEducationGradeLabel),
           items: grades.map((g) => DropdownMenuItem(value: g, child: Text(g, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onGradeChanged,
         ),
         const SizedBox(height: 8),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Student has learned Quran before'),
+          title: Text(l10n.quranLiveLearnedBeforeLabel),
           value: learnedQuranBefore,
           onChanged: onLearnedChanged,
         ),
@@ -485,12 +492,13 @@ class _PreferencesStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Class Preferences', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+        Text(l10n.quranLiveClassPreferencesTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 16),
-        const Text('Preferred Class Days', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(l10n.quranLivePreferredDaysLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -501,22 +509,22 @@ class _PreferencesStep extends StatelessWidget {
           }).toList(),
         ),
         const SizedBox(height: 16),
-        const Text('Preferred Time', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(l10n.quranLivePreferredTimeLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
         const SizedBox(height: 2),
-        Text("Our academy's available class slots, shown in Pakistan Time (PKT).", style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+        Text(l10n.quranLivePktSlotsHint, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           initialValue: preferredTime,
           isExpanded: true,
           decoration: const InputDecoration(),
-          items: meta.times.map((t) => DropdownMenuItem(value: t, child: Text('$t PKT', overflow: TextOverflow.ellipsis))).toList(),
+          items: meta.times.map((t) => DropdownMenuItem(value: t, child: Text(l10n.quranLivePktSuffix(t), overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onPreferredTimeChanged,
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: meta.timezones.contains(timezone) ? timezone : null,
           isExpanded: true,
-          decoration: const InputDecoration(labelText: 'Your Timezone'),
+          decoration: InputDecoration(labelText: l10n.quranLiveYourTimezoneLabel),
           items: meta.timezones.map((tz) => DropdownMenuItem(value: tz, child: Text(tz, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: (v) {
             if (v != null) onTimezoneChanged(v);
@@ -526,7 +534,7 @@ class _PreferencesStep extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: teacherPreference,
           isExpanded: true,
-          decoration: InputDecoration(label: requiredLabel('Teacher Preference')),
+          decoration: InputDecoration(label: requiredLabel(l10n.quranLiveTeacherPreferenceLabel)),
           items: meta.teacherPreferences.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onTeacherPreferenceChanged,
         ),
@@ -534,7 +542,7 @@ class _PreferencesStep extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: selectedLevel,
           isExpanded: true,
-          decoration: const InputDecoration(labelText: 'Which Level are you applying for?'),
+          decoration: InputDecoration(labelText: l10n.quranLiveWhichLevelLabel),
           items: meta.levels
               .map((l) => DropdownMenuItem(value: l.title, child: Text(l.levelNumber != null ? '${l.levelNumber} — ${l.title}' : l.title, overflow: TextOverflow.ellipsis)))
               .toList(),
@@ -544,9 +552,9 @@ class _PreferencesStep extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: previousLevel,
           isExpanded: true,
-          decoration: const InputDecoration(labelText: 'Previous Level Completed (if any)'),
+          decoration: InputDecoration(labelText: l10n.quranLivePreviousLevelLabel),
           items: [
-            const DropdownMenuItem(value: null, child: Text('None / First time')),
+            DropdownMenuItem(value: null, child: Text(l10n.quranLiveNoneFirstTime)),
             ...meta.levels.map((l) => DropdownMenuItem(
                 value: l.title, child: Text(l.levelNumber != null ? '${l.levelNumber} — ${l.title}' : l.title, overflow: TextOverflow.ellipsis))),
           ],
@@ -556,7 +564,7 @@ class _PreferencesStep extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: classType,
           isExpanded: true,
-          decoration: const InputDecoration(labelText: 'Class Type Preference'),
+          decoration: InputDecoration(labelText: l10n.quranLiveClassTypeLabel),
           items: meta.classTypes.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onClassTypeChanged,
         ),
@@ -565,7 +573,7 @@ class _PreferencesStep extends StatelessWidget {
           controller: commentsController,
           minLines: 2,
           maxLines: 4,
-          decoration: const InputDecoration(labelText: 'Special Requirements / Comments (optional)'),
+          decoration: InputDecoration(labelText: l10n.quranLiveSpecialRequirementsLabel),
         ),
         const SizedBox(height: 12),
         CheckboxListTile(
@@ -573,9 +581,9 @@ class _PreferencesStep extends StatelessWidget {
           controlAffinity: ListTileControlAffinity.leading,
           value: declarationAccepted,
           onChanged: (v) => onDeclarationChanged(v ?? false),
-          title: const Text(
-            'I confirm the information above is accurate and I agree to Sallaamti\'s Quran Live class terms.',
-            style: TextStyle(fontSize: 13),
+          title: Text(
+            l10n.quranLiveDeclarationText,
+            style: const TextStyle(fontSize: 13),
           ),
         ),
       ],
