@@ -117,6 +117,13 @@ String languageLabel(AppLocalizations l10n, String value) => {
       'Balochi': l10n.languageBalochi,
     }[value] ?? value;
 
+String visibilityLabel(AppLocalizations l10n, String? value) => {
+      'public': l10n.nikahVisibilityPublic,
+      'members_only': l10n.nikahVisibilityMembersOnly,
+      'matchmaker_assisted': l10n.nikahVisibilityMatchmakerAssisted,
+      'confidential': l10n.nikahVisibilityConfidential,
+    }[value] ?? (value ?? '');
+
 String interestStatusLabel(AppLocalizations l10n, String status) => {
       'pending': l10n.interestStatusPending,
       'accepted': l10n.interestStatusAccepted,

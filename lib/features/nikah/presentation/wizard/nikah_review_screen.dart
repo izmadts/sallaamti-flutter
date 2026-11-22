@@ -7,6 +7,7 @@ import '../../../../core/api/api_exception.dart';
 import '../../../../core/theme/module_themes.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../shared/widgets/error_banner.dart';
+import '../../domain/nikah_labels.dart';
 import '../../state/nikah_controller.dart';
 
 class NikahReviewScreen extends ConsumerStatefulWidget {
@@ -48,7 +49,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
       final profile = ref.read(nikahControllerProvider).profile;
       if (profile?.paymentStatus == 'confirmed') {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No verification fee is required right now — your profile is ready.')),
+          SnackBar(content: Text(l10n.nikahNoFeeRequiredMessage)),
         );
         context.go('/nikah');
       } else {
@@ -75,7 +76,7 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Review Your Profile')),
+        appBar: AppBar(title: Text(l10n.nikahReviewProfileTitle)),
         body: SafeArea(
           child: Column(
             children: [
@@ -92,69 +93,69 @@ class _NikahReviewScreenState extends ConsumerState<NikahReviewScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${profile.completenessPercentage}% complete',
+                      l10n.nikahCompletenessPercent(profile.completenessPercentage),
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 13,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _section('Basic Info', [
-                      _row('Age', '${profile.age}'),
-                      _row('Height', profile.height),
+                    _section(l10n.nikahBasicInfoTitle, [
+                      _row(l10n.ageLabel, '${profile.age}'),
+                      _row(l10n.heightLabel, profile.height),
                       _row(
-                        'Marital Status',
-                        profile.maritalStatus.replaceAll('_', ' '),
+                        l10n.maritalStatusLabel,
+                        maritalStatusLabel(l10n, profile.maritalStatus),
                       ),
                       _row(
-                        'City',
+                        l10n.cityLabel,
                         '${profile.city}${profile.state != null ? ', ${profile.state}' : ''}',
                       ),
-                      _row('Address', profile.address),
+                      _row(l10n.addressLabel, profile.address),
                     ]),
-                    _section('Guardian (Sarparast Family)', [
-                      _row('Name', profile.guardianName),
-                      _row('Contact', profile.guardianContact),
-                      _row('Relation', profile.guardianRelation),
+                    _section(l10n.nikahGuardianSectionTitle, [
+                      _row(l10n.nameLabel, profile.guardianName),
+                      _row(l10n.contactLabel, profile.guardianContact),
+                      _row(l10n.relationLabel, profile.guardianRelation != null ? guardianRelationLabel(l10n, profile.guardianRelation!) : null),
                     ]),
-                    _section('Deen & Lifestyle', [
-                      _row('Sect', profile.sect),
-                      _row('Prayer', profile.prayerFrequency),
-                      _row('Education', profile.education),
-                      _row('Profession', profile.profession),
+                    _section(l10n.nikahDeenLifestyleTitle, [
+                      _row(l10n.sectLabel, profile.sect != null ? sectLabel(l10n, profile.sect!) : null),
+                      _row(l10n.nikahPrayerLabel, profile.prayerFrequency != null ? (prayerOptions(l10n)[profile.prayerFrequency!] ?? profile.prayerFrequency) : null),
+                      _row(l10n.educationLabel, profile.education != null ? educationLabel(l10n, profile.education!) : null),
+                      _row(l10n.professionLabel, profile.profession),
                     ]),
-                    _section('About', [
-                      _row('About', profile.about),
-                      _row('Looking for', profile.expectations),
+                    _section(l10n.aboutLabel, [
+                      _row(l10n.aboutLabel, profile.about),
+                      _row(l10n.lookingForLabel, profile.expectations),
                       _row(
-                        'Preferred age',
+                        l10n.nikahPreferredAgeLabel,
                         (profile.prefMinAge != null ||
                                 profile.prefMaxAge != null)
                             ? '${profile.prefMinAge ?? '—'} – ${profile.prefMaxAge ?? '—'}'
                             : null,
                       ),
-                      _row('Preferred city', profile.prefCity),
-                      _row('Preferred sect', profile.prefSect),
-                      _row('Preferred education', profile.prefEducation),
+                      _row(l10n.nikahPreferredCityLabel, profile.prefCity),
+                      _row(l10n.nikahPreferredSectLabel, profile.prefSect),
+                      _row(l10n.nikahPreferredEducationLabel, profile.prefEducation),
                       _row(
-                        'Preferred marital status',
-                        profile.prefMaritalStatus,
+                        l10n.nikahPreferredMaritalStatusLabel,
+                        profile.prefMaritalStatus != null ? maritalStatusLabel(l10n, profile.prefMaritalStatus!) : null,
                       ),
-                      _row('Preferred income', profile.prefIncome),
-                      _row('Other preferences', profile.prefOther),
+                      _row(l10n.nikahPreferredIncomeShortLabel, profile.prefIncome),
+                      _row(l10n.nikahOtherPreferencesLabel, profile.prefOther),
                     ]),
-                    _section('Verification', [
+                    _section(l10n.nikahVerificationSectionTitle, [
                       _row(
-                        'CNIC Number',
+                        l10n.cnicNumberLabel,
                         profile.hasCnicNumber
-                            ? '••••• (saved)'
-                            : 'Not provided',
+                            ? l10n.nikahCnicSavedLabel
+                            : l10n.nikahNotProvidedLabel,
                       ),
                       _row(
-                        'Photo',
-                        profile.hasPhoto ? 'Uploaded ✓' : 'Not added',
+                        l10n.photoLabel,
+                        profile.hasPhoto ? l10n.nikahUploadedLabel : l10n.nikahNotAddedLabel,
                       ),
-                      _row('Visibility', profile.visibility),
+                      _row(l10n.visibilityLabel, visibilityLabel(l10n, profile.visibility)),
                     ]),
                   ],
                 ),
