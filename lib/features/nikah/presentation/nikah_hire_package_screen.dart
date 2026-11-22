@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/theme/module_themes.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../shared/widgets/image_pick_field.dart';
 import '../../../shared/widgets/required_label.dart';
 import '../data/nikah_hire_repository.dart';
@@ -25,7 +26,11 @@ class NikahHirePackageScreen extends ConsumerStatefulWidget {
 }
 
 class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen> {
-  static const _methodLabels = {'jazzcash': 'JazzCash', 'easypaisa': 'EasyPaisa', 'bank_transfer': 'Bank Transfer'};
+  Map<String, String> _methodLabels(AppLocalizations l10n) => {
+        'jazzcash': l10n.jazzcashMethodLabel,
+        'easypaisa': l10n.easypaisaMethodLabel,
+        'bank_transfer': l10n.bankTransferMethodLabel,
+      };
 
   List<CounselorPackage> _packages = [];
   CounselorPackage? _selected;
@@ -45,9 +50,10 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
   }
 
   Future<void> _copy(String value) async {
+    final l10n = AppLocalizations.of(context)!;
     await Clipboard.setData(ClipboardData(text: value));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 2)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nikahCopiedToClipboard), duration: const Duration(seconds: 2)));
     }
   }
 
@@ -94,7 +100,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = AppLocalizations.of(context)!.errorGeneric);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -109,14 +115,15 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
   // canRelease — reaching this screen at all means nothing's been
   // submitted yet for this lead.
   Future<void> _release() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Choose a different counselor?'),
-        content: const Text('This removes the counselor you just chose — nothing has been paid yet, so there\'s nothing to undo there.'),
+        title: Text(l10n.nikahChooseDifferentCounselorTitle),
+        content: Text(l10n.nikahChooseDifferentCounselorMessage),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Go Back')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.nikahGoBack)),
         ],
       ),
     );
@@ -129,7 +136,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.displayMessage)));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Something went wrong. Please try again.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     } finally {
       if (mounted) setState(() => _releasing = false);
     }
@@ -141,9 +148,10 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_selected == null || _method == null) return;
     if (_screenshot == null) {
-      setState(() => _error = 'Please upload a payment screenshot.');
+      setState(() => _error = l10n.nikahUploadScreenshotRequired);
       return;
     }
 
@@ -163,7 +171,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
     } on ApiException catch (e) {
       setState(() => _error = e.displayMessage);
     } catch (_) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = l10n.errorGeneric);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -171,11 +179,12 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_submitted) {
       return Theme(
         data: ModuleThemes.forModule('nikah'),
         child: Scaffold(
-          appBar: AppBar(title: const Text('Payment Submitted')),
+          appBar: AppBar(title: Text(l10n.nikahPackagePaymentSubmittedTitle)),
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -184,15 +193,15 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                 children: [
                   const Text('✅', style: TextStyle(fontSize: 56)),
                   const SizedBox(height: 16),
-                  const Text('Payment Submitted', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
+                  Text(l10n.nikahPackagePaymentSubmittedTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
                   const SizedBox(height: 8),
                   Text(
-                    'Your counselor and our team will confirm it shortly. You can message your counselor anytime in the meantime.',
+                    l10n.nikahPackageSubmittedFollowUpMessage,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(onPressed: () => context.go('/nikah'), child: const Text('Back to Nikah')),
+                  ElevatedButton(onPressed: () => context.go('/nikah'), child: Text(l10n.nikahBackToNikah)),
                 ],
               ),
             ),
@@ -205,7 +214,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Choose a Package'),
+          title: Text(l10n.nikahChoosePackageButton),
           actions: [
             TextButton(
               // Same AppBarTheme.foregroundColor fix as nikah_payment_screen.dart's
@@ -215,7 +224,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
               onPressed: _releasing ? null : _release,
               child: _releasing
                   ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Go Back'),
+                  : Text(l10n.nikahGoBack),
             ),
           ],
         ),
@@ -248,10 +257,10 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Send payment to', style: TextStyle(fontWeight: FontWeight.w700)),
+                                Text(l10n.nikahSendPaymentTo, style: const TextStyle(fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 12),
                                 if (_paymentInstructions.hasJazzcash) ...[
-                                  const Text('📱 JazzCash', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  Text(l10n.nikahJazzcashLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 2),
                                   _copyableRow(_paymentInstructions.jazzcashNumber!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                                   if ((_paymentInstructions.jazzcashAccountTitle ?? '').isNotEmpty)
@@ -259,28 +268,28 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                                   const SizedBox(height: 12),
                                 ],
                                 if (_paymentInstructions.hasEasypaisa) ...[
-                                  const Text('📱 EasyPaisa', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  Text(l10n.nikahEasypaisaLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 2),
                                   _copyableRow(_paymentInstructions.easypaisaNumber!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                                   const SizedBox(height: 12),
                                 ],
                                 if (_paymentInstructions.hasBankTransfer) ...[
-                                  const Text('🏦 Bank Transfer', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  Text(l10n.nikahBankTransferLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 2),
-                                  Text('Bank: ${_paymentInstructions.bankName}', style: TextStyle(color: Colors.grey.shade700)),
+                                  Text(l10n.nikahBankLabel(_paymentInstructions.bankName ?? ''), style: TextStyle(color: Colors.grey.shade700)),
                                   if ((_paymentInstructions.bankAccountTitle ?? '').isNotEmpty)
-                                    Text('Account Title: ${_paymentInstructions.bankAccountTitle}', style: TextStyle(color: Colors.grey.shade700)),
+                                    Text(l10n.nikahAccountTitleLabel(_paymentInstructions.bankAccountTitle!), style: TextStyle(color: Colors.grey.shade700)),
                                   if ((_paymentInstructions.bankAccountNumber ?? '').isNotEmpty)
                                     Row(
                                       children: [
-                                        Text('Account No: ', style: TextStyle(color: Colors.grey.shade700)),
+                                        Text(l10n.nikahAccountNoLabel, style: TextStyle(color: Colors.grey.shade700)),
                                         Expanded(child: _copyableRow(_paymentInstructions.bankAccountNumber!, style: TextStyle(color: Colors.grey.shade700))),
                                       ],
                                     ),
                                   if ((_paymentInstructions.bankAccountIban ?? '').isNotEmpty)
                                     Row(
                                       children: [
-                                        Text('IBAN: ', style: TextStyle(color: Colors.grey.shade700)),
+                                        Text(l10n.nikahIbanLabel, style: TextStyle(color: Colors.grey.shade700)),
                                         Expanded(child: _copyableRow(_paymentInstructions.bankAccountIban!, style: TextStyle(color: Colors.grey.shade700))),
                                       ],
                                     ),
@@ -293,9 +302,9 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
-                          child: const Text(
-                            'Payment details have not been configured yet. Please contact support before sending any payment.',
-                            style: TextStyle(color: Colors.deepOrange),
+                          child: Text(
+                            l10n.nikahPaymentNotConfiguredMessage,
+                            style: const TextStyle(color: Colors.deepOrange),
                           ),
                         ),
                       const SizedBox(height: 16),
@@ -303,7 +312,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                         initialValue: _method,
                         decoration: InputDecoration(label: requiredLabel('Payment Method')),
                         items: _availableMethods
-                            .map((m) => DropdownMenuItem(value: m, child: Text(_methodLabels[m]!)))
+                            .map((m) => DropdownMenuItem(value: m, child: Text(_methodLabels(l10n)[m]!)))
                             .toList(),
                         onChanged: _availableMethods.isEmpty ? null : (v) => setState(() => _method = v),
                       ),
@@ -311,7 +320,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                       SizedBox(
                         width: 160,
                         child: ImagePickField(
-                          label: 'Payment Screenshot',
+                          label: l10n.nikahPaymentScreenshotLabel,
                           file: _screenshot,
                           alreadyUploaded: false,
                           onTap: _pickScreenshot,
@@ -322,7 +331,7 @@ class _NikahHirePackageScreenState extends ConsumerState<NikahHirePackageScreen>
                         onPressed: (_submitting || _selected == null || _method == null) ? null : _submit,
                         child: _submitting
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Text('Submit Payment'),
+                            : Text(l10n.nikahSubmitPaymentButton),
                       ),
                     ],
                   ),
@@ -341,6 +350,7 @@ class _PackageOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final primary = Theme.of(context).colorScheme.primary;
     return InkWell(
       onTap: onTap,
@@ -370,7 +380,7 @@ class _PackageOption extends StatelessWidget {
             ],
             if (package.proposalLimit != null) ...[
               const SizedBox(height: 6),
-              Text('Up to ${package.proposalLimit} proposals', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              Text(l10n.nikahProposalLimitLabel(package.proposalLimit!), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
             ],
           ],
         ),
