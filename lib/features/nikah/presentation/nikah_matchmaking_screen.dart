@@ -53,14 +53,15 @@ class _NikahMatchmakingScreenState extends ConsumerState<NikahMatchmakingScreen>
     // "interested" response here also bridges into a real NikahInterest,
     // which reveals the guardian's contact to the candidate immediately.
     if (response == 'interested') {
+      final l10n = AppLocalizations.of(context)!;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Interested in this candidate?'),
-          content: const Text('This will share your guardian\'s contact details with them once they accept. Please check their verification badges first.'),
+          title: Text(l10n.nikahInterestedDialogTitle),
+          content: Text(l10n.nikahInterestedDialogMessage),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Yes, I\'m Interested')),
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.nikahYesImInterested)),
           ],
         ),
       );
@@ -93,7 +94,7 @@ class _NikahMatchmakingScreenState extends ConsumerState<NikahMatchmakingScreen>
     return Theme(
       data: ModuleThemes.forModule('nikah'),
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Matchmaker')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.nikahMyMatchmakerTitle)),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
@@ -104,13 +105,14 @@ class _NikahMatchmakingScreenState extends ConsumerState<NikahMatchmakingScreen>
   }
 
   Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final overview = _overview;
     if (overview == null) return const SizedBox.shrink();
 
     final allProposals = overview.proposalBatches.expand((b) => b.proposals).toList();
 
     if (allProposals.isEmpty && overview.consentRequests.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.nikahNothingHereYet));
+      return Center(child: Text(l10n.nikahNothingHereYet));
     }
 
     return RefreshIndicator(
@@ -119,13 +121,13 @@ class _NikahMatchmakingScreenState extends ConsumerState<NikahMatchmakingScreen>
         padding: const EdgeInsets.all(16),
         children: [
           if (overview.consentRequests.isNotEmpty) ...[
-            const Text('Consent Requested', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            Text(l10n.nikahConsentRequestedTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 8),
             ...overview.consentRequests.map((cr) => _ConsentCard(request: cr, onRespond: (decision) => _respondToConsent(cr, decision))),
             const SizedBox(height: 20),
           ],
           if (allProposals.isNotEmpty) ...[
-            const Text('Proposed Matches', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            Text(l10n.nikahProposedMatchesTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 8),
             ...allProposals.map((p) => _ProposalCard(
                   proposal: p,
@@ -146,6 +148,7 @@ class _ConsentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
@@ -161,7 +164,7 @@ class _ConsentCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => onRespond('grant'),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600),
-                    child: const Text('Agree'),
+                    child: Text(l10n.agreeLabel),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -169,7 +172,7 @@ class _ConsentCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => onRespond('decline'),
                     style: OutlinedButton.styleFrom(foregroundColor: Colors.red.shade700, side: BorderSide(color: Colors.red.shade200)),
-                    child: const Text('Not Now'),
+                    child: Text(l10n.notNowLabel),
                   ),
                 ),
               ],
@@ -189,6 +192,7 @@ class _ProposalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final candidate = proposal.candidate;
     final pending = proposal.status != 'responded';
 
@@ -239,7 +243,7 @@ class _ProposalCard extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () => onRespond('interested'),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade600),
-                        child: const Text('Interested'),
+                        child: Text(l10n.nikahInterestedButton),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -247,7 +251,7 @@ class _ProposalCard extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: () => onRespond('not_interested'),
                         style: OutlinedButton.styleFrom(foregroundColor: Colors.red.shade700, side: BorderSide(color: Colors.red.shade200)),
-                        child: const Text('Not Interested'),
+                        child: Text(l10n.nikahNotInterestedButton),
                       ),
                     ),
                   ],
@@ -275,7 +279,7 @@ class _ResponsePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-      child: Text(response ?? 'maybe', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+      child: Text(response ?? AppLocalizations.of(context)!.nikahMaybeLabel, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
     );
   }
 }
